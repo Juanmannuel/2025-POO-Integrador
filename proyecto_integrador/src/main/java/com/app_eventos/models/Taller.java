@@ -2,12 +2,14 @@ package com.app_eventos.models;
 
 import com.app_eventos.models.enums.Modalidad;
 import com.app_eventos.models.enums.TipoInscripcion;
+import com.app_eventos.models.interfaces.IEventoConInscripcion;
+import com.app_eventos.models.interfaces.IEventoConCupo;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Taller extends Evento // implements IEventoConInscripcion, IEventoConCupo {
+public class Taller extends Evento implements IEventoConInscripcion, IEventoConCupo {
     private Modalidad modalidad;
     private TipoInscripcion tipoInscripcion;
     private Persona curador;
@@ -72,16 +74,16 @@ public class Taller extends Evento // implements IEventoConInscripcion, IEventoC
         return inscriptos;
     }
 
-    // // Métodos de las interfaces
-    // @Override
-    // public void inscribirPersona(Persona persona) {
-    //     if (inscriptos.size() < cupoMaximo && !inscriptos.contains(persona)) {
-    //         inscriptos.add(persona);
-    //     }
-    // }
+    // Métodos de las interfaces
+    @Override
+    public void inscribirPersona(Persona persona) {
+        if (inscriptos.size() < cupoMaximo && !inscriptos.contains(persona)) {
+            inscriptos.add(persona);
+        }
+    }
 
-    // @Override
-    // public boolean hayCupoDisponible() {
-    //     return inscriptos.size() < cupoMaximo;
-    // }
+    @Override
+    public boolean hayCupoDisponible() {
+        return inscriptos.size() < cupoMaximo;
+    }
 }
