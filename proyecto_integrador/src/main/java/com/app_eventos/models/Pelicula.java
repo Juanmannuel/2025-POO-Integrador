@@ -1,42 +1,32 @@
 package com.app_eventos.models;
 
 public class Pelicula {
-    private String nombre;
-    private String director;
-    private int anioEstreno;
+    private Long idPelicula;
+    private String titulo;
     private int duracionMinutos;
 
     // Constructor
-    public Pelicula(String nombre, String director, int anioEstreno, int duracionMinutos) {
-        this.nombre = nombre;
-        this.director = director;
-        this.anioEstreno = anioEstreno;
+    public Pelicula(Long idPelicula, String titulo, int duracionMinutos) {
+        this.idPelicula = idPelicula;
+        this.titulo = titulo;
         this.duracionMinutos = duracionMinutos;
     }
 
     // Getters y Setters
-    public String getNombre() {
-        return nombre;
+    public Long getIdPelicula() {
+        return idPelicula;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public void setIdPelicula(Long idPelicula) {
+        this.idPelicula = idPelicula;
     }
 
-    public String getDirector() {
-        return director;
+    public String getTitulo() {
+        return titulo;
     }
 
-    public void setDirector(String director) {
-        this.director = director;
-    }
-
-    public int getAnioEstreno() {
-        return anioEstreno;
-    }
-
-    public void setAnioEstreno(int anioEstreno) {
-        this.anioEstreno = anioEstreno;
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
     }
 
     public int getDuracionMinutos() {
@@ -45,10 +35,5 @@ public class Pelicula {
 
     public void setDuracionMinutos(int duracionMinutos) {
         this.duracionMinutos = duracionMinutos;
-    }
-
-    @Override
-    public String toString() {
-        return nombre + " (" + anioEstreno + ")";
     }
 }

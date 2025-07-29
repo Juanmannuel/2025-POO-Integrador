@@ -1,44 +1,44 @@
 package com.app_eventos.models;
 
-import java.time.LocalDate;
+import com.app_eventos.models.enums.EstadoEvento;
+import com.app_eventos.models.enums.TipoEvento;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CicloCine extends Evento {
-    private String genero;
-    private Persona presentador;
     private List<Pelicula> peliculas;
+    private boolean postCharla;
 
     // Constructor
-    public CicloCine(int codigo, String nombre, String descripcion, LocalDate fechaInicio, LocalDate fechaFin,
-                     String genero, Persona presentador, List<Pelicula> peliculas) {
-        super(codigo, nombre, descripcion, fechaInicio, fechaFin);
-        this.genero = genero;
-        this.presentador = presentador;
-        this.peliculas = peliculas;
+    public CicloCine(Long idEvento, String nombre, String descripcion,
+                     LocalDateTime fechaInicio, LocalDateTime fechaFin,
+                     Duration duracionEstimada, EstadoEvento estado,
+                     boolean postCharla) {
+
+        super(idEvento, TipoEvento.CICLO_CINE, nombre, descripcion,
+              fechaInicio, fechaFin, duracionEstimada, estado);
+
+        this.peliculas = new ArrayList<>();
+        this.postCharla = postCharla;
     }
 
     // Getters y Setters
-    public String getGenero() {
-        return genero;
-    }
-
-    public void setGenero(String genero) {
-        this.genero = genero;
-    }
-
-    public Persona getPresentador() {
-        return presentador;
-    }
-
-    public void setPresentador(Persona presentador) {
-        this.presentador = presentador;
-    }
-
     public List<Pelicula> getPeliculas() {
         return peliculas;
     }
 
     public void setPeliculas(List<Pelicula> peliculas) {
         this.peliculas = peliculas;
+    }
+
+    public boolean isPostCharla() {
+        return postCharla;
+    }
+
+    public void setPostCharla(boolean postCharla) {
+        this.postCharla = postCharla;
     }
 }

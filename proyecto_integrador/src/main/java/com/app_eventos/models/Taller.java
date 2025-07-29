@@ -1,43 +1,33 @@
 package com.app_eventos.models;
 
+import com.app_eventos.models.enums.EstadoEvento;
 import com.app_eventos.models.enums.Modalidad;
 import com.app_eventos.models.enums.TipoInscripcion;
-import com.app_eventos.models.interfaces.IEventoConInscripcion;
-import com.app_eventos.models.interfaces.IEventoConCupo;
+import com.app_eventos.models.enums.TipoEvento;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
-public class Taller extends Evento implements IEventoConInscripcion, IEventoConCupo {
-    private Modalidad modalidad;
+public class Taller extends Evento {
     private TipoInscripcion tipoInscripcion;
-    private Persona curador;
-    private List<Persona> responsables;
-    private int cupoMaximo;
-    private List<Persona> inscriptos;
+    private Modalidad modalidad;
+    private int cupo;
 
     // Constructor
-    public Taller(int codigo, String nombre, String descripcion, LocalDate fechaInicio, LocalDate fechaFin,
-                  Modalidad modalidad, TipoInscripcion tipoInscripcion, Persona curador, int cupoMaximo) {
-        super(codigo, nombre, descripcion, fechaInicio, fechaFin);
-        this.modalidad = modalidad;
+    public Taller(Long idEvento, String nombre, String descripcion,
+                  LocalDateTime fechaInicio, LocalDateTime fechaFin,
+                  Duration duracionEstimada, EstadoEvento estado,
+                  TipoInscripcion tipoInscripcion, Modalidad modalidad, int cupo) {
+
+        super(idEvento, TipoEvento.TALLER, nombre, descripcion,
+              fechaInicio, fechaFin, duracionEstimada, estado);
+
         this.tipoInscripcion = tipoInscripcion;
-        this.curador = curador;
-        this.cupoMaximo = cupoMaximo;
-        this.inscriptos = new ArrayList<>();
-        this.responsables = new ArrayList<>();
+        this.modalidad = modalidad;
+        this.cupo = cupo;
     }
 
     // Getters y Setters
-    public Modalidad getModalidad() {
-        return modalidad;
-    }
-
-    public void setModalidad(Modalidad modalidad) {
-        this.modalidad = modalidad;
-    }
-
     public TipoInscripcion getTipoInscripcion() {
         return tipoInscripcion;
     }
@@ -46,44 +36,19 @@ public class Taller extends Evento implements IEventoConInscripcion, IEventoConC
         this.tipoInscripcion = tipoInscripcion;
     }
 
-    public Persona getCurador() {
-        return curador;
+    public Modalidad getModalidad() {
+        return modalidad;
     }
 
-    public void setCurador(Persona curador) {
-        this.curador = curador;
+    public void setModalidad(Modalidad modalidad) {
+        this.modalidad = modalidad;
     }
 
-    public List<Persona> getResponsables() {
-        return responsables;
+    public int getCupo() {
+        return cupo;
     }
 
-    public void setResponsables(List<Persona> responsables) {
-        this.responsables = responsables;
-    }
-
-    public int getCupoMaximo() {
-        return cupoMaximo;
-    }
-
-    public void setCupoMaximo(int cupoMaximo) {
-        this.cupoMaximo = cupoMaximo;
-    }
-
-    public List<Persona> getInscriptos() {
-        return inscriptos;
-    }
-
-    // Métodos de las interfaces
-    @Override
-    public void inscribirPersona(Persona persona) {
-        if (inscriptos.size() < cupoMaximo && !inscriptos.contains(persona)) {
-            inscriptos.add(persona);
-        }
-    }
-
-    @Override
-    public boolean hayCupoDisponible() {
-        return inscriptos.size() < cupoMaximo;
+    public void setCupo(int cupo) {
+        this.cupo = cupo;
     }
 }

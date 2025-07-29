@@ -1,33 +1,30 @@
 package com.app_eventos.models;
 
 import com.app_eventos.models.enums.TipoArte;
+import com.app_eventos.models.enums.EstadoEvento;
+import com.app_eventos.models.enums.TipoEvento;
 
-import java.time.LocalDate;
-import java.util.List;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 public class Exposicion extends Evento {
-    private String tema;
     private TipoArte tipoArte;
-    private List<Persona> invitados;
+    private Persona curador;
 
     // Constructor
-    public Exposicion(int codigo, String nombre, String descripcion, LocalDate fechaInicio, LocalDate fechaFin,
-                      String tema, TipoArte tipoArte, List<Persona> invitados) {
-        super(codigo, nombre, descripcion, fechaInicio, fechaFin);
-        this.tema = tema;
+    public Exposicion(Long idEvento, String nombre, String descripcion,
+                      LocalDateTime fechaInicio, LocalDateTime fechaFin,
+                      Duration duracionEstimada, EstadoEvento estado,
+                      TipoArte tipoArte, Persona curador) {
+
+        super(idEvento, TipoEvento.EXPOSICION, nombre, descripcion,
+              fechaInicio, fechaFin, duracionEstimada, estado);
+
         this.tipoArte = tipoArte;
-        this.invitados = invitados;
+        this.curador = curador;
     }
 
     // Getters y Setters
-    public String getTema() {
-        return tema;
-    }
-
-    public void setTema(String tema) {
-        this.tema = tema;
-    }
-
     public TipoArte getTipoArte() {
         return tipoArte;
     }
@@ -36,11 +33,11 @@ public class Exposicion extends Evento {
         this.tipoArte = tipoArte;
     }
 
-    public List<Persona> getInvitados() {
-        return invitados;
+    public Persona getCurador() {
+        return curador;
     }
 
-    public void setInvitados(List<Persona> invitados) {
-        this.invitados = invitados;
+    public void setCurador(Persona curador) {
+        this.curador = curador;
     }
 }

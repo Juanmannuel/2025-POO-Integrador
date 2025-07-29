@@ -1,8 +1,11 @@
 package com.app_eventos.models;
 
+import com.app_eventos.models.enums.EstadoEvento;
 import com.app_eventos.models.enums.TipoEntrada;
+import com.app_eventos.models.enums.TipoEvento;
 
-import java.time.LocalDate;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 public class Concierto extends Evento {
     private String artista;
@@ -10,9 +13,14 @@ public class Concierto extends Evento {
     private int cantidadAsistentes;
 
     // Constructor
-    public Concierto(int codigo, String nombre, String descripcion, LocalDate fechaInicio, LocalDate fechaFin,
+    public Concierto(Long idEvento, String nombre, String descripcion,
+                     LocalDateTime fechaInicio, LocalDateTime fechaFin,
+                     Duration duracionEstimada, EstadoEvento estado,
                      String artista, TipoEntrada tipoEntrada, int cantidadAsistentes) {
-        super(codigo, nombre, descripcion, fechaInicio, fechaFin);
+
+        super(idEvento, TipoEvento.CONCIERTO, nombre, descripcion,
+              fechaInicio, fechaFin, duracionEstimada, estado);
+
         this.artista = artista;
         this.tipoEntrada = tipoEntrada;
         this.cantidadAsistentes = cantidadAsistentes;

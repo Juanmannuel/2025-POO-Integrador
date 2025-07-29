@@ -1,36 +1,43 @@
 package com.app_eventos.models;
 
 import com.app_eventos.models.enums.TipoAmbiente;
-import com.app_eventos.models.enums.TipoEntrada;
+import com.app_eventos.models.enums.EstadoEvento;
+import com.app_eventos.models.enums.TipoEvento;
 
-import java.time.LocalDate;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 public class Feria extends Evento {
+    private int cantidadStands;
     private TipoAmbiente tipoAmbiente;
-    private TipoEntrada tipoEntrada;
 
     // Constructor
-    public Feria(int codigo, String nombre, String descripcion, LocalDate fechaInicio, LocalDate fechaFin,
-                 TipoAmbiente tipoAmbiente, TipoEntrada tipoEntrada) {
-        super(codigo, nombre, descripcion, fechaInicio, fechaFin);
+    public Feria(Long idEvento, String nombre, String descripcion,
+                 LocalDateTime fechaInicio, LocalDateTime fechaFin,
+                 Duration duracionEstimada, EstadoEvento estado,
+                 int cantidadStands, TipoAmbiente tipoAmbiente) {
+
+        super(idEvento, TipoEvento.FERIA, nombre, descripcion,
+              fechaInicio, fechaFin, duracionEstimada, estado);
+
+        this.cantidadStands = cantidadStands;
         this.tipoAmbiente = tipoAmbiente;
-        this.tipoEntrada = tipoEntrada;
     }
 
-    // Getters y setters
+    // Getters y Setters
+    public int getCantidadStands() {
+        return cantidadStands;
+    }
+
+    public void setCantidadStands(int cantidadStands) {
+        this.cantidadStands = cantidadStands;
+    }
+
     public TipoAmbiente getTipoAmbiente() {
         return tipoAmbiente;
     }
 
     public void setTipoAmbiente(TipoAmbiente tipoAmbiente) {
         this.tipoAmbiente = tipoAmbiente;
-    }
-
-    public TipoEntrada getTipoEntrada() {
-        return tipoEntrada;
-    }
-
-    public void setTipoEntrada(TipoEntrada tipoEntrada) {
-        this.tipoEntrada = tipoEntrada;
     }
 }

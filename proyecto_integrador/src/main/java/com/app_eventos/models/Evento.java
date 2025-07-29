@@ -1,33 +1,52 @@
 package com.app_eventos.models;
 
-import java.time.LocalDate;
 import com.app_eventos.models.enums.EstadoEvento;
+import com.app_eventos.models.enums.TipoEvento;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class Evento {
-    protected int codigo;
-    protected String nombre;
-    protected String descripcion;
-    protected LocalDate fechaInicio;
-    protected LocalDate fechaFin;
-    protected EstadoEvento estado;
+    private Long idEvento;
+    private TipoEvento tipoEvento;
+    private String nombre;
+    private LocalDateTime fechaInicio;
+    private LocalDateTime fechaFin;
+    private Duration duracionEstimada;
+    private EstadoEvento estado;
+    private List<Persona> responsables;
 
-    // Se define el constructor
-    public Evento(int codigo, String nombre, String descripcion, LocalDate fechaInicio, LocalDate fechaFin) {
-        this.codigo = codigo;
+    // Constructor
+    public Evento(Long idEvento, TipoEvento tipoEvento, String nombre, String descripcion,
+                  LocalDateTime fechaInicio, LocalDateTime fechaFin,
+                  Duration duracionEstimada, EstadoEvento estado) {
+        this.idEvento = idEvento;
+        this.tipoEvento = tipoEvento;
         this.nombre = nombre;
-        this.descripcion = descripcion;
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
-        this.estado = EstadoEvento.PLANIFICACION;
+        this.duracionEstimada = duracionEstimada;
+        this.estado = estado;
+        this.responsables = new ArrayList<>();
     }
 
-    // Se definen los Getters y Setters
-    public int getCodigo() {
-        return codigo;
+    // Getters y Setters
+    public Long getIdEvento() {
+        return idEvento;
     }
 
-    public void setCodigo(int codigo) {
-        this.codigo = codigo;
+    public void setIdEvento(Long idEvento) {
+        this.idEvento = idEvento;
+    }
+
+    public TipoEvento getTipoEvento() {
+        return tipoEvento;
+    }
+
+    public void setTipoEvento(TipoEvento tipoEvento) {
+        this.tipoEvento = tipoEvento;
     }
 
     public String getNombre() {
@@ -38,28 +57,28 @@ public abstract class Evento {
         this.nombre = nombre;
     }
 
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
-    public LocalDate getFechaInicio() {
+    public LocalDateTime getFechaInicio() {
         return fechaInicio;
     }
 
-    public void setFechaInicio(LocalDate fechaInicio) {
+    public void setFechaInicio(LocalDateTime fechaInicio) {
         this.fechaInicio = fechaInicio;
     }
 
-    public LocalDate getFechaFin() {
+    public LocalDateTime getFechaFin() {
         return fechaFin;
     }
 
-    public void setFechaFin(LocalDate fechaFin) {
+    public void setFechaFin(LocalDateTime fechaFin) {
         this.fechaFin = fechaFin;
+    }
+
+    public Duration getDuracionEstimada() {
+        return duracionEstimada;
+    }
+
+    public void setDuracionEstimada(Duration duracionEstimada) {
+        this.duracionEstimada = duracionEstimada;
     }
 
     public EstadoEvento getEstado() {
@@ -70,8 +89,11 @@ public abstract class Evento {
         this.estado = estado;
     }
 
-    // Método común para cambiar el estado del evento
-    public void cambiarEstado(EstadoEvento nuevoEstado) {
-        this.estado = nuevoEstado;
+    public List<Persona> getResponsables() {
+        return responsables;
+    }
+
+    public void setResponsables(List<Persona> responsables) {
+        this.responsables = responsables;
     }
 }
