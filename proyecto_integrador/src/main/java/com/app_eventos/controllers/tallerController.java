@@ -1,5 +1,5 @@
 package com.app_eventos.controllers;
 
-public class tallerController {
+public class TallerController {
     
 }
