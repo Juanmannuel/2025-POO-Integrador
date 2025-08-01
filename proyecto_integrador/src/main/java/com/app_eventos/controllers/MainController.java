@@ -34,7 +34,7 @@ public class MainController {
     @FXML
     private void mostrarEventos() {
         try {
-            Node vistaEventos = FXMLLoader.load(getClass().getResource("/com/app_eventos/abmEvento.fxml"));
+            Node vistaEventos = FXMLLoader.load(getClass().getResource("/fxml/abm/abmEvento.fxml"));
             contenidoCentral.getChildren().setAll(vistaEventos);
         } catch (IOException e) {
             e.printStackTrace();
