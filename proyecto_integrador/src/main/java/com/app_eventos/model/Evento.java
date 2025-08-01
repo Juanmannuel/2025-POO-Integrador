@@ -1,0 +1,126 @@
+package com.app_eventos.model;
+
+import java.time.LocalDateTime;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.app_eventos.model.enums.EstadoEvento;
+import com.app_eventos.model.enums.TipoEvento;
+import com.app_eventos.model.enums.TipoRol;
+
+public abstract class Evento {
+
+    private Long idEvento;
+    private String nombre;
+    private LocalDateTime fechaInicio;
+    private LocalDateTime fechaFin;
+    private EstadoEvento estado;
+    private TipoEvento tipoEvento;
+    private List<RolEvento> roles = new ArrayList<>();
+
+    // Constructor con TipoEvento
+    public Evento(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin, TipoEvento tipoEvento) {
+        this.nombre = nombre;
+        this.fechaInicio = fechaInicio;
+        this.fechaFin = fechaFin;
+        this.tipoEvento = tipoEvento;
+        this.estado = EstadoEvento.PLANIFICACION;
+    }
+
+    // Constructor vacío
+    public Evento() {
+        this.estado = EstadoEvento.PLANIFICACION;
+    }
+
+    // Métodos modelo rico
+    public void cambiarEstado(EstadoEvento nuevoEstado) {
+        if (nuevoEstado == EstadoEvento.CONFIRMADO && this.fechaInicio.isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("No se puede confirmar un evento con fecha pasada.");
+        }
+        this.estado = nuevoEstado;
+    }
+
+    public void agregarResponsable(Persona persona) {
+        RolEvento nuevoRol = new RolEvento(this, persona, TipoRol.ORGANIZADOR);
+        this.roles.add(nuevoRol);
+    }
+
+    public void quitarResponsable(Persona persona) {
+        this.roles.removeIf(rol -> rol.getPersona().equals(persona) && rol.getRol() == TipoRol.ORGANIZADOR);
+    }
+
+    public List<Persona> obtenerResponsables() {
+        return this.roles.stream()
+                .filter(rol -> rol.getRol() == TipoRol.ORGANIZADOR)
+                .map(RolEvento::getPersona)
+                .toList();
+    }
+
+    public Duration getDuracionEstimada() {
+        return Duration.between(fechaInicio, fechaFin);
+    }
+
+    public String descripcionDetallada() {
+        return nombre + " (" + tipoEvento + ") - " +
+                "Inicio: " + fechaInicio + ", Fin: " + fechaFin + ", Estado: " + estado;
+    }
+
+    // Getters y setters
+
+    public Long getIdEvento() {
+        return idEvento;
+    }
+
+    public void setIdEvento(Long idEvento) {
+        this.idEvento = idEvento;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public LocalDateTime getFechaInicio() {
+        return fechaInicio;
+    }
+
+    public void setFechaInicio(LocalDateTime fechaInicio) {
+        this.fechaInicio = fechaInicio;
+    }
+
+    public LocalDateTime getFechaFin() {
+        return fechaFin;
+    }
+
+    public void setFechaFin(LocalDateTime fechaFin) {
+        this.fechaFin = fechaFin;
+    }
+
+    public EstadoEvento getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoEvento estado) {
+        this.estado = estado;
+    }
+
+    public TipoEvento getTipoEvento() {
+        return tipoEvento;
+    }
+
+    public void setTipoEvento(TipoEvento tipoEvento) {
+        this.tipoEvento = tipoEvento;
+    }
+
+    public List<RolEvento> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<RolEvento> roles) {
+        this.roles = roles;
+    }
+}

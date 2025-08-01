@@ -9,9 +9,9 @@ import javafx.stage.Stage;
 public class App extends Application {
 @Override
 public void start(Stage primaryStage) throws Exception {
-    Parent root = FXMLLoader.load(getClass().getResource("/fxml/main.fxml"));
+    Parent root = FXMLLoader.load(getClass().getResource("/com/app_eventos/main.fxml"));
     Scene scene = new Scene(root);
-    primaryStage.setTitle("Pantalla Principal de Eventos");
+    primaryStage.setTitle("Gestión de Eventos Culturales");
 
     // Tamaño inicial grande (ej: 1200x800)
     primaryStage.setWidth(1200);
