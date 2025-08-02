@@ -36,9 +36,6 @@
         </columns>
     </TableView>
 
-    <!-- SECCIÓN DINÁMICA -->
-    <Pane fx:id="seccionDinamica" prefHeight="100" style="-fx-border-color: gray;" VBox.vgrow="ALWAYS"/>
-
     <!-- PAGINACIÓN -->
     <HBox alignment="CENTER_RIGHT">
         <Pagination pageCount="3"/>
