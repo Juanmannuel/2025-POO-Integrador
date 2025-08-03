@@ -2,7 +2,7 @@ package com.app_eventos.controllers;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
@@ -23,6 +23,12 @@ public class MainController {
     private Button btnEventos;
 
     @FXML
+    private Button btnPersonas;
+
+    @FXML
+    private Button btnParticipantes;
+
+    @FXML
     public void initialize() {
         // Mostrar fecha actual
         LocalDate hoy = LocalDate.now();
@@ -34,8 +40,35 @@ public class MainController {
     @FXML
     private void mostrarEventos() {
         try {
-            Node vistaEventos = FXMLLoader.load(getClass().getResource("/fxml/abm/abmEvento.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmEvento.fxml"));
+            Parent vistaEventos = loader.load();
+
+            // Aplicar el CSS específico de la vista de eventos
+            vistaEventos.getStylesheets().add(getClass().getResource("/styles/abmEvento.css").toExternalForm());
+
             contenidoCentral.getChildren().setAll(vistaEventos);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void mostrarPersonas() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmPersona.fxml"));
+            Parent vistaPersonas = loader.load();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void mostrarParticipantes() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmParticipante.fxml"));
+            Parent vistaParticipantes = loader.load();
+            
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -1,0 +1,76 @@
+/* Panel gris claro con bordes redondeados */
+.panel-contenedor {
+    -fx-background-color: #f5f7f9;
+    -fx-padding: 20;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);
+}
+
+/* Botón + Nuevo Evento alineado a la derecha */
+.boton-nuevo-evento {
+    -fx-background-color: #3f86f2;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-padding: 6 14;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.boton-nuevo-evento:hover {
+    -fx-background-color: #3476d1;
+}
+
+.modal-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.5);
+    -fx-alignment: CENTER;
+    -fx-position: absolute;
+    -fx-padding: 40;
+}
+
+.modal-contenido {
+    -fx-background-color: white;
+    -fx-padding: 30;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 15, 0.1, 0, 2);
+}
+
+.modal-titulo {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+.btn-cancelar {
+    -fx-background-color: #f2f2f2;
+    -fx-text-fill: #333;
+    -fx-padding: 6 14;
+    -fx-background-radius: 6;
+}
+
+.btn-guardar {
+    -fx-background-color: #3f86f2;
+    -fx-text-fill: white;
+    -fx-padding: 6 14;
+    -fx-background-radius: 6;
+
+}
+
+    .campo-invalido {
+    -fx-border-color: red;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+}
+
+.modal-scroll {
+    -fx-background-color: transparent;
+    -fx-padding: 5;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+.modal-scroll .viewport {
+    -fx-background-color: transparent;
+}
