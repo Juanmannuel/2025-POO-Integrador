@@ -14,7 +14,7 @@
         <Button fx:id="btnInicio" text="Inicio" styleClass="sidebar-button selected" />
         <Button fx:id="btnEventos" text="Eventos" onAction="#mostrarEventos" styleClass="sidebar-button" />
         <Button fx:id="btnParticipantes" text="Participantes" styleClass="sidebar-button" />
-        <Button fx:id="btnPersona" text="Personas" styleClass="sidebar-button" />
+        <Button fx:id="btnPersona" text="Personas" onAction="#mostrarPersonas" styleClass="sidebar-button" />
     </VBox>
 
     <!-- Parte derecha: encabezado y contenido -->

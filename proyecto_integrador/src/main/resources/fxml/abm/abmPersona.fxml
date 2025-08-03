@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21.0.1"
+    xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.app_eventos.controllers.PersonaController"
+     spacing="15" style="-fx-padding: 20;" VBox.vgrow="ALWAYS">
+
+      <Label text="👥 Gestión de Personas" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+
+        <VBox spacing="10" padding="10">
+            <HBox spacing="10">
+                <TextField fx:id="txtDni" promptText="DNI"/>
+                <TextField fx:id="txtNombre" promptText="Nombre"/>
+                <TextField fx:id="txtApellido" promptText="Apellido"/>
+                <TextField fx:id="txtTelefono" promptText="Teléfono"/>
+                <TextField fx:id="txtEmail" promptText="Email"/>
+            </HBox>
+            <HBox spacing="10">
+                <Button fx:id="btnAgregarPersona" text="Agregar" onAction="#agregarPersona"/>
+                <Button fx:id="btnModificarPersona" text="Modificar" onAction="#modificarPersona"/>
+                <Button fx:id="btnEliminarPersona" text="Eliminar" onAction="#eliminarPersona"/>
+                <Button fx:id="btnLimpiarCampos" text="Limpiar" onAction="#limpiarCampos"/>
+            </HBox>
+            <TableView fx:id="tablaPersonas" prefHeight="300">
+                <columns>
+                    <TableColumn fx:id="colDni" text="DNI" prefWidth="80"/>
+                    <TableColumn fx:id="colNombre" text="Nombre" prefWidth="120"/>
+                    <TableColumn fx:id="colApellido" text="Apellido" prefWidth="120"/>
+                    <TableColumn fx:id="colTelefono" text="Teléfono" prefWidth="120"/>
+                    <TableColumn fx:id="colEmail" text="Email" prefWidth="150"/>
+                </columns>
+            </TableView>
+        </VBox>
+</VBox>
