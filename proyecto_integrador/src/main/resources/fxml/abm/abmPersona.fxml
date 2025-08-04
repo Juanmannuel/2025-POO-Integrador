@@ -12,7 +12,7 @@
 
         <!-- Título y botón alineado a la derecha -->
         <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS">
-            <Label text="Gestión de Personas" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+            <Label text="👥Gestión de Personas" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
             <Region HBox.hgrow="ALWAYS" />
             <Button text="＋ Nueva Persona" onAction="#mostrarModal" />
         </HBox>
