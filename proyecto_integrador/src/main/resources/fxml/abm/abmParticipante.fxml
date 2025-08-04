@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/21.0.1"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.app_eventos.controllers.ABMParticipantesController"
+           styleClass="participantes-container">
+
+    <VBox spacing="20" style="-fx-padding: 20;" VBox.vgrow="ALWAYS">
+
+        <!-- Título -->
+        <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="🎟️ Gestión de Participantes" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="lblInfoCupo" text="" style="-fx-font-style: italic; -fx-text-fill: #7f8c8d;" />
+        </HBox>
+
+        <!-- Filtros -->
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Evento:"/>
+            <ComboBox fx:id="comboEventoFiltro" promptText="Seleccionar evento" prefWidth="200"/>
+            <Label text="Nombre:"/>
+            <TextField fx:id="txtNombreFiltro" promptText="Buscar por nombre" prefWidth="120"/>
+            <Label text="DNI:"/>
+            <TextField fx:id="txtDNIFiltro" promptText="Buscar por DNI" prefWidth="120"/>
+            <Button text="🔄 Actualizar" onAction="#actualizarLista" styleClass="btn-actualizar"/>
+        </HBox>
+
+        <!-- Tabla -->
+        <TableView fx:id="tablaParticipantes" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colEvento" text="Evento" prefWidth="180"/>
+                <TableColumn fx:id="colNombre" text="Participante" prefWidth="160"/>
+                <TableColumn fx:id="colDNI" text="DNI" prefWidth="100"/>
+                <TableColumn fx:id="colTelefono" text="Teléfono" prefWidth="120"/>
+                <TableColumn fx:id="colEmail" text="Email" prefWidth="150"/>
+                <TableColumn fx:id="colEstadoEvento" text="Estado Evento" prefWidth="100"/>
+            </columns>
+        </TableView>
+
+        <!-- Botones debajo de la tabla -->
+        <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
+            <Button text="Inscribir" onAction="#mostrarModalInscribir" styleClass="btn-agregar"/>
+            <Button text="Des-inscribir" onAction="#desinscribirParticipante" styleClass="btn-eliminar"/>
+            <Button text="Ver Detalles" onAction="#verDetallesParticipante" styleClass="btn-modificar"/>
+        </HBox>
+
+        <!-- Paginador -->
+        <HBox alignment="CENTER_RIGHT">
+            <Pagination fx:id="paginador" pageCount="3"/>
+        </HBox>
+    </VBox>
+
+    <!-- MODAL INSCRIBIR -->
+    <StackPane fx:id="modalOverlay" visible="false" styleClass="modal-overlay">
+        <VBox spacing="15" styleClass="modal-contenido" maxWidth="620" maxHeight="450">
+            <Label text="Inscribir Participante" styleClass="modal-titulo"/>
+            <GridPane hgap="15" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="30"/>
+                    <ColumnConstraints percentWidth="70"/>
+                </columnConstraints>
+                <Label text="Evento" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <ComboBox fx:id="comboEvento" GridPane.rowIndex="0" GridPane.columnIndex="1" prefWidth="300"/>
+                
+                <Label text="Participante" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <ComboBox fx:id="comboParticipante" GridPane.rowIndex="1" GridPane.columnIndex="1" prefWidth="300"/>
+                
+                <Label text="Información del Evento:" GridPane.rowIndex="2" GridPane.columnIndex="0" 
+                       style="-fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                <VBox GridPane.rowIndex="2" GridPane.columnIndex="1" spacing="5">
+                    <Label fx:id="lblEstadoEvento" text="Estado: -" style="-fx-font-size: 12px;"/>
+                    <Label fx:id="lblTipoEvento" text="Tipo: -" style="-fx-font-size: 12px;"/>
+                    <Label fx:id="lblCupoDisponible" text="Cupo: -" style="-fx-font-size: 12px;"/>
+                    <Label fx:id="lblFechaEvento" text="Fecha: -" style="-fx-font-size: 12px;"/>
+                </VBox>
+                
+                <Label text="Información del Participante:" GridPane.rowIndex="3" GridPane.columnIndex="0" 
+                       style="-fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                <VBox GridPane.rowIndex="3" GridPane.columnIndex="1" spacing="5">
+                    <Label fx:id="lblNombreParticipante" text="Nombre: -" style="-fx-font-size: 12px;"/>
+                    <Label fx:id="lblDniParticipante" text="DNI: -" style="-fx-font-size: 12px;"/>
+                    <Label fx:id="lblTelefonoParticipante" text="Teléfono: -" style="-fx-font-size: 12px;"/>
+                    <Label fx:id="lblEmailParticipante" text="Email: -" style="-fx-font-size: 12px;"/>
+                </VBox>
+            </GridPane>
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Cancelar" onAction="#cerrarModal" styleClass="btn-cancelar"/>
+                <Button text="Inscribir" onAction="#inscribirParticipante" styleClass="btn-guardar"/>
+            </HBox>
+        </VBox>
+    </StackPane>
+
+    <!-- MODAL DETALLES -->
+    <StackPane fx:id="modalDetallesOverlay" visible="false" styleClass="modal-overlay">
+        <VBox spacing="15" styleClass="modal-contenido" maxWidth="550" maxHeight="400">
+            <Label text="Detalles de Participación" styleClass="modal-titulo"/>
+            <GridPane hgap="15" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="35"/>
+                    <ColumnConstraints percentWidth="65"/>
+                </columnConstraints>
+                <Label text="Evento:" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <Label fx:id="lblDetalleEvento" text="-" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                
+                <Label text="Participante:" GridPane.rowIndex="1" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <Label fx:id="lblDetalleParticipante" text="-" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                
+                <Label text="Estado del Evento:" GridPane.rowIndex="2" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <Label fx:id="lblDetalleEstado" text="-" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                
+                <Label text="Tipo de Evento:" GridPane.rowIndex="3" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <Label fx:id="lblDetalleTipo" text="-" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                
+                <Label text="Fecha/Hora:" GridPane.rowIndex="4" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <Label fx:id="lblDetalleFecha" text="-" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                
+                <Label text="Información Adicional:" GridPane.rowIndex="5" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <TextArea fx:id="txtDetalleInfo" GridPane.rowIndex="5" GridPane.columnIndex="1" 
+                         prefRowCount="3" editable="false" wrapText="true"/>
+            </GridPane>
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Cerrar" onAction="#cerrarModalDetalles" styleClass="btn-cancelar"/>
+            </HBox>
+        </VBox>
+    </StackPane>
+
+</StackPane>

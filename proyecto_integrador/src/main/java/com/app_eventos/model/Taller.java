@@ -93,4 +93,8 @@ public class Taller extends Evento implements IEventoConCupo, IEventoConInscripc
     public void setInstructor(Persona instructor) {
         this.instructor = instructor;
     }
+
+    public void setInscriptos(int inscriptos) {
+        this.inscriptos = inscriptos;
+    }
 }
