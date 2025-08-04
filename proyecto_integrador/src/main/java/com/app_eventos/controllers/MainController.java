@@ -43,7 +43,6 @@ public class MainController {
 
     @FXML
     private void mostrarPersonas() {
-        System.out.println("Botón Personas clickeado");
         try {
             Node vista = FXMLLoader.load(getClass().getResource("/fxml/abm/abmPersona.fxml"));
             contenidoCentral.getChildren().setAll(vista);

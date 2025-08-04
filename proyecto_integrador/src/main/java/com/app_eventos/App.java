@@ -12,6 +12,9 @@ public void start(Stage primaryStage) throws Exception {
     Parent root = FXMLLoader.load(getClass().getResource("/fxml/main.fxml"));
     Scene scene = new Scene(root);
     scene.getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
+    scene.getStylesheets().add(getClass().getResource("/styles/persona.css").toExternalForm());
+
+    
     primaryStage.setTitle("Gestión de Eventos Culturales");
 
     // Tamaño inicial grande

@@ -3,35 +3,86 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox xmlns="http://javafx.com/javafx/21.0.1"
-    xmlns:fx="http://javafx.com/fxml/1"
-    fx:controller="com.app_eventos.controllers.PersonaController"
-     spacing="15" style="-fx-padding: 20;" VBox.vgrow="ALWAYS">
+<StackPane xmlns="http://javafx.com/javafx/21.0.1"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.app_eventos.controllers.ABMPersonaController">
 
-      <Label text="👥 Gestión de Personas" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+    <!-- CONTENIDO PRINCIPAL -->
+    <VBox spacing="20" style="-fx-padding: 20;" VBox.vgrow="ALWAYS">
 
-        <VBox spacing="10" padding="10">
-            <HBox spacing="10">
-                <TextField fx:id="txtDni" promptText="DNI"/>
-                <TextField fx:id="txtNombre" promptText="Nombre"/>
-                <TextField fx:id="txtApellido" promptText="Apellido"/>
-                <TextField fx:id="txtTelefono" promptText="Teléfono"/>
-                <TextField fx:id="txtEmail" promptText="Email"/>
-            </HBox>
-            <HBox spacing="10">
-                <Button fx:id="btnAgregarPersona" text="Agregar" onAction="#agregarPersona"/>
-                <Button fx:id="btnModificarPersona" text="Modificar" onAction="#modificarPersona"/>
-                <Button fx:id="btnEliminarPersona" text="Eliminar" onAction="#eliminarPersona"/>
-                <Button fx:id="btnLimpiarCampos" text="Limpiar" onAction="#limpiarCampos"/>
-            </HBox>
-            <TableView fx:id="tablaPersonas" prefHeight="300">
-                <columns>
-                    <TableColumn fx:id="colDni" text="DNI" prefWidth="80"/>
-                    <TableColumn fx:id="colNombre" text="Nombre" prefWidth="120"/>
-                    <TableColumn fx:id="colApellido" text="Apellido" prefWidth="120"/>
-                    <TableColumn fx:id="colTelefono" text="Teléfono" prefWidth="120"/>
-                    <TableColumn fx:id="colEmail" text="Email" prefWidth="150"/>
-                </columns>
-            </TableView>
+        <!-- Título y botón alineado a la derecha -->
+        <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Gestión de Personas" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button text="＋ Nueva Persona" onAction="#mostrarModal" />
+        </HBox>
+
+        <!-- Panel contenedor con filtros + tabla -->
+        <VBox spacing="15" VBox.vgrow="ALWAYS" styleClass="panel-contenedor">
+
+            <!-- FILTROS -->
+            <VBox spacing="15" VBox.vgrow="ALWAYS">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Rol"/>
+                    <ComboBox fx:id="comboTipoRolFiltro" promptText="Todos" prefWidth="120"/>
+                    <Label text="Nombre:"/>
+                    <TextField fx:id="txtNombreFiltro" promptText="Buscar por nombre" prefWidth="120"/>
+                    <Label text="DNI:"/>
+                    <TextField fx:id="txtDNIFiltro" promptText="Buscar por DNI" prefWidth="120"/>
+                </HBox>
+
+                <!-- TABLA -->
+                <TableView fx:id="tablaPersonas" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colNombre" text="Nombre" prefWidth="180"/>
+                        <TableColumn fx:id="colDNI" text="DNI" prefWidth="100"/>
+                        <TableColumn fx:id="colTelefono" text="Teléfono" prefWidth="120"/>
+                        <TableColumn fx:id="colEmail" text="Email" prefWidth="100"/>
+                        <TableColumn fx:id="colRol" text="Rol" prefWidth="120"/>
+                    </columns>
+                </TableView>
+
+                <HBox alignment="CENTER_RIGHT">
+                    <Pagination pageCount="3"/>
+                </HBox>
+            </VBox>
         </VBox>
-</VBox>
+    </VBox>
+
+    <!-- MODAL -->
+    <StackPane fx:id="modalOverlay" visible="false" styleClass="modal-overlay">
+        <VBox spacing="15" styleClass="modal-contenido" maxWidth="620" maxHeight="350">
+            <Label text="Nueva Persona" styleClass="modal-titulo"/>
+
+            <GridPane hgap="15" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="50"/>
+                    <ColumnConstraints percentWidth="50"/>
+                </columnConstraints>
+
+                <Label text="DNI" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <TextField fx:id="txtDNI" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                <Label text="Nombre" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <TextField fx:id="txtNombre" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                <Label text="Apellido" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <TextField fx:id="txtApellido" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                <Label text="Teléfono" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                <TextField fx:id="txtTelefono" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                <Label text="Email" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                <TextField fx:id="txtEmail" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                <Label text="Rol" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                <ComboBox fx:id="comboRol" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+            </GridPane>
+
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Cancelar" onAction="#cerrarModal" styleClass="btn-cancelar"/>
+                <Button text="Guardar" onAction="#guardarPersona" styleClass="btn-guardar"/>
+            </HBox>
+        </VBox>
+    </StackPane>
+</StackPane>
