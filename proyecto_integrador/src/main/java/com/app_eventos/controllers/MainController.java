@@ -51,4 +51,14 @@ public class MainController {
         }
     }
 
+    @FXML
+    private void mostrarParticipantes() {
+        try {
+            Node vista = FXMLLoader.load(getClass().getResource("/fxml/abm/abmParticipante.fxml"));
+            contenidoCentral.getChildren().setAll(vista);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

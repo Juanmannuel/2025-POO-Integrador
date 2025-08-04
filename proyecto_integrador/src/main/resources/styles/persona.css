@@ -52,3 +52,82 @@
     -fx-text-fill: white;
     -fx-background-radius: 6;
 }
+
+/* Estilos específicos solo para la pantalla de PARTICIPANTES */
+.participantes-container .btn-agregar {
+    -fx-background-color: #27ae60;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.participantes-container .btn-agregar:hover {
+    -fx-background-color: #2ecc71;
+}
+
+.participantes-container .btn-modificar {
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.participantes-container .btn-modificar:hover {
+    -fx-background-color: #5dade2;
+}
+
+.participantes-container .btn-eliminar {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.participantes-container .btn-eliminar:hover {
+    -fx-background-color: #ec7063;
+}
+
+.participantes-container .btn-actualizar {
+    -fx-background-color: #f39c12;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.participantes-container .btn-actualizar:hover {
+    -fx-background-color: #f4d03f;
+}
+
+.participantes-container .btn-guardar {
+    -fx-background-color: #27ae60;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.participantes-container .btn-guardar:hover {
+    -fx-background-color: #2ecc71;
+}
+
+.participantes-container .btn-cancelar {
+    -fx-background-color: #95a5a6;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.participantes-container .btn-cancelar:hover {
+    -fx-background-color: #bdc3c7;
+}
