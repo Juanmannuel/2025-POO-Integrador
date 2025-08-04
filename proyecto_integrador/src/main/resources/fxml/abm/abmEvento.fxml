@@ -23,7 +23,7 @@
             <!-- FILTROS -->
             <HBox spacing="10" alignment="CENTER_LEFT">
                 <Label text="Tipo:"/>
-                <ComboBox fx:id="comboTipoEvento" promptText="Todos" prefWidth="120"/>
+                <ComboBox fx:id="comboTipoEventoFiltro" promptText="Todos" prefWidth="120"/>
                 <Label text="Estado:"/>
                 <ComboBox promptText="Todos" prefWidth="120"/>
                 <Label text="Fecha desde:"/>
@@ -57,7 +57,7 @@
         <VBox spacing="15" styleClass="modal-contenido" maxWidth="620" maxHeight="500">
             <Label text="Nuevo Evento" styleClass="modal-titulo"/>
 
-            <!-- ScrollPane añadido aquí -->
+            <!-- ScrollPane añadido -->
             <ScrollPane fitToWidth="true" styleClass="modal-scroll">
                 <content>
                     <GridPane hgap="15" vgap="10">
@@ -82,17 +82,19 @@
 
                         <!-- Duración -->
                         <Label text="Duración (días)" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-                        <TextField fx:id="txtDescripcion" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                        <Spinner fx:id="spinnerDuracion" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
                         
                         <!-- Tipo de Entrada -->
                         <Label text="Tipo de Entrada" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
                         <ComboBox fx:id="comboTipoEntrada" promptText="Seleccione una opción" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
 
                         <Label text="Estado" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
-                        <ComboBox GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+                        <ComboBox fx:id="comboEstado" promptText="Seleccione un estado" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
 
                         <Label text="Responsables" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
                         <ListView prefHeight="100" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+
+                        <Pane fx:id="seccionDinamica" GridPane.rowIndex="8" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
                     </GridPane>
                 </content>
             </ScrollPane>

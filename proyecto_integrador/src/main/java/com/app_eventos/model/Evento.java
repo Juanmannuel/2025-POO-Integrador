@@ -25,12 +25,12 @@ public abstract class Evento {
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
         this.tipoEvento = tipoEvento;
-        this.estado = EstadoEvento.PLANIFICACION;
+        this.estado = EstadoEvento.PLANIFICACIÓN;
     }
 
     // Constructor vacío
     public Evento() {
-        this.estado = EstadoEvento.PLANIFICACION;
+        this.estado = EstadoEvento.PLANIFICACIÓN;
     }
 
     // Métodos modelo rico
@@ -46,7 +46,7 @@ public abstract class Evento {
         this.roles.add(nuevoRol);
     }
 
-    public void quitarResponsable(Persona persona) {
+    public void BorrarResponsable(Persona persona) {
         this.roles.removeIf(rol -> rol.getPersona().equals(persona) && rol.getRol() == TipoRol.ORGANIZADOR);
     }
 

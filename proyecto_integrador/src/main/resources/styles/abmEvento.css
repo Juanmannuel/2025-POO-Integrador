@@ -7,7 +7,6 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);
 }
 
-/* Botón + Nuevo Evento alineado a la derecha */
 .boton-nuevo-evento {
     -fx-background-color: #3f86f2;
     -fx-text-fill: white;
@@ -48,6 +47,11 @@
     -fx-text-fill: #333;
     -fx-padding: 6 14;
     -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.btn-cancelar:hover {
+    -fx-background-color: #e0e0e0;
 }
 
 .btn-guardar {
@@ -55,10 +59,13 @@
     -fx-text-fill: white;
     -fx-padding: 6 14;
     -fx-background-radius: 6;
-
+    -fx-cursor: hand;
 }
 
-    .campo-invalido {
+.btn-guardar:hover {
+    -fx-background-color: #3476d1;
+}
+.campo-invalido {
     -fx-border-color: red;
     -fx-border-width: 1;
     -fx-border-radius: 4;
@@ -74,3 +81,4 @@
 .modal-scroll .viewport {
     -fx-background-color: transparent;
 }
+

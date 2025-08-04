@@ -1,9 +1,9 @@
 package com.app_eventos.model.enums;
 
 public enum EstadoEvento {
-    PLANIFICACION,
+    PLANIFICACIÓN,
     CONFIRMADO,
     CANCELADO,
-    EJECUCION,
+    EJECUCIÓN,
     FINALIZADO
 }
