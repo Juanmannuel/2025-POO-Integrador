@@ -52,7 +52,7 @@
 
     <!-- VENTANA MODAL NUEVO PARTICIPANTE -->
     <StackPane fx:id="modalOverlay" visible="false" styleClass="modal-overlay">
-            <VBox spacing="15" styleClass="modal-contenido" maxWidth="620" maxHeight="450">
+            <VBox spacing="15" styleClass="modal-contenido" maxWidth="620" maxHeight="400">
                 <Label text="Inscribir Participante" styleClass="modal-titulo"/>
                 <GridPane hgap="15" vgap="10">
                     <columnConstraints>
@@ -64,17 +64,19 @@
                     
                     <Label text="Participante" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
                     <ComboBox fx:id="comboParticipante" GridPane.rowIndex="1" GridPane.columnIndex="1" prefWidth="300"/>
-                    
+                                        
+                    <!-- Información del Evento -->
                     <Label text="Información del Evento:" GridPane.rowIndex="2" GridPane.columnIndex="0" />
-                    <VBox GridPane.rowIndex="2" GridPane.columnIndex="1" spacing="5">
+                    <VBox GridPane.rowIndex="2" GridPane.columnIndex="1" spacing="5" styleClass="info-box">
                         <Label fx:id="lblEstadoEvento" text="Estado: -" />
                         <Label fx:id="lblTipoEvento" text="Tipo: -" />
                         <Label fx:id="lblCupoDisponible" text="Cupo: -" />
                         <Label fx:id="lblFechaEvento" text="Fecha: -" />
                     </VBox>
-                    
+
+                    <!-- Información del Participante -->
                     <Label text="Información del Participante:" GridPane.rowIndex="3" GridPane.columnIndex="0" />
-                    <VBox GridPane.rowIndex="3" GridPane.columnIndex="1" spacing="5">
+                    <VBox GridPane.rowIndex="3" GridPane.columnIndex="1" spacing="5" styleClass="info-box">
                         <Label fx:id="lblNombreParticipante" text="Nombre: -" />
                         <Label fx:id="lblDniParticipante" text="DNI: -" />
                         <Label fx:id="lblTelefonoParticipante" text="Teléfono: -" />
