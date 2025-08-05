@@ -30,7 +30,6 @@
             </HBox>
 
             <!-- TABLA -->
-        <!-- Tabla -->
             <TableView fx:id="tablaPersonas" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="colNombre" text="Nombre" />
@@ -49,7 +48,7 @@
         </VBox>
     </VBox>
 
-    <!-- VENTANA MODAL NUEVO PARTICIPANTE -->
+    <!-- VENTANA MODAL NUEVO PERSONA -->
     <StackPane fx:id="modalOverlay" visible="false" styleClass="modal-overlay">
         <VBox spacing="15" styleClass="modal-contenido" maxWidth="620" maxHeight="350">
             <Label text="Nueva Persona" styleClass="modal-titulo"/>
