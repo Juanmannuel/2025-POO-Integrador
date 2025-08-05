@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="15"
+      xmlns="http://javafx.com/javafx/21.0.1"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.app_eventos.controllers.CicloCineController">
+
+    <Label text="Datos específicos de Ciclo de Cine" style="-fx-font-weight: bold;" />
+
+    <!-- Películas a proyectar -->
+    <VBox spacing="5">
+        <Label text="Películas a Proyectar" />
+        <TextArea fx:id="txtPeliculas" promptText="Ingrese una película por línea, con su orden de proyección" 
+                    prefRowCount="4"/>
+    </VBox>
+
+    <!-- Charlas y cupo -->
+    <GridPane hgap="100" vgap="10">
+
+        <!-- Incluye charla -->
+        <Label text="¿Incluye charlas posteriores?" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <HBox spacing="15" GridPane.rowIndex="1" GridPane.columnIndex="0">
+            <RadioButton fx:id="radioSi" text="Sí"/>
+            <RadioButton fx:id="radioNo" text="No"/>
+        </HBox>
+
+        <!-- Cupo máximo -->
+        <Label text="Cupo Máximo" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+        <Spinner fx:id="spinnerCupoMaximo"
+                 editable="true"
+                 GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+    </GridPane>
+</VBox>

@@ -67,7 +67,7 @@
                         </columnConstraints>
 
                         <Label text="Nombre del Evento" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-                        <TextField fx:id="txtNombre" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                        <TextField fx:id="txtNombre" promptText="Ingrese el nombre del Evento" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
                         <Label text="Tipo de Evento" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
                         <ComboBox fx:id="comboTipoEvento" promptText="Seleccione un tipo" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
@@ -83,10 +83,6 @@
                         <!-- Duración -->
                         <Label text="Duración (días)" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
                         <Spinner fx:id="spinnerDuracion" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
-                        
-                        <!-- Tipo de Entrada -->
-                        <Label text="Tipo de Entrada" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
-                        <ComboBox fx:id="comboTipoEntrada" promptText="Seleccione una opción" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
 
                         <Label text="Estado" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
                         <ComboBox fx:id="comboEstado" promptText="Seleccione un estado" GridPane.rowIndex="6" GridPane.columnIndex="1"/>

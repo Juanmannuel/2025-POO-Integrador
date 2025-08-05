@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="15"
+      xmlns="http://javafx.com/javafx/21.0.1"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.app_eventos.controllers.ConciertoController">
+
+    <Label text="Datos específicos de Concierto" style="-fx-font-weight: bold;" />
+
+    <GridPane hgap="10" vgap="10">
+
+        <!-- Artistas/Bandas -->
+        <Label text="Artistas/Bandas" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextArea fx:id="textAreaArtistas" promptText="Ingrese un artista o banda" wrapText="true"
+                    prefWidth="400" prefRowCount="4" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+
+        <!-- Contenedor horizontal para Cupo Máximo y Tipo de Entrada -->
+        <HBox spacing="87" GridPane.rowIndex="2" GridPane.columnIndex="0">
+            <VBox spacing="5">
+                <Label text="Cupo Máximo" />
+                <Spinner fx:id="spinnerCupoMaximo"/>
+            </VBox>
+            <VBox spacing="5">
+                <Label text="Tipo de Entrada" />
+                <ComboBox fx:id="comboTipoEntradaConcierto"
+                          promptText="Seleccione una opción"/>
+            </VBox>
+        </HBox>
+    </GridPane>
+</VBox>

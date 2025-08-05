@@ -42,10 +42,6 @@ public class MainController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmEvento.fxml"));
             Parent vistaEventos = loader.load();
-
-            // Aplicar el CSS específico de la vista de eventos
-            vistaEventos.getStylesheets().add(getClass().getResource("/styles/abmEvento.css").toExternalForm());
-
             contenidoCentral.getChildren().setAll(vistaEventos);
         } catch (IOException e) {
             e.printStackTrace();
