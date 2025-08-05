@@ -16,7 +16,7 @@
             <Region HBox.hgrow="ALWAYS" />
         </HBox>
 
-        <!-- Panel contenedor con filtros + tabla + paginación -->
+        <!-- Panel contenedor con filtros y tabla -->
         <VBox spacing="15" styleClass="panel-contenedor" VBox.vgrow="ALWAYS">
 
             <!-- FILTROS -->
@@ -41,9 +41,9 @@
             </TableView>
 
             <HBox spacing="12" alignment="CENTER_RIGHT">
-                <Button text="Agregar" onAction="#mostrarModal" styleClass="btn-nuevo-agregar" />
+                <Button text="Alta" onAction="#mostrarModal" styleClass="btn-alta" />
                 <Button text="Modificar" styleClass="btn-modificar" />
-                <Button text="Eliminar" styleClass="btn-eliminar" />
+                <Button text="Baja" styleClass="btn-baja" />
             </HBox>
         </VBox>
     </VBox>

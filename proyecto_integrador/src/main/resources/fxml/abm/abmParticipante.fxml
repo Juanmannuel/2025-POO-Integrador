@@ -27,7 +27,6 @@
                 <TextField fx:id="txtNombreFiltro" promptText="Buscar por nombre" prefWidth="120"/>
                 <Label text="DNI:"/>
                 <TextField fx:id="txtDNIFiltro" promptText="Buscar por DNI" prefWidth="120"/>
-                <Button text="🔄 Actualizar" onAction="#actualizarLista" styleClass="btn-actualizar"/>
             </HBox>
 
             <!-- TABLA -->
@@ -43,9 +42,9 @@
             </TableView>
 
             <HBox spacing="12" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
-                <Button text="Inscribir" onAction="#mostrarModalInscribir" styleClass="btn-nuevo-agregar"/>
-                <Button text="Des-inscribir" onAction="#desinscribirParticipante" styleClass="btn-eliminar"/>
-                <Button text="Ver Detalles" onAction="#verDetallesParticipante" styleClass="btn-modificar"/>
+                <Button text="Alta" onAction="#mostrarModalAlta" styleClass="btn-alta"/>
+                <Button text="Modificar" onAction="#modificarParticipante" styleClass="btn-modificar"/>
+                <Button text="Baja" onAction="#bajaParticipante" styleClass="btn-baja"/>
             </HBox>
         </VBox>
     </VBox>
@@ -66,7 +65,7 @@
                     <ComboBox fx:id="comboParticipante" GridPane.rowIndex="1" GridPane.columnIndex="1" prefWidth="300"/>
                                         
                     <!-- Información del Evento -->
-                    <Label text="Información del Evento:" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+                    <Label text="Info. del Evento:" GridPane.rowIndex="2" GridPane.columnIndex="0" />
                     <VBox GridPane.rowIndex="2" GridPane.columnIndex="1" spacing="5" styleClass="info-box">
                         <Label fx:id="lblEstadoEvento" text="Estado: -" />
                         <Label fx:id="lblTipoEvento" text="Tipo: -" />
@@ -75,7 +74,7 @@
                     </VBox>
 
                     <!-- Información del Participante -->
-                    <Label text="Información del Participante:" GridPane.rowIndex="3" GridPane.columnIndex="0" />
+                    <Label text="Info. del Participante:" GridPane.rowIndex="3" GridPane.columnIndex="0" />
                     <VBox GridPane.rowIndex="3" GridPane.columnIndex="1" spacing="5" styleClass="info-box">
                         <Label fx:id="lblNombreParticipante" text="Nombre: -" />
                         <Label fx:id="lblDniParticipante" text="DNI: -" />
@@ -85,13 +84,13 @@
                 </GridPane>
                 <HBox spacing="10" alignment="CENTER_RIGHT">
                     <Button text="Cancelar" onAction="#cerrarModal" styleClass="btn-cancelar"/>
-                    <Button text="Inscribir" onAction="#inscribirParticipante" styleClass="btn-guardar"/>
+                    <Button text="Guardar" onAction="#altaParticipante" styleClass="btn-guardar"/>
                 </HBox>
             </VBox>
         </StackPane>
 
-        <!-- MODAL DETALLES -->
-        <StackPane fx:id="modalDetallesOverlay" visible="false" styleClass="modal-overlay">
+        <!-- MODAL MODIFICAR -->
+        <StackPane fx:id="modalModificarOverlay" visible="false" styleClass="modal-overlay">
             <VBox spacing="15" styleClass="modal-contenido" maxWidth="550" maxHeight="400">
                 <Label text="Detalles de Participación" styleClass="modal-titulo"/>
                 <GridPane hgap="15" vgap="10">
@@ -99,27 +98,9 @@
                         <ColumnConstraints percentWidth="35"/>
                         <ColumnConstraints percentWidth="65"/>
                     </columnConstraints>
-                    <Label text="Evento:" GridPane.rowIndex="0" GridPane.columnIndex="0" />
-                    <Label fx:id="lblDetalleEvento" text="-" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-                    
-                    <Label text="Participante:" GridPane.rowIndex="1" GridPane.columnIndex="0" />
-                    <Label fx:id="lblDetalleParticipante" text="-" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-                    
-                    <Label text="Estado del Evento:" GridPane.rowIndex="2" GridPane.columnIndex="0" />
-                    <Label fx:id="lblDetalleEstado" text="-" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-                    
-                    <Label text="Tipo de Evento:" GridPane.rowIndex="3" GridPane.columnIndex="0" />
-                    <Label fx:id="lblDetalleTipo" text="-" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
-                    
-                    <Label text="Fecha/Hora:" GridPane.rowIndex="4" GridPane.columnIndex="0" />
-                    <Label fx:id="lblDetalleFecha" text="-" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
-                    
-                    <Label text="Información Adicional:" GridPane.rowIndex="5" GridPane.columnIndex="0" />
-                    <TextArea fx:id="txtDetalleInfo" GridPane.rowIndex="5" GridPane.columnIndex="1" 
-                            prefRowCount="3" editable="false" wrapText="true"/>
                 </GridPane>
                 <HBox spacing="10" alignment="CENTER_RIGHT">
-                    <Button text="Cerrar" onAction="#cerrarModalDetalles" styleClass="btn-cancelar"/>
+                    <Button text="Cancelar" onAction="#cerrarModalModificar" styleClass="btn-cancelar"/>
                 </HBox>
             </VBox>
         </StackPane>

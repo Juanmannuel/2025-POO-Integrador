@@ -36,7 +36,7 @@ public class ABMParticipanteController {
     @FXML private Label lblEmailParticipante;
 
     // Modal detalles
-    @FXML private StackPane modalDetallesOverlay;
+    @FXML private StackPane modalModificarOverlay;
     @FXML private Label lblDetalleEvento;
     @FXML private Label lblDetalleParticipante;
     @FXML private Label lblDetalleEstado;
@@ -48,20 +48,14 @@ public class ABMParticipanteController {
     public void initialize() {
         // Inicialización de componentes
         modalOverlay.setVisible(false);
-        modalDetallesOverlay.setVisible(false);
+        modalModificarOverlay.setVisible(false);
 
         // Aquí podrías cargar datos en comboEventoFiltro y tablaParticipantes
     }
 
     @FXML
-    private void actualizarLista() {
-        System.out.println("Actualizando lista de participantes...");
-        // Acá iría la lógica para aplicar los filtros y refrescar la tabla
-    }
-
-    @FXML
-    private void mostrarModalInscribir() {
-        limpiarModalInscripcion();
+    private void mostrarModalAlta() {
+        limpiarModalAlta();
         modalOverlay.setVisible(true);
     }
 
@@ -71,31 +65,25 @@ public class ABMParticipanteController {
     }
 
     @FXML
-    private void inscribirParticipante() {
-        System.out.println("Inscribiendo participante...");
-        // Lógica para registrar la participación
+    private void altaParticipante() {
         cerrarModal();
     }
 
     @FXML
-    private void desinscribirParticipante() {
-        System.out.println("Desinscribiendo participante...");
-        // Lógica para eliminar la inscripción
+    private void bajaParticipante() {
     }
 
     @FXML
-    private void verDetallesParticipante() {
-        System.out.println("Mostrando detalles de participación...");
-        // Aquí podrías cargar los datos del participante seleccionado
-        modalDetallesOverlay.setVisible(true);
+    private void modificarParticipante() {
+        modalModificarOverlay.setVisible(true);
     }
 
     @FXML
-    private void cerrarModalDetalles() {
-        modalDetallesOverlay.setVisible(false);
+    private void cerrarModalModificar() {
+        modalModificarOverlay.setVisible(false);
     }
 
-    private void limpiarModalInscripcion() {
+    private void limpiarModalAlta() {
         comboEvento.getSelectionModel().clearSelection();
         comboParticipante.getSelectionModel().clearSelection();
 
