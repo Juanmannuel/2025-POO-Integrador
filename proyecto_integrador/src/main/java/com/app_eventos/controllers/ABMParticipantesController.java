@@ -105,7 +105,7 @@ public class ABMParticipantesController {
                                                LocalDateTime.now().plusDays(45), 
                                                LocalDateTime.now().plusDays(45).plusHours(2), 
                                                15, Modalidad.VIRTUAL);
-        tallerPlanificacion.setEstado(EstadoEvento.PLANIFICACION);
+        tallerPlanificacion.setEstado(EstadoEvento.PLANIFICACIÓN);
         eventos.add(tallerPlanificacion);
 
         // Crear participaciones simuladas

@@ -53,6 +53,7 @@ public class MainController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmPersona.fxml"));
             Parent vistaPersonas = loader.load();
+            contenidoCentral.getChildren().setAll(vistaPersonas);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -64,30 +65,9 @@ public class MainController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmParticipante.fxml"));
             Parent vistaParticipantes = loader.load();
-            
+            contenidoCentral.getChildren().setAll(vistaParticipantes);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-    @FXML
-    private void mostrarPersonas() {
-        try {
-            Node vista = FXMLLoader.load(getClass().getResource("/fxml/abm/abmPersona.fxml"));
-            contenidoCentral.getChildren().setAll(vista);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @FXML
-    private void mostrarParticipantes() {
-        try {
-            Node vista = FXMLLoader.load(getClass().getResource("/fxml/abm/abmParticipante.fxml"));
-            contenidoCentral.getChildren().setAll(vista);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
 }

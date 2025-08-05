@@ -11,11 +11,8 @@ public class App extends Application {
 public void start(Stage primaryStage) throws Exception {
     Parent root = FXMLLoader.load(getClass().getResource("/fxml/main.fxml"));
     Scene scene = new Scene(root);
-    scene.getStylesheets().add(getClass().getResource("/styles/app.css").toExternalForm());
     // Aplicar el CSS específico de la vista de eventos
     scene.getStylesheets().add(getClass().getResource("/styles/app.css").toExternalForm());
-    scene.getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
-    scene.getStylesheets().add(getClass().getResource("/styles/persona.css").toExternalForm());
 
     
     primaryStage.setTitle("Gestión de Eventos Culturales");

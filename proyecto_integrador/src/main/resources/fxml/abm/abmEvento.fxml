@@ -44,7 +44,7 @@
             </TableView>
 
             <HBox spacing="12" alignment="CENTER_RIGHT">
-                <Button text="Nuevo Evento" onAction="#mostrarModal" styleClass="btn-nuevo-evento" />
+                <Button text="Nuevo Evento" onAction="#mostrarModal" styleClass="btn-nuevo-agregar" />
                 <Button text="Modificar" styleClass="btn-modificar" />
                 <Button text="Eliminar" styleClass="btn-eliminar" />
             </HBox>
