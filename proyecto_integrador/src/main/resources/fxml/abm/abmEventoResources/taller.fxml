@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="15" xmlns="http://javafx.com/javafx/21.0.1"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.app_eventos.controllers.TallerController">
+
+    <Label text="Datos específicos de Taller" style="-fx-font-weight: bold;" />
+
+    <GridPane hgap="188" vgap="12">
+
+        <!-- Instructor -->
+        <Label text="Instructor" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="comboInstructor" promptText="Seleccione un instructor"
+                GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <!-- Cupo máximo -->
+        <Label text="Cupo máximo" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <Spinner fx:id="spinnerCupoMaximo"
+                GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <!-- Modalidad -->
+        <Label text="Modalidad" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="comboModalidad" promptText="Seleccione una modalidad"
+                GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+    </GridPane>
+</VBox>

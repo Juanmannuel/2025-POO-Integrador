@@ -3,42 +3,101 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox xmlns="http://javafx.com/javafx/21.0.1"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.app_eventos.controllers.ABMEventoController"
-      spacing="15" style="-fx-padding: 20;" VBox.vgrow="ALWAYS">
+<StackPane xmlns="http://javafx.com/javafx/21.0.1"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.app_eventos.controllers.ABMEventoController">
 
-    <Label text="Gestión de Eventos" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+    <!-- CONTENIDO PRINCIPAL -->
+    <VBox spacing="20" style="-fx-padding: 20;" VBox.vgrow="ALWAYS">
 
-    <!-- FILTROS -->
-    <HBox spacing="10">
-        <Label text="Tipo:"/>
-        <ComboBox fx:id="comboTipoEvento" promptText="Todos" prefWidth="120"/>
-        <Label text="Estado:"/>
-        <ComboBox promptText="Todos" prefWidth="120"/>
-        <Label text="Fecha desde:"/>
-        <DatePicker/>
-        <Label text="Fecha hasta:"/>
-        <DatePicker/>
-        <Button text="＋ Nuevo Evento"/>
-    </HBox>
+        <!-- Título y botón alineado a la derecha -->
+        <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Gestión de Eventos" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+            <Region HBox.hgrow="ALWAYS" />
+        </HBox>
 
-    <!-- TABLA -->
-    <TableView VBox.vgrow="ALWAYS">
-        <columns>
-            <TableColumn text="Nombre" prefWidth="180"/>
-            <TableColumn text="Tipo" prefWidth="100"/>
-            <TableColumn text="Fecha Inicio" prefWidth="120"/>
-            <TableColumn text="Duración" prefWidth="100"/>
-            <TableColumn text="Estado" prefWidth="120"/>
-            <TableColumn text="Responsables" prefWidth="200"/>
-            <TableColumn text="Acciones" prefWidth="170"/>
-        </columns>
-    </TableView>
+        <!-- Panel contenedor con filtros + tabla + paginación -->
+        <VBox spacing="15" styleClass="panel-contenedor" VBox.vgrow="ALWAYS">
 
-    <!-- PAGINACIÓN -->
-    <HBox alignment="CENTER_RIGHT">
-        <Pagination pageCount="3"/>
-    </HBox>
+            <!-- FILTROS -->
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="Tipo:"/>
+                <ComboBox fx:id="comboTipoEventoFiltro" promptText="Todos" prefWidth="120"/>
+                <Label text="Estado:"/>
+                <ComboBox promptText="Todos" prefWidth="120"/>
+                <Label text="Fecha desde:"/>
+                <DatePicker/>
+                <Label text="Fecha hasta:"/>
+                <DatePicker/>
+            </HBox>
 
-</VBox>
+            <!-- TABLA -->
+            <TableView fx:id="tablaEventos" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colNombre" text="Nombre"/>
+                    <TableColumn fx:id="colTipo" text="Tipo"/>
+                    <TableColumn fx:id="colFechaInicio" text="Fecha Inicio"/>
+                    <TableColumn fx:id="colDuracion" text="Duración"/>
+                    <TableColumn fx:id="colEstado" text="Estado"/>
+                    <TableColumn fx:id="colResponsables" text="Responsables"/>
+                </columns>
+            </TableView>
+
+            <HBox spacing="12" alignment="CENTER_RIGHT">
+                <Button text="Nuevo Evento" onAction="#mostrarModal" styleClass="btn-nuevo-evento" />
+                <Button text="Modificar" styleClass="btn-modificar" />
+                <Button text="Eliminar" styleClass="btn-eliminar" />
+            </HBox>
+        </VBox>
+    </VBox>
+
+    <!-- VENTANA MODAL NUEVO EVENTO -->
+    <StackPane fx:id="modalOverlay" visible="false" styleClass="modal-overlay">
+        <VBox spacing="15" styleClass="modal-contenido" maxWidth="620" maxHeight="480">
+            <Label text="Nuevo Evento" styleClass="modal-titulo"/>
+
+            <!-- ScrollPane añadido -->
+            <ScrollPane fitToWidth="true" styleClass="modal-scroll">
+                <content>
+                    <GridPane hgap="15" vgap="10">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="50"/>
+                            <ColumnConstraints percentWidth="50"/>
+                        </columnConstraints>
+
+                        <Label text="Nombre del Evento" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <TextField fx:id="txtNombre" promptText="Ingrese el nombre del Evento" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                        <Label text="Tipo de Evento" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <ComboBox fx:id="comboTipoEvento" promptText="Seleccione un tipo" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                        <!-- Fecha de Inicio -->
+                        <Label text="Fecha de Inicio" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <DatePicker fx:id="dateInicio" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                        <!-- Fecha de Fin -->
+                        <Label text="Fecha de Fin" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                        <DatePicker fx:id="dateFin" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                        <!-- Duración -->
+                        <Label text="Duración (días)" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                        <Spinner fx:id="spinnerDuracion" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                        <Label text="Estado" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                        <ComboBox fx:id="comboEstado" promptText="Seleccione un estado" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+                        <Label text="Responsables" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+                        <ListView prefHeight="100" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+
+                        <Pane fx:id="seccionDinamica" GridPane.rowIndex="8" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
+                    </GridPane>
+                </content>
+            </ScrollPane>
+
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Cancelar" onAction="#cerrarModal" styleClass="btn-cancelar"/>
+                <Button text="Guardar" onAction="#guardarEvento" styleClass="btn-guardar"/>
+            </HBox>
+        </VBox>
+    </StackPane>
+</StackPane>

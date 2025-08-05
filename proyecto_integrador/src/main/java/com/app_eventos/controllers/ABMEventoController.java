@@ -1,62 +1,176 @@
 package com.app_eventos.controllers;
 
-import com.app_eventos.model.enums.TipoEvento;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.TextField;
+
+import com.app_eventos.model.enums.EstadoEvento;
+import com.app_eventos.model.enums.TipoEntrada;
+import com.app_eventos.model.enums.TipoEvento;
+import com.app_eventos.utils.ComboBoxInicializador;
+import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
-import javafx.util.StringConverter;
+import javafx.scene.layout.StackPane;
 
 import java.io.IOException;
 
+
 public class ABMEventoController {
 
+    // Campos de búsqueda y modal
     @FXML private TextField txtNombre;
-    @FXML private TextField txtDescripcion;
     @FXML private DatePicker dateInicio;
     @FXML private DatePicker dateFin;
+    @FXML private StackPane modalOverlay;
     @FXML private ComboBox<TipoEvento> comboTipoEvento;
+    @FXML private ComboBox<TipoEntrada> comboTipoEntrada;
+    @FXML private ComboBox<EstadoEvento> comboEstado;
     @FXML private Pane seccionDinamica;
+    @FXML private Spinner<Integer> spinnerDuracion;
+    @FXML private TableView<?> tablaEventos;
+
+    @FXML private TableColumn<?, ?> colNombre;
+    @FXML private TableColumn<?, ?> colTipo;
+    @FXML private TableColumn<?, ?> colFechaInicio;
+    @FXML private TableColumn<?, ?> colDuracion;
+    @FXML private TableColumn<?, ?> colEstado;
+    @FXML private TableColumn<?, ?> colResponsables;
+
 
     @FXML
     public void initialize() {
-        comboTipoEvento.getItems().setAll(TipoEvento.values());
+         tablaEventos.widthProperty().addListener((obs, oldWidth, newWidth) -> {
+        double total = newWidth.doubleValue();
 
-        comboTipoEvento.setConverter(new StringConverter<>() {
-            @Override
-            public String toString(TipoEvento tipo) {
-                return tipo != null ? tipo.name().replace("_", " ") : "";
-            }
-
-            @Override
-            public TipoEvento fromString(String s) {
-                return TipoEvento.valueOf(s.replace(" ", "_"));
-            }
+        colNombre.setPrefWidth(total * 0.20);        // 20%
+        colTipo.setPrefWidth(total * 0.10);          // 10%
+        colFechaInicio.setPrefWidth(total * 0.15);   // 15%
+        colDuracion.setPrefWidth(total * 0.10);      // 10%
+        colEstado.setPrefWidth(total * 0.15);        // 15%
+        colResponsables.setPrefWidth(total * 0.30);  // 30%
         });
 
-        comboTipoEvento.setOnAction(event ->
-                cargarFormTipoEvento(comboTipoEvento.getValue()));
+        ComboBoxInicializador.cargarTipoEvento(comboTipoEvento);
+        ComboBoxInicializador.cargarEstadoEvento(comboEstado);
+
+        // Configuración del spinner de duración
+        spinnerDuracion.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 365, 1));
+        spinnerDuracion.setEditable(false);
+
+        // Cargar fragmento al cambiar tipo de evento
+        comboTipoEvento.valueProperty().addListener((obs, oldVal, newVal) -> {cargarFragmentoEspecifico(newVal);
+            comboTipoEvento.getStyleClass().remove("campo-invalido");
+        });
+
+        // Listeners para limpiar el estilo de error si el usuario lo corrige
+        txtNombre.textProperty().addListener((obs, oldVal, newVal) -> txtNombre.getStyleClass().remove("campo-invalido"));
+        dateInicio.valueProperty().addListener((obs, oldVal, newVal) -> dateInicio.getStyleClass().remove("campo-invalido"));
+        dateFin.valueProperty().addListener((obs, oldVal, newVal) -> dateFin.getStyleClass().remove("campo-invalido"));
+        comboEstado.valueProperty().addListener((obs, oldVal, newVal) -> comboEstado.getStyleClass().remove("campo-invalido"));
+
     }
 
-    private void cargarFormTipoEvento(TipoEvento tipoSeleccionado) {
+    private void cargarFragmentoEspecifico(TipoEvento tipo) {
         seccionDinamica.getChildren().clear();
+        if (tipo == null) return;
 
-        if (tipoSeleccionado == null) return;
+        String rutaFXML = switch (tipo) {
+            case FERIA -> "/fxml/abm/abmEventoResources/feria.fxml";
+            case TALLER -> "/fxml/abm/abmEventoResources/taller.fxml";
+            case EXPOSICION -> "/fxml/abm/abmEventoResources/exposicion.fxml";
+            case CONCIERTO -> "/fxml/abm/abmEventoResources/concierto.fxml";
+            case CICLO_CINE -> "/fxml/abm/abmEventoResources/cicloCine.fxml";
+            default -> null;
+        };
 
         try {
-            Node fragmento = switch (tipoSeleccionado) {
-                case FERIA -> FXMLLoader.load(getClass().getResource("/fxml/abm/fragmentos/feria.fxml"));
-                case TALLER -> FXMLLoader.load(getClass().getResource("/fxml/abm/fragmentos/taller.fxml"));
-                case EXPOSICION -> FXMLLoader.load(getClass().getResource("/fxml/abm/fragmentos/exposicion.fxml"));
-                case CONCIERTO -> FXMLLoader.load(getClass().getResource("/fxml/abm/fragmentos/concierto.fxml"));
-                case CICLO_CINE -> FXMLLoader.load(getClass().getResource("/fxml/abm/fragmentos/ciclo_cine.fxml"));
-            };
-            seccionDinamica.getChildren().add(fragmento);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(rutaFXML));
+            Node nodo = loader.load();
+            seccionDinamica.getChildren().add(nodo);
         } catch (IOException e) {
+            System.err.println("Error al cargar el fragmento: " + rutaFXML);
             e.printStackTrace();
         }
+    }
+
+    // -- Modal --
+    @FXML
+    private void mostrarModal() {
+        modalOverlay.setVisible(true);
+        modalOverlay.toFront();
+    }
+
+    @FXML
+    private void cerrarModal() {
+        limpiarEstilos();
+        spinnerDuracion.getValueFactory().setValue(1);
+        txtNombre.clear();
+        dateInicio.setValue(null);
+        dateFin.setValue(null);
+        comboTipoEvento.getSelectionModel().clearSelection();
+        seccionDinamica.getChildren().clear();
+
+        modalOverlay.setVisible(false);
+    }
+
+    @FXML
+    private void guardarEvento() {
+        // Limpia estilos anteriores
+        limpiarEstilos();
+
+        boolean invalido = false;
+
+        if (txtNombre.getText().isBlank()) {
+            txtNombre.getStyleClass().add("campo-invalido");
+            invalido = true;
+        }
+
+        if (comboTipoEvento.getValue() == null) {
+            comboTipoEvento.getStyleClass().add("campo-invalido");
+            invalido = true;
+        }
+
+        if (dateInicio.getValue() == null) {
+            dateInicio.getStyleClass().add("campo-invalido");
+            invalido = true;
+        }
+
+        if (dateFin.getValue() == null) {
+            dateFin.getStyleClass().add("campo-invalido");
+            invalido = true;
+        }
+
+        if (invalido) {
+            mostrarAlerta("Campos incompletos", "Complete todos los campos obligatorios.");
+            return;
+        }
+
+        if (dateFin.getValue().isBefore(dateInicio.getValue())) {
+            dateFin.getStyleClass().add("campo-invalido");
+            mostrarAlerta("Error en fechas", "La fecha de fin no puede ser anterior a la fecha de inicio.");
+            return;
+        }
+
+        if (comboEstado.getValue() == null) {
+            comboEstado.getStyleClass().add("campo-invalido");
+            invalido = true;
+        }
+
+        cerrarModal();
+    }
+
+    private void mostrarAlerta(String titulo, String mensaje) {
+        Alert alerta = new Alert(Alert.AlertType.WARNING);
+        alerta.setTitle(titulo);
+        alerta.setHeaderText(null);
+        alerta.setContentText(mensaje);
+        alerta.showAndWait();
+    }
+
+    private void limpiarEstilos() {
+        txtNombre.getStyleClass().remove("campo-invalido");
+        comboTipoEvento.getStyleClass().remove("campo-invalido");
+        dateInicio.getStyleClass().remove("campo-invalido");
+        dateFin.getStyleClass().remove("campo-invalido");
     }
 }
