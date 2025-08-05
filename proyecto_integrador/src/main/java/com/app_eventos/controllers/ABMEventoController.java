@@ -27,10 +27,28 @@ public class ABMEventoController {
     @FXML private ComboBox<EstadoEvento> comboEstado;
     @FXML private Pane seccionDinamica;
     @FXML private Spinner<Integer> spinnerDuracion;
+    @FXML private TableView<?> tablaEventos;
+
+    @FXML private TableColumn<?, ?> colNombre;
+    @FXML private TableColumn<?, ?> colTipo;
+    @FXML private TableColumn<?, ?> colFechaInicio;
+    @FXML private TableColumn<?, ?> colDuracion;
+    @FXML private TableColumn<?, ?> colEstado;
+    @FXML private TableColumn<?, ?> colResponsables;
 
 
     @FXML
     public void initialize() {
+         tablaEventos.widthProperty().addListener((obs, oldWidth, newWidth) -> {
+        double total = newWidth.doubleValue();
+
+        colNombre.setPrefWidth(total * 0.20);        // 20%
+        colTipo.setPrefWidth(total * 0.10);          // 10%
+        colFechaInicio.setPrefWidth(total * 0.15);   // 15%
+        colDuracion.setPrefWidth(total * 0.10);      // 10%
+        colEstado.setPrefWidth(total * 0.15);        // 15%
+        colResponsables.setPrefWidth(total * 0.30);  // 30%
+        });
 
         ComboBoxInicializador.cargarTipoEvento(comboTipoEvento);
         ComboBoxInicializador.cargarEstadoEvento(comboEstado);

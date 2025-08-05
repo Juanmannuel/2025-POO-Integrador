@@ -60,18 +60,48 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);
 }
 
-.boton-nuevo-evento {
+.btn-nuevo-evento {
     -fx-background-color: #3f86f2;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 14;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 3, 0, 0, 1);
+}
+
+.btn-nuevo-evento:hover {
+    -fx-background-color: #3476d1;
+}
+
+.btn-modificar {
+    -fx-background-color: #f2c94c;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 14;
+
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.btn-modificar:hover {
+    -fx-background-color: #d4b83c;
+}
+
+.btn-eliminar {
+    -fx-background-color: #e74c3c;
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-font-size: 13px;
     -fx-padding: 6 14;
-    -fx-background-radius: 8;
+    -fx-background-radius: 6;
     -fx-cursor: hand;
 }
 
-.boton-nuevo-evento:hover {
-    -fx-background-color: #3476d1;
+.btn-eliminar:hover {
+    -fx-background-color: #c0392b;
 }
 
 .modal-overlay {
@@ -133,4 +163,58 @@
 
 .modal-scroll .viewport {
     -fx-background-color: transparent;
+}
+
+
+
+/* Estilo general de la tabla */
+.table-view {
+    -fx-background-color: #f9fafb;
+    -fx-border-color: transparent;
+    -fx-table-cell-border-color: transparent;
+    -fx-padding: 5px;
+    -fx-background-insets: 0;
+    -fx-control-inner-background: #f9fafb;
+    -fx-selection-bar: #3f86f2;
+    -fx-selection-bar-text: white;
+}
+
+.table-view .column-header .label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #6b7280;
+    -fx-alignment: CENTER-LEFT;
+    -fx-padding: 0 0 0 10;
+    -fx-text-transform: uppercase;
+}
+
+/* Celdas */
+.table-view .table-cell {
+    -fx-font-size: 13px;
+    -fx-text-fill: #374151;
+    -fx-padding: 6px 10px;
+    -fx-alignment: CENTER-LEFT;
+}
+
+/* Filas alternadas suaves (opcional) */
+.table-row-cell:odd {
+    -fx-background-color: #ffffff;
+}
+
+.table-row-cell:even {
+    -fx-background-color: #f8fafc;
+}
+
+.table-row-cell:filled:selected, .table-row-cell:filled:selected:hover {
+    -fx-background-color: #3f86f2;
+    -fx-text-fill: white;
+}
+
+/* Eliminar bordes visuales entre celdas */
+.table-view .filler,
+.table-view .column-drag-header,
+.table-view .column-resize-line,
+.table-view .column-header-background .nested-column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
 }
