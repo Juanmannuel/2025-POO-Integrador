@@ -13,6 +13,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 
 import java.io.IOException;
+import java.time.LocalDate;
 
 
 public class ABMEventoController {
@@ -39,8 +40,8 @@ public class ABMEventoController {
 
     @FXML
     public void initialize() {
-         tablaEventos.widthProperty().addListener((obs, oldWidth, newWidth) -> {
-        double total = newWidth.doubleValue();
+         tablaEventos.widthProperty().addListener((obs, oldWidth, newWidth) -> { 
+            double total = newWidth.doubleValue();
 
         colNombre.setPrefWidth(total * 0.20);        // 20%
         colTipo.setPrefWidth(total * 0.10);          // 10%
@@ -131,37 +132,39 @@ public class ABMEventoController {
             txtNombre.getStyleClass().add("campo-invalido");
             invalido = true;
         }
-
         if (comboTipoEvento.getValue() == null) {
             comboTipoEvento.getStyleClass().add("campo-invalido");
             invalido = true;
         }
-
         if (dateInicio.getValue() == null) {
             dateInicio.getStyleClass().add("campo-invalido");
             invalido = true;
         }
-
         if (dateFin.getValue() == null) {
             dateFin.getStyleClass().add("campo-invalido");
             invalido = true;
         }
-
         if (invalido) {
             mostrarAlerta("Campos incompletos", "Complete todos los campos obligatorios.");
             return;
         }
-
         if (dateFin.getValue().isBefore(dateInicio.getValue())) {
             dateFin.getStyleClass().add("campo-invalido");
             mostrarAlerta("Error en fechas", "La fecha de fin no puede ser anterior a la fecha de inicio.");
             return;
         }
-
         if (comboEstado.getValue() == null) {
             comboEstado.getStyleClass().add("campo-invalido");
             invalido = true;
         }
+
+        // Obtener datos del formulario
+        String nombre = txtNombre.getText();
+        TipoEvento tipo = comboTipoEvento.getValue();
+        LocalDate fechaInicio = dateInicio.getValue();
+        LocalDate fechaFin = dateFin.getValue();
+        int duracion = spinnerDuracion.getValue();
+        EstadoEvento estado = comboEstado.getValue();
 
         cerrarModal();
     }
