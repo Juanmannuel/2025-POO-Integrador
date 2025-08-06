@@ -38,9 +38,9 @@
             <!-- TABLA -->
             <TableView fx:id="tablaPersonas" VBox.vgrow="ALWAYS">
                 <columns>
+                    <TableColumn fx:id="colDNI" prefWidth="110.4000244140625" text="DNI" />
                     <TableColumn fx:id="colNombre" prefWidth="137.60006141662598" text="Nombre" />
                     <TableColumn fx:id="colApellido" prefWidth="139.20001220703125" text="Apellido" />
-                    <TableColumn fx:id="colDNI" prefWidth="110.4000244140625" text="DNI" />
                     <TableColumn fx:id="colTelefono" prefWidth="124.80001831054688" text="Teléfono" />
                     <TableColumn fx:id="colEmail" prefWidth="220" text="Email" />
                 </columns>
@@ -57,7 +57,7 @@
     <!-- VENTANA MODAL NUEVO PERSONA -->
     <StackPane fx:id="modalOverlay" styleClass="modal-overlay" visible="false">
         <VBox maxHeight="335" maxWidth="620" spacing="15" styleClass="modal-contenido">
-            <Label styleClass="modal-titulo" text="Nueva Persona" />
+            <Label styleClass="modal-titulo" text="Persona" />
             <GridPane hgap="15" vgap="10">
                 <columnConstraints>
                     <ColumnConstraints percentWidth="50" />
