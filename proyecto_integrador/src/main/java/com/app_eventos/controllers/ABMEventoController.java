@@ -93,6 +93,13 @@ public class ABMEventoController {
         }
     }
 
+    private void limpiarEstilos() {
+        txtNombre.getStyleClass().remove("campo-invalido");
+        comboTipoEvento.getStyleClass().remove("campo-invalido");
+        dateInicio.getStyleClass().remove("campo-invalido");
+        dateFin.getStyleClass().remove("campo-invalido");
+    }
+
     // -- Modal --
     @FXML
     private void mostrarModal() {
@@ -159,18 +166,22 @@ public class ABMEventoController {
         cerrarModal();
     }
 
+    @FXML
+    private void modificarEvento() {
+        Object eventoSeleccionado = tablaEventos.getSelectionModel().getSelectedItem();
+        if (eventoSeleccionado != null) {
+            // Acá se cargan los datos del evento seleccionado en los campos del modal
+            modalOverlay.setVisible(true);
+        } else {
+            mostrarAlerta("Selección requerida", "Debe seleccionar un evento en la tabla para modificar.");
+        }
+    }
+
     private void mostrarAlerta(String titulo, String mensaje) {
         Alert alerta = new Alert(Alert.AlertType.WARNING);
         alerta.setTitle(titulo);
         alerta.setHeaderText(null);
         alerta.setContentText(mensaje);
         alerta.showAndWait();
-    }
-
-    private void limpiarEstilos() {
-        txtNombre.getStyleClass().remove("campo-invalido");
-        comboTipoEvento.getStyleClass().remove("campo-invalido");
-        dateInicio.getStyleClass().remove("campo-invalido");
-        dateFin.getStyleClass().remove("campo-invalido");
     }
 }

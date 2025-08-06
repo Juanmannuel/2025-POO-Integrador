@@ -30,14 +30,24 @@ public class ABMPersonaController {
     @FXML private TextField txtEmail;
     @FXML private ComboBox<TipoRol> comboRol;
 
+    // Modal modificación
+    @FXML private StackPane modalModificarOverlay;
+
     @FXML
     public void initialize() {
         // Inicializar combos
         comboTipoRolFiltro.setItems(FXCollections.observableArrayList(TipoRol.values()));
         comboRol.setItems(FXCollections.observableArrayList(TipoRol.values()));
+        modalOverlay.setVisible(false);  // Ocultar modal por defecto
+    }
 
-        // Ocultar modal por defecto
-        modalOverlay.setVisible(false);
+    private void limpiarCampos() {
+        txtDNI.clear();
+        txtNombre.clear();
+        txtApellido.clear();
+        txtTelefono.clear();
+        txtEmail.clear();
+        comboRol.getSelectionModel().clearSelection();
     }
 
     @FXML
@@ -52,22 +62,29 @@ public class ABMPersonaController {
     }
 
     @FXML
-    private void guardarEvento() {
-        // Acá podrías validar y guardar los datos
-        System.out.println("Guardando persona:");
-        System.out.println("Nombre: " + txtNombre.getText());
-        System.out.println("DNI: " + txtDNI.getText());
-        System.out.println("Rol: " + comboRol.getValue());
-
-        cerrarModal(); // cerrar modal luego de guardar
+    private void altaPersona() {
+        // Acá se puede validar y guardar los datos
+        cerrarModal(); // cerrar modal después de guardar
     }
 
-    private void limpiarCampos() {
-        txtDNI.clear();
-        txtNombre.clear();
-        txtApellido.clear();
-        txtTelefono.clear();
-        txtEmail.clear();
-        comboRol.getSelectionModel().clearSelection();
+    @FXML
+    private void modificarPersona() {
+        Object personaSeleccionada = tablaPersonas.getSelectionModel().getSelectedItem();
+
+        if (personaSeleccionada != null) {
+            // Acá se cargan los datos de la persona seleccionada
+        } else {
+        // mostrar alerta si no hay selección
+        Alert alerta = new Alert(Alert.AlertType.WARNING);
+        alerta.setTitle("Selección requerida");
+        alerta.setHeaderText(null);
+        alerta.setContentText("Debe seleccionar una persona en la tabla para modificar.");
+        alerta.showAndWait();
+        }
+    }
+
+    @FXML
+    private void bajaPersona() {
+
     }
 }

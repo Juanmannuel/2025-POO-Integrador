@@ -42,7 +42,7 @@
 
             <HBox spacing="12" alignment="CENTER_RIGHT">
                 <Button text="Alta" onAction="#mostrarModal" styleClass="btn-alta" />
-                <Button text="Modificar" styleClass="btn-modificar" />
+                <Button text="Modificar" styleClass="btn-modificar" onAction="#modificarPersona"/>
                 <Button text="Baja" styleClass="btn-baja" />
             </HBox>
         </VBox>
@@ -50,7 +50,7 @@
 
     <!-- VENTANA MODAL NUEVO PERSONA -->
     <StackPane fx:id="modalOverlay" visible="false" styleClass="modal-overlay">
-        <VBox spacing="15" styleClass="modal-contenido" maxWidth="620" maxHeight="350">
+        <VBox spacing="15" styleClass="modal-contenido" maxWidth="620" maxHeight="335">
             <Label text="Nueva Persona" styleClass="modal-titulo"/>
             <GridPane hgap="15" vgap="10">
                 <columnConstraints>
@@ -72,7 +72,7 @@
             </GridPane>
             <HBox spacing="10" alignment="CENTER_RIGHT">
                 <Button text="Cancelar" onAction="#cerrarModal" styleClass="btn-cancelar"/>
-                <Button text="Guardar" onAction="#guardarEvento" styleClass="btn-guardar"/>
+                <Button text="Guardar" onAction="#altaPersona" styleClass="btn-guardar"/>
             </HBox>
         </VBox>
     </StackPane>

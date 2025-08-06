@@ -220,7 +220,7 @@
 }
 
 /* Estilo del modal de participantes */
-.info-box {
+.cuadro-info {
     -fx-background-color: #f5f5f5;
     -fx-padding: 10;
     -fx-border-radius: 8;

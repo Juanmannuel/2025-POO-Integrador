@@ -35,52 +35,12 @@ public class ABMParticipanteController {
     @FXML private Label lblTelefonoParticipante;
     @FXML private Label lblEmailParticipante;
 
-    // Modal detalles
-    @FXML private StackPane modalModificarOverlay;
-    @FXML private Label lblDetalleEvento;
-    @FXML private Label lblDetalleParticipante;
-    @FXML private Label lblDetalleEstado;
-    @FXML private Label lblDetalleTipo;
-    @FXML private Label lblDetalleFecha;
-    @FXML private TextArea txtDetalleInfo;
-
     @FXML
     public void initialize() {
         // Inicialización de componentes
         modalOverlay.setVisible(false);
-        modalModificarOverlay.setVisible(false);
 
         // Aquí podrías cargar datos en comboEventoFiltro y tablaParticipantes
-    }
-
-    @FXML
-    private void mostrarModalAlta() {
-        limpiarModalAlta();
-        modalOverlay.setVisible(true);
-    }
-
-    @FXML
-    private void cerrarModal() {
-        modalOverlay.setVisible(false);
-    }
-
-    @FXML
-    private void altaParticipante() {
-        cerrarModal();
-    }
-
-    @FXML
-    private void bajaParticipante() {
-    }
-
-    @FXML
-    private void modificarParticipante() {
-        modalModificarOverlay.setVisible(true);
-    }
-
-    @FXML
-    private void cerrarModalModificar() {
-        modalModificarOverlay.setVisible(false);
     }
 
     private void limpiarModalAlta() {
@@ -96,6 +56,43 @@ public class ABMParticipanteController {
         lblDniParticipante.setText("DNI: -");
         lblTelefonoParticipante.setText("Teléfono: -");
         lblEmailParticipante.setText("Email: -");
+    }
+
+    @FXML
+    private void mostrarModalAlta() {
+        limpiarModalAlta();
+        modalOverlay.setVisible(true);
+    }
+
+    @FXML
+    private void cerrarModal() {
+        modalOverlay.setVisible(false);
+    }
+
+    @FXML
+    private void altaParticipante() {
+        // Acá van los datos del participante
+        cerrarModal();
+    }
+
+    @FXML
+    private void modificarParticipante() {
+        Object participanteSeleccionado = tablaParticipantes.getSelectionModel().getSelectedItem();
+
+        if (participanteSeleccionado != null) {
+        // Acá van los datos del participante seleccionado
+        
+        } else {
+        Alert alerta = new Alert(Alert.AlertType.WARNING);
+        alerta.setTitle("Selección requerida");
+        alerta.setHeaderText(null);
+        alerta.setContentText("Debe seleccionar un participante de la tabla para modificar.");
+        alerta.showAndWait();
+        }
+    }
+
+    @FXML
+    private void bajaParticipante() {
     }
 }
 
