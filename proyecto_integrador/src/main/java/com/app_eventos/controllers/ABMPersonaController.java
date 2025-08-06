@@ -1,25 +1,30 @@
 package com.app_eventos.controllers;
 
-import com.app_eventos.model.enums.TipoRol;
+import com.app_eventos.model.Persona;
+import com.app_eventos.services.PersonaService;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
-import javafx.collections.FXCollections;
+
+import java.util.Optional;
 
 public class ABMPersonaController {
 
-    // Filtros
-    @FXML private ComboBox<TipoRol> comboTipoRolFiltro;
+    // Filtros de búsqueda
     @FXML private TextField txtNombreFiltro;
     @FXML private TextField txtDNIFiltro;
 
-    // Tabla
-    @FXML private TableView<?> tablaPersonas;
-    @FXML private TableColumn<?, ?> colNombre;
-    @FXML private TableColumn<?, ?> colDNI;
-    @FXML private TableColumn<?, ?> colTelefono;
-    @FXML private TableColumn<?, ?> colEmail;
-    @FXML private TableColumn<?, ?> colRol;
+    // Tabla y columnas
+    @FXML private TableView<Persona> tablaPersonas;
+    @FXML private TableColumn<Persona, String> colNombre;
+    @FXML private TableColumn<Persona, String> colApellido;
+    @FXML private TableColumn<Persona, String> colDNI;
+    @FXML private TableColumn<Persona, String> colTelefono;
+    @FXML private TableColumn<Persona, String> colEmail;
+    @FXML private TableColumn<Persona, String> colRol; // Aunque no lo usemos por ahora
 
     // Modal
     @FXML private StackPane modalOverlay;
@@ -28,63 +33,141 @@ public class ABMPersonaController {
     @FXML private TextField txtApellido;
     @FXML private TextField txtTelefono;
     @FXML private TextField txtEmail;
-    @FXML private ComboBox<TipoRol> comboRol;
 
-    // Modal modificación
-    @FXML private StackPane modalModificarOverlay;
+    private final PersonaService personaService = new PersonaService();
+    private Persona personaSeleccionada = null;
+    private boolean modoEdicion = false;
 
     @FXML
     public void initialize() {
-        // Inicializar combos
-        comboTipoRolFiltro.setItems(FXCollections.observableArrayList(TipoRol.values()));
-        comboRol.setItems(FXCollections.observableArrayList(TipoRol.values()));
-        modalOverlay.setVisible(false);  // Ocultar modal por defecto
-    }
+        // Configurar columnas
+        colNombre.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getNombre()));
+        colApellido.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getApellido()));
+        colDNI.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getDni()));
+        colTelefono.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getTelefono()));
+        colEmail.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getEmail()));
 
-    private void limpiarCampos() {
-        txtDNI.clear();
-        txtNombre.clear();
-        txtApellido.clear();
-        txtTelefono.clear();
-        txtEmail.clear();
-        comboRol.getSelectionModel().clearSelection();
+        // Enlazar datos
+        tablaPersonas.setItems(personaService.obtenerPersonasFiltradas());
+
+        // Listeners para filtros
+        txtNombreFiltro.setOnKeyReleased(this::filtrar);
+        txtDNIFiltro.setOnKeyReleased(this::filtrar);
+
+        // Selección de tabla
+        tablaPersonas.setOnMouseClicked(this::onSeleccionarFila);
+
+        modalOverlay.setVisible(false);
+        tablaPersonas.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.setOnMousePressed(event -> {
+                    // Si el clic fue fuera de la tabla
+                    if (!tablaPersonas.isHover()) {
+                        tablaPersonas.getSelectionModel().clearSelection();
+                        personaSeleccionada = null;
+                    }
+                });
+            }
+        });
+
     }
 
     @FXML
-    private void mostrarModal() {
-        limpiarCampos();
+    public void mostrarModal(ActionEvent event) {
+        modoEdicion = false;
+        limpiarFormulario();
         modalOverlay.setVisible(true);
     }
 
     @FXML
-    private void cerrarModal() {
-        modalOverlay.setVisible(false);
+    public void modificarPersona(ActionEvent event) {
+        if (personaSeleccionada == null) {
+            mostrarAlerta("Debe seleccionar una persona para modificar.");
+            return;
+        }
+
+        modoEdicion = true;
+
+        txtNombre.setText(personaSeleccionada.getNombre());
+        txtApellido.setText(personaSeleccionada.getApellido());
+        txtDNI.setText(personaSeleccionada.getDni());
+        txtTelefono.setText(personaSeleccionada.getTelefono());
+        txtEmail.setText(personaSeleccionada.getEmail());
+
+        modalOverlay.setVisible(true);
     }
 
     @FXML
-    private void altaPersona() {
-        // Acá se puede validar y guardar los datos
-        cerrarModal(); // cerrar modal después de guardar
-    }
+    public void eliminarPersona(ActionEvent event) {
+        if (personaSeleccionada == null) {
+            mostrarAlerta("Debe seleccionar una persona para eliminar.");
+            return;
+        }
 
-    @FXML
-    private void modificarPersona() {
-        Object personaSeleccionada = tablaPersonas.getSelectionModel().getSelectedItem();
+        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacion.setTitle("Confirmación");
+        confirmacion.setHeaderText("¿Está seguro que desea eliminar a " + personaSeleccionada + "?");
 
-        if (personaSeleccionada != null) {
-            // Acá se cargan los datos de la persona seleccionada
-        } else {
-        // mostrar alerta si no hay selección
-        Alert alerta = new Alert(Alert.AlertType.WARNING);
-        alerta.setTitle("Selección requerida");
-        alerta.setHeaderText(null);
-        alerta.setContentText("Debe seleccionar una persona en la tabla para modificar.");
-        alerta.showAndWait();
+        Optional<ButtonType> resultado = confirmacion.showAndWait();
+        if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
+            personaService.eliminarPersona(personaSeleccionada);
+            personaSeleccionada = null;
         }
     }
 
     @FXML
-    private void bajaPersona() {
+    public void altaPersona(ActionEvent event) {
+        try {
+            Persona nueva = new Persona(
+                txtNombre.getText(),
+                txtApellido.getText(),
+                txtDNI.getText(),
+                txtTelefono.getText(),
+                txtEmail.getText()
+            );
 
+            if (modoEdicion) {
+                personaService.actualizarPersona(personaSeleccionada, nueva);
+            } else {
+                personaService.guardarPersona(nueva);
+            }
+
+            modalOverlay.setVisible(false);
+            limpiarFormulario();
+            personaSeleccionada = null;
+
+        } catch (Exception e) {
+            mostrarAlerta("Error: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    public void cerrarModal(ActionEvent event) {
+        modalOverlay.setVisible(false);
+        limpiarFormulario();
+    }
+
+    private void onSeleccionarFila(MouseEvent event) {
+        personaSeleccionada = tablaPersonas.getSelectionModel().getSelectedItem();
+    }
+
+    private void filtrar(KeyEvent keyEvent) {
+        personaService.filtrarPersonas(txtNombreFiltro.getText(), txtDNIFiltro.getText());
+    }
+
+    private void limpiarFormulario() {
+        txtNombre.clear();
+        txtApellido.clear();
+        txtDNI.clear();
+        txtTelefono.clear();
+        txtEmail.clear();
+    }
+
+    private void mostrarAlerta(String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Información");
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
     }
 }
