@@ -11,9 +11,13 @@ import com.app_eventos.utils.ComboBoxInicializador;
 import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import javafx.util.StringConverter;
 
 import java.io.IOException;
-import java.time.LocalDate;
+
 
 
 public class ABMEventoController {
@@ -26,8 +30,9 @@ public class ABMEventoController {
     @FXML private ComboBox<TipoEvento> comboTipoEvento;
     @FXML private ComboBox<TipoEntrada> comboTipoEntrada;
     @FXML private ComboBox<EstadoEvento> comboEstado;
+    @FXML private Spinner<LocalTime> spinnerHoraInicio;
+    @FXML private Spinner<LocalTime> spinnerHoraFin;
     @FXML private Pane seccionDinamica;
-    @FXML private Spinner<Integer> spinnerDuracion;
     @FXML private TableView<?> tablaEventos;
 
     @FXML private TableColumn<?, ?> colNombre;
@@ -51,24 +56,61 @@ public class ABMEventoController {
         colResponsables.setPrefWidth(total * 0.30);  // 30%
         });
 
+        // Spinner de hora (de 00:00 a 23:59, con salto de 30 minutos)
+        spinnerHoraInicio.setValueFactory(crearFactoryHora());
+        spinnerHoraFin.setValueFactory(crearFactoryHora());
+
+        // Evita edición manual incorrecta
+        spinnerHoraInicio.setEditable(false);
+        spinnerHoraFin.setEditable(false);
+
         ComboBoxInicializador.cargarTipoEvento(comboTipoEvento);
         ComboBoxInicializador.cargarEstadoEvento(comboEstado);
-
-        // Configuración del spinner de duración
-        spinnerDuracion.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 365, 1));
-        spinnerDuracion.setEditable(false);
 
         // Cargar fragmento al cambiar tipo de evento
         comboTipoEvento.valueProperty().addListener((obs, oldVal, newVal) -> {cargarFragmentoEspecifico(newVal);
             comboTipoEvento.getStyleClass().remove("campo-invalido");
         });
 
-        // Listeners para limpiar el estilo de error si el usuario lo corrige
-        txtNombre.textProperty().addListener((obs, oldVal, newVal) -> txtNombre.getStyleClass().remove("campo-invalido"));
-        dateInicio.valueProperty().addListener((obs, oldVal, newVal) -> dateInicio.getStyleClass().remove("campo-invalido"));
-        dateFin.valueProperty().addListener((obs, oldVal, newVal) -> dateFin.getStyleClass().remove("campo-invalido"));
-        comboEstado.valueProperty().addListener((obs, oldVal, newVal) -> comboEstado.getStyleClass().remove("campo-invalido"));
+    }
 
+    private SpinnerValueFactory<LocalTime> crearFactoryHora() {
+        LocalTime horaInicial = LocalTime.of(8, 0);
+        LocalTime horaFinal = LocalTime.of(22, 0);
+        int intervaloMinutos = 30;
+
+        return new SpinnerValueFactory<>() {
+            private LocalTime value = horaInicial;
+
+            {
+                setConverter(new StringConverter<>() {
+                    final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+
+                    @Override
+                    public String toString(LocalTime time) {
+                        return time != null ? time.format(formatter) : "";
+                    }
+
+                    @Override
+                    public LocalTime fromString(String s) {
+                        return LocalTime.parse(s, formatter);
+                    }
+                });
+                setValue(horaInicial);
+            }
+
+            @Override
+            public void decrement(int steps) {
+                LocalTime next = value.minusMinutes(steps * intervaloMinutos);
+                if (!next.isBefore(horaInicial)) setValue(next);
+            }
+
+            @Override
+            public void increment(int steps) {
+                LocalTime next = value.plusMinutes(steps * intervaloMinutos);
+                if (!next.isAfter(horaFinal)) setValue(next);
+            }
+        };
     }
 
     private void cargarFragmentoEspecifico(TipoEvento tipo) {
@@ -94,13 +136,6 @@ public class ABMEventoController {
         }
     }
 
-    private void limpiarEstilos() {
-        txtNombre.getStyleClass().remove("campo-invalido");
-        comboTipoEvento.getStyleClass().remove("campo-invalido");
-        dateInicio.getStyleClass().remove("campo-invalido");
-        dateFin.getStyleClass().remove("campo-invalido");
-    }
-
     // -- Modal --
     @FXML
     private void mostrarModal() {
@@ -110,63 +145,30 @@ public class ABMEventoController {
 
     @FXML
     private void cerrarModal() {
-        limpiarEstilos();
-        spinnerDuracion.getValueFactory().setValue(1);
         txtNombre.clear();
         dateInicio.setValue(null);
         dateFin.setValue(null);
         comboTipoEvento.getSelectionModel().clearSelection();
         seccionDinamica.getChildren().clear();
-
+        spinnerHoraInicio.getValueFactory().setValue(LocalTime.of(0, 0));
+        spinnerHoraFin.getValueFactory().setValue(LocalTime.of(0, 0));
         modalOverlay.setVisible(false);
     }
 
     @FXML
     private void guardarEvento() {
-        // Limpia estilos anteriores
-        limpiarEstilos();
+    // Captura de datos desde la vista
+    String nombre = txtNombre.getText();
+    TipoEvento tipo = comboTipoEvento.getValue();
+    LocalDate fechaInicio = dateInicio.getValue();
+    LocalDate fechaFin = dateFin.getValue();
+    LocalTime horaInicio = spinnerHoraInicio.getValue();
+    LocalTime horaFin = spinnerHoraFin.getValue();
+    EstadoEvento estado = comboEstado.getValue();
 
-        boolean invalido = false;
-
-        if (txtNombre.getText().isBlank()) {
-            txtNombre.getStyleClass().add("campo-invalido");
-            invalido = true;
-        }
-        if (comboTipoEvento.getValue() == null) {
-            comboTipoEvento.getStyleClass().add("campo-invalido");
-            invalido = true;
-        }
-        if (dateInicio.getValue() == null) {
-            dateInicio.getStyleClass().add("campo-invalido");
-            invalido = true;
-        }
-        if (dateFin.getValue() == null) {
-            dateFin.getStyleClass().add("campo-invalido");
-            invalido = true;
-        }
-        if (invalido) {
-            mostrarAlerta("Campos incompletos", "Complete todos los campos obligatorios.");
-            return;
-        }
-        if (dateFin.getValue().isBefore(dateInicio.getValue())) {
-            dateFin.getStyleClass().add("campo-invalido");
-            mostrarAlerta("Error en fechas", "La fecha de fin no puede ser anterior a la fecha de inicio.");
-            return;
-        }
-        if (comboEstado.getValue() == null) {
-            comboEstado.getStyleClass().add("campo-invalido");
-            invalido = true;
-        }
-
-        // Obtener datos del formulario
-        String nombre = txtNombre.getText();
-        TipoEvento tipo = comboTipoEvento.getValue();
-        LocalDate fechaInicio = dateInicio.getValue();
-        LocalDate fechaFin = dateFin.getValue();
-        int duracion = spinnerDuracion.getValue();
-        EstadoEvento estado = comboEstado.getValue();
-
-        cerrarModal();
+    // En este punto, se podría pasar todo a la capa de servicio (aún no implementada)
+    // Por ahora, simplemente cerramos el modal
+    cerrarModal();
     }
 
     @FXML

@@ -75,13 +75,17 @@
                         <Label text="Fecha de Inicio" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
                         <DatePicker fx:id="dateInicio" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
-                        <!-- Fecha de Fin -->
-                        <Label text="Fecha de Fin" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-                        <DatePicker fx:id="dateFin" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                        <!-- Hora de Inicio -->
+                        <Label text="Hora de Inicio" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                        <Spinner fx:id="spinnerHoraInicio" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
-                        <!-- Duración -->
-                        <Label text="Duración (días)" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-                        <Spinner fx:id="spinnerDuracion" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                        <!-- Fecha de Fin -->
+                        <Label text="Fecha de Fin" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                        <DatePicker fx:id="dateFin" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                        <!-- Hora de Fin -->
+                        <Label text="Hora de Fin" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                        <Spinner fx:id="spinnerHoraFin" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
 
                         <Label text="Estado" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
                         <ComboBox fx:id="comboEstado" promptText="Seleccione un estado" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
