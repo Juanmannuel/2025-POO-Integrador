@@ -1,6 +1,8 @@
 package com.app_eventos.model;
 
+import com.app_eventos.model.enums.EstadoEvento;
 import com.app_eventos.model.enums.TipoRol;
+import com.app_eventos.model.interfaces.IEventoConCupo;
 
 public class RolEvento {
 
@@ -70,6 +72,59 @@ public class RolEvento {
 
     public void setRol(TipoRol rol) {
         this.rol = rol;
+    }
+    
+    // FACTORY METHOD - Lógica de negocio para inscribir participante
+    public static RolEvento inscribirParticipante(Evento evento, Persona persona) {
+        // Validar estado del evento
+        evento.validarInscripcion(persona);
+        
+        // Validar cupo si el evento lo requiere
+        if (evento instanceof IEventoConCupo eventoConCupo) {
+            if (eventoConCupo.estaCompleto()) {
+                throw new IllegalStateException("El evento ha alcanzado su cupo máximo");
+            }
+        }
+        
+        return new RolEvento(evento, persona, TipoRol.PARTICIPANTE);
+    }
+    
+    // FACTORY METHOD - Lógica de negocio para asignar responsable
+    public static RolEvento asignarResponsable(Evento evento, Persona persona) {
+        return new RolEvento(evento, persona, TipoRol.ORGANIZADOR);
+    }
+    
+    // FACTORY METHOD - Lógica de negocio para asignar instructor
+    public static RolEvento asignarInstructor(Evento evento, Persona persona) {
+        if (!(evento instanceof Taller)) {
+            throw new IllegalStateException("Solo se pueden asignar instructores a talleres");
+        }
+        return new RolEvento(evento, persona, TipoRol.INSTRUCTOR);
+    }
+    
+    // FACTORY METHOD - Lógica de negocio para asignar curador
+    public static RolEvento asignarCurador(Evento evento, Persona persona) {
+        if (!(evento instanceof Exposicion)) {
+            throw new IllegalStateException("Solo se pueden asignar curadores a exposiciones");
+        }
+        return new RolEvento(evento, persona, TipoRol.CURADOR);
+    }
+    
+    // FACTORY METHOD - Lógica de negocio para asignar artista
+    public static RolEvento asignarArtista(Evento evento, Persona persona) {
+        if (!(evento instanceof Concierto)) {
+            throw new IllegalStateException("Solo se pueden asignar artistas a conciertos");
+        }
+        return new RolEvento(evento, persona, TipoRol.ARTISTA);
+    }
+    
+    // Lógica de negocio para cancelar inscripción
+    public boolean puedeSerCancelada() {
+        return evento.getEstado() != EstadoEvento.FINALIZADO;
+    }
+    
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @Override

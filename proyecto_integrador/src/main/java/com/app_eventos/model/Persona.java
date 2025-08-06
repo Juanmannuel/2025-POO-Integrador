@@ -79,8 +79,58 @@ public class Persona {
         this.telefono = telefono;
     }
 
+    // FACTORY METHOD - Lógica de negocio para crear persona
+    public static Persona crearPersona(String nombre, String apellido, String dni, 
+                                      String telefono, String email) {
+        Persona persona = new Persona(nombre, apellido, dni, telefono, email);
+        persona.aplicarReglas();
+        return persona;
+    }
+    
+    // Lógica de negocio para modificar datos
+    public void modificarDatos(String nombre, String apellido, String telefono, String email) {
+        setNombre(nombre);
+        setApellido(apellido);
+        this.telefono = telefono;
+        setEmail(email);
+        aplicarReglas();
+    }
+    
+    // Lógica de negocio: verificar si puede ser eliminada
+    public boolean puedeSerEliminada() {
+        // TODO: Verificar si tiene eventos asociados
+        return true; // Por ahora permite eliminar
+    }
+    
+    // Métodos de utilidad
+    public String getNombreCompleto() {
+        return nombre + " " + apellido;
+    }
+    
+    // Aplicar reglas de negocio (capitalización, etc.)
+    private void aplicarReglas() {
+        // Las reglas ya se aplican en los setters
+    }
+    
+    public void setIdPersona(Long idPersona) {
+        this.idPersona = idPersona;
+    }
+
     @Override
     public String toString() {
         return apellido + ", " + nombre;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Persona persona = (Persona) obj;
+        return dni != null && dni.equals(persona.dni);
+    }
+    
+    @Override
+    public int hashCode() {
+        return dni != null ? dni.hashCode() : 0;
     }
 }

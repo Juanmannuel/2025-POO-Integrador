@@ -1,6 +1,7 @@
 package com.app_eventos.model;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +60,67 @@ public abstract class Evento {
 
     public Duration getDuracionEstimada() {
         return Duration.between(fechaInicio, fechaFin);
+    }
+    
+    // FACTORY METHOD - Lógica de negocio para crear eventos según tipo
+    public static Evento crearEvento(TipoEvento tipo, String nombre, 
+                                   LocalDate fechaInicio, LocalDate fechaFin) {
+        // Crear instancia del tipo específico
+        Evento evento = switch (tipo) {
+            case CONCIERTO -> new Concierto();
+            case TALLER -> new Taller();
+            case EXPOSICION -> new Exposicion();
+            case FERIA -> new Feria();
+            case CICLO_CINE -> new CicloCine();
+        };
+        
+        // Configurar datos comunes
+        evento.setNombre(nombre);
+        evento.setFechaInicio(fechaInicio.atStartOfDay());
+        evento.setFechaFin(fechaFin.atStartOfDay());
+        evento.setTipoEvento(tipo);
+        evento.setEstado(EstadoEvento.PLANIFICACIÓN);
+        
+        return evento;
+    }
+    
+    // Lógica de negocio para cambio de estado
+    public void confirmarEvento() {
+        if (this.fechaInicio.isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("No se puede confirmar un evento con fecha pasada");
+        }
+        this.estado = EstadoEvento.CONFIRMADO;
+    }
+    
+    public void iniciarEvento() {
+        if (this.estado != EstadoEvento.CONFIRMADO) {
+            throw new IllegalStateException("Solo se pueden iniciar eventos confirmados");
+        }
+        this.estado = EstadoEvento.EJECUCION;
+    }
+    
+    public void finalizarEvento() {
+        if (this.estado != EstadoEvento.EJECUCION) {
+            throw new IllegalStateException("Solo se pueden finalizar eventos en ejecución");
+        }
+        this.estado = EstadoEvento.FINALIZADO;
+    }
+    
+    public void cancelarEvento() {
+        if (this.estado == EstadoEvento.FINALIZADO) {
+            throw new IllegalStateException("No se puede cancelar un evento finalizado");
+        }
+        this.estado = EstadoEvento.CANCELADO;
+    }
+    
+    // Lógica de negocio para validar inscripciones
+    public void validarInscripcion(Persona persona) {
+        if (this.estado != EstadoEvento.CONFIRMADO) {
+            throw new IllegalStateException("Solo se puede inscribir a eventos confirmados");
+        }
+        if (this.estado == EstadoEvento.FINALIZADO) {
+            throw new IllegalStateException("No se puede inscribir a eventos finalizados");
+        }
     }
 
     public String descripcionDetallada() {
