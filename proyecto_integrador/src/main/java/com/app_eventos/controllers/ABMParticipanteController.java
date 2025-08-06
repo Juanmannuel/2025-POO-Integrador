@@ -1,7 +1,11 @@
 package com.app_eventos.controllers;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 
 public class ABMParticipanteController {
@@ -35,22 +39,13 @@ public class ABMParticipanteController {
     @FXML private Label lblTelefonoParticipante;
     @FXML private Label lblEmailParticipante;
 
-    // Modal detalles
+    // Modal detalles (modificar)
     @FXML private StackPane modalModificarOverlay;
-    @FXML private Label lblDetalleEvento;
-    @FXML private Label lblDetalleParticipante;
-    @FXML private Label lblDetalleEstado;
-    @FXML private Label lblDetalleTipo;
-    @FXML private Label lblDetalleFecha;
-    @FXML private TextArea txtDetalleInfo;
 
     @FXML
     public void initialize() {
-        // Inicialización de componentes
         modalOverlay.setVisible(false);
         modalModificarOverlay.setVisible(false);
-
-        // Aquí podrías cargar datos en comboEventoFiltro y tablaParticipantes
     }
 
     @FXML
@@ -70,8 +65,7 @@ public class ABMParticipanteController {
     }
 
     @FXML
-    private void bajaParticipante() {
-    }
+    private void bajaParticipante() { }
 
     @FXML
     private void modificarParticipante() {
@@ -86,16 +80,13 @@ public class ABMParticipanteController {
     private void limpiarModalAlta() {
         comboEvento.getSelectionModel().clearSelection();
         comboParticipante.getSelectionModel().clearSelection();
-
         lblEstadoEvento.setText("Estado: -");
         lblTipoEvento.setText("Tipo: -");
         lblCupoDisponible.setText("Cupo: -");
         lblFechaEvento.setText("Fecha: -");
-
         lblNombreParticipante.setText("Nombre: -");
         lblDniParticipante.setText("DNI: -");
         lblTelefonoParticipante.setText("Teléfono: -");
         lblEmailParticipante.setText("Email: -");
     }
 }
-
