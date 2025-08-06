@@ -131,7 +131,6 @@ public class ABMEventoController {
             Node nodo = loader.load();
             seccionDinamica.getChildren().add(nodo);
         } catch (IOException e) {
-            System.err.println("Error al cargar el fragmento: " + rutaFXML);
             e.printStackTrace();
         }
     }
