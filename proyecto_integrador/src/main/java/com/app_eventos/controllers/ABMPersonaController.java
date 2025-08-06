@@ -1,12 +1,16 @@
 package com.app_eventos.controllers;
 
+import com.app_eventos.model.Persona;
 import com.app_eventos.model.enums.TipoRol;
+import com.app_eventos.repository.Repositorio;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.collections.FXCollections;
 
 public class ABMPersonaController {
+
+    private Repositorio repositorio = new Repositorio();
 
     // Filtros
     @FXML private ComboBox<TipoRol> comboTipoRolFiltro;
@@ -61,10 +65,87 @@ public class ABMPersonaController {
         modalOverlay.setVisible(false);
     }
 
+    private void limpiarEstilos() {
+        txtDNI.getStyleClass().remove("campo-invalido");
+        txtNombre.getStyleClass().remove("campo-invalido");
+        txtApellido.getStyleClass().remove("campo-invalido");
+        txtEmail.getStyleClass().remove("campo-invalido");
+        comboRol.getStyleClass().remove("campo-invalido");
+    }
+
     @FXML
     private void altaPersona() {
-        // Acá se puede validar y guardar los datos
-        cerrarModal(); // cerrar modal después de guardar
+        // ===== VALIDACIONES EN CONTROLLER =====
+        limpiarEstilos();
+        boolean invalido = false;
+
+        // Validar campos obligatorios
+        if (txtDNI.getText().isBlank()) {
+            txtDNI.getStyleClass().add("campo-invalido");
+            invalido = true;
+        }
+        if (txtNombre.getText().isBlank()) {
+            txtNombre.getStyleClass().add("campo-invalido");
+            invalido = true;
+        }
+        if (txtApellido.getText().isBlank()) {
+            txtApellido.getStyleClass().add("campo-invalido");
+            invalido = true;
+        }
+        if (comboRol.getValue() == null) {
+            comboRol.getStyleClass().add("campo-invalido");
+            invalido = true;
+        }
+
+        // Validar formato DNI
+        if (!txtDNI.getText().isBlank() && !txtDNI.getText().matches("\\d{7,10}")) {
+            txtDNI.getStyleClass().add("campo-invalido");
+            mostrarAlerta("DNI inválido", "El DNI debe contener solo números y tener entre 7 y 10 dígitos.");
+            return;
+        }
+
+        // Validar formato email (si no está vacío)
+        if (!txtEmail.getText().isBlank() && 
+            !txtEmail.getText().matches("^[\\w-.]+@[\\w-]+\\.[a-zA-Z]{2,}$")) {
+            txtEmail.getStyleClass().add("campo-invalido");
+            mostrarAlerta("Email inválido", "El formato del email no es válido.");
+            return;
+        }
+
+        if (invalido) {
+            mostrarAlerta("Campos incompletos", "Complete todos los campos obligatorios.");
+            return;
+        }
+
+        // Validar DNI único
+        if (repositorio.existePersonaConDni(txtDNI.getText().trim())) {
+            txtDNI.getStyleClass().add("campo-invalido");
+            mostrarAlerta("DNI duplicado", "Ya existe una persona con ese DNI.");
+            return;
+        }
+
+        try {
+            // ===== DELEGAR AL MODELO =====
+            Persona nuevaPersona = Persona.crearPersona(
+                txtNombre.getText().trim(),
+                txtApellido.getText().trim(),
+                txtDNI.getText().trim(),
+                txtTelefono.getText().trim(),
+                txtEmail.getText().trim()
+            );
+
+            // ===== PERSISTIR =====
+            repositorio.guardarPersona(nuevaPersona);
+
+            // ===== ACTUALIZAR UI =====
+            mostrarAlerta("Éxito", "Persona guardada correctamente.", Alert.AlertType.INFORMATION);
+            cerrarModal();
+            // TODO: Actualizar tabla
+
+        } catch (IllegalArgumentException e) {
+            // Manejar errores del modelo (aunque no deberían ocurrir tras validaciones)
+            mostrarAlerta("Error", e.getMessage());
+        }
     }
 
     @FXML
@@ -85,6 +166,38 @@ public class ABMPersonaController {
 
     @FXML
     private void bajaPersona() {
+        Object personaSeleccionada = tablaPersonas.getSelectionModel().getSelectedItem();
+        
+        if (personaSeleccionada != null) {
+            Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmacion.setTitle("Confirmar eliminación");
+            confirmacion.setHeaderText(null);
+            confirmacion.setContentText("¿Está seguro de que desea eliminar esta persona?");
+            
+            if (confirmacion.showAndWait().get() == ButtonType.OK) {
+                try {
+                    // TODO: Obtener ID de la persona seleccionada
+                    // repositorio.eliminarPersona(persona.getIdPersona());
+                    mostrarAlerta("Éxito", "Persona eliminada correctamente.", Alert.AlertType.INFORMATION);
+                    // TODO: Actualizar tabla
+                } catch (Exception e) {
+                    mostrarAlerta("Error", "No se pudo eliminar la persona: " + e.getMessage());
+                }
+            }
+        } else {
+            mostrarAlerta("Selección requerida", "Debe seleccionar una persona en la tabla para eliminar.");
+        }
+    }
 
+    private void mostrarAlerta(String titulo, String mensaje) {
+        mostrarAlerta(titulo, mensaje, Alert.AlertType.WARNING);
+    }
+
+    private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
+        Alert alerta = new Alert(tipo);
+        alerta.setTitle(titulo);
+        alerta.setHeaderText(null);
+        alerta.setContentText(mensaje);
+        alerta.showAndWait();
     }
 }
