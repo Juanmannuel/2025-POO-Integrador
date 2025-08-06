@@ -187,7 +187,7 @@ public class ABMEventoController {
                 // Usar métodos del modelo para cambio de estado
                 switch (estadoSeleccionado) {
                     case CONFIRMADO -> nuevoEvento.confirmarEvento();
-                    case EJECUCION -> {
+                    case EJECUCIÓN -> {
                         nuevoEvento.confirmarEvento();
                         nuevoEvento.iniciarEvento();
                     }

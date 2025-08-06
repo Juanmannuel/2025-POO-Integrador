@@ -50,6 +50,11 @@ public class Taller extends Evento implements IEventoConCupo, IEventoConInscripc
     public boolean hayCupoDisponible() {
         return inscriptos < cupoMaximo;
     }
+    
+    @Override
+    public boolean estaCompleto() {
+        return inscriptos >= cupoMaximo;
+    }
 
     // Lógica para asignar instructor
 

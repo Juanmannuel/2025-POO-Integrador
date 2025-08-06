@@ -96,11 +96,11 @@ public abstract class Evento {
         if (this.estado != EstadoEvento.CONFIRMADO) {
             throw new IllegalStateException("Solo se pueden iniciar eventos confirmados");
         }
-        this.estado = EstadoEvento.EJECUCION;
+        this.estado = EstadoEvento.EJECUCIÓN;
     }
     
     public void finalizarEvento() {
-        if (this.estado != EstadoEvento.EJECUCION) {
+        if (this.estado != EstadoEvento.EJECUCIÓN) {
             throw new IllegalStateException("Solo se pueden finalizar eventos en ejecución");
         }
         this.estado = EstadoEvento.FINALIZADO;
