@@ -12,8 +12,10 @@ import com.app_eventos.model.interfaces.IEventoConInscripcion;
 public class Concierto extends Evento implements IEventoConInscripcion {
 
     private List<Persona> artistas = new ArrayList<>();
+    private String artistasTexto; // Campo para el texto de artistas/bandas desde la UI
     private TipoEntrada tipoEntrada;
     private int inscriptos;
+    private int cupoMaximo;
 
     // Constructor
     public Concierto(String nombre,
@@ -74,5 +76,31 @@ public class Concierto extends Evento implements IEventoConInscripcion {
 
     public void setInscriptos(int inscriptos) {
         this.inscriptos = inscriptos;
+    }
+
+    public int getCupoMaximo() {
+        return cupoMaximo;
+    }
+
+    public void setCupoMaximo(int cupoMaximo) {
+        this.cupoMaximo = cupoMaximo;
+    }
+
+    public String getArtistasTexto() {
+        return artistasTexto;
+    }
+
+    public void setArtistasTexto(String artistasTexto) {
+        this.artistasTexto = artistasTexto;
+    }
+
+    // Validaciones específicas del concierto
+    public void validarDatos() {
+        if (cupoMaximo <= 0) {
+            throw new IllegalStateException("El cupo máximo debe ser mayor a 0");
+        }
+        if (tipoEntrada == null) {
+            throw new IllegalStateException("Debe especificar el tipo de entrada (gratuita o paga)");
+        }
     }
 }

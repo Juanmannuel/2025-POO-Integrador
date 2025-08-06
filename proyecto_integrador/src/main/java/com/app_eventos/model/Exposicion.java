@@ -75,4 +75,12 @@ public class Exposicion extends Evento implements IEventoConInscripcion {
     public void setInscriptos(int inscriptos) {
         this.inscriptos = inscriptos;
     }
+
+    // Validaciones específicas de la exposición
+    public void validarDatos() {
+        if (tipoArte == null) {
+            throw new IllegalStateException("Debe seleccionar el tipo de arte para la exposición");
+        }
+        // curador es opcional
+    }
 }

@@ -29,7 +29,7 @@
 
         <!-- Cupo máximo -->
         <Label text="Cupo Máximo" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-        <Spinner fx:id="spinnerCupoMaximo"
+                        <TextField fx:id="txtCupoMaximo" promptText="Ingrese cupo máximo"
                  editable="true"
                  GridPane.rowIndex="1" GridPane.columnIndex="1"/>
     </GridPane>

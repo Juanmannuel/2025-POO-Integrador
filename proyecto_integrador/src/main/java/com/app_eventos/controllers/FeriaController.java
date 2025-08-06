@@ -26,13 +26,31 @@ public class FeriaController {
         radioAireLibre.setSelected(true);
     }
 
-    // public int getCantidadStands() {
-    //     return spinnerCantidadStands.getValue();
-    // }
+    // Métodos getter
+    public int getCantidadStands() {
+        return spinnerCantidadStands.getValue();
+    }
 
-    // public String getAmbienteSeleccionado() {
-    //     if (radioAireLibre.isSelected()) return "AIRE_LIBRE";
-    //     if (radioTechada.isSelected()) return "TECHADO";
-    //     return null;
-    // }
+    public String getAmbienteSeleccionado() {
+        if (radioAireLibre.isSelected()) return "AIRE_LIBRE";
+        if (radioTechada.isSelected()) return "TECHADO";
+        return null;
+    }
+
+    public boolean esAireLibre() {
+        return radioAireLibre.isSelected();
+    }
+
+    // Métodos setter para cargar datos en modo edición
+    public void setCantidadStands(int cantidad) {
+        spinnerCantidadStands.getValueFactory().setValue(cantidad);
+    }
+
+    public void setAireLibre(boolean esAireLibre) {
+        if (esAireLibre) {
+            radioAireLibre.setSelected(true);
+        } else {
+            radioTechada.setSelected(true);
+        }
+    }
 }

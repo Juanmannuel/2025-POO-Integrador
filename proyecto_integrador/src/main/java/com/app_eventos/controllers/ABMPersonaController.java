@@ -7,10 +7,11 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.collections.FXCollections;
+import javafx.scene.control.cell.PropertyValueFactory;
 
 public class ABMPersonaController {
 
-    private Repositorio repositorio = new Repositorio();
+    private Repositorio repositorio = Repositorio.getInstance();
 
     // Filtros
     @FXML private ComboBox<TipoRol> comboTipoRolFiltro;
@@ -18,12 +19,12 @@ public class ABMPersonaController {
     @FXML private TextField txtDNIFiltro;
 
     // Tabla
-    @FXML private TableView<?> tablaPersonas;
-    @FXML private TableColumn<?, ?> colNombre;
-    @FXML private TableColumn<?, ?> colDNI;
-    @FXML private TableColumn<?, ?> colTelefono;
-    @FXML private TableColumn<?, ?> colEmail;
-    @FXML private TableColumn<?, ?> colRol;
+    @FXML private TableView<Persona> tablaPersonas;
+    @FXML private TableColumn<Persona, String> colNombre;
+    @FXML private TableColumn<Persona, String> colDNI;
+    @FXML private TableColumn<Persona, String> colTelefono;
+    @FXML private TableColumn<Persona, String> colEmail;
+    @FXML private TableColumn<Persona, String> colRol;
 
     // Modal
     @FXML private StackPane modalOverlay;
@@ -43,6 +44,27 @@ public class ABMPersonaController {
         comboTipoRolFiltro.setItems(FXCollections.observableArrayList(TipoRol.values()));
         comboRol.setItems(FXCollections.observableArrayList(TipoRol.values()));
         modalOverlay.setVisible(false);  // Ocultar modal por defecto
+        
+        // Configurar columnas de la tabla
+        configurarColumnasTabla();
+        
+        // Cargar datos iniciales
+        actualizarTabla();
+    }
+
+    private void configurarColumnasTabla() {
+        colNombre.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getNombreCompleto()));
+        colDNI.setCellValueFactory(new PropertyValueFactory<>("dni"));
+        colTelefono.setCellValueFactory(new PropertyValueFactory<>("telefono"));
+        colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
+        colRol.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty("Sin rol asignado")); // Por ahora
+    }
+
+    private void actualizarTabla() {
+        var personas = repositorio.obtenerTodasLasPersonas();
+        tablaPersonas.setItems(FXCollections.observableArrayList(personas));
     }
 
     private void limpiarCampos() {
@@ -140,7 +162,7 @@ public class ABMPersonaController {
             // ===== ACTUALIZAR UI =====
             mostrarAlerta("Éxito", "Persona guardada correctamente.", Alert.AlertType.INFORMATION);
             cerrarModal();
-            // TODO: Actualizar tabla
+            actualizarTabla(); // Actualizar la tabla con la nueva persona
 
         } catch (IllegalArgumentException e) {
             // Manejar errores del modelo (aunque no deberían ocurrir tras validaciones)

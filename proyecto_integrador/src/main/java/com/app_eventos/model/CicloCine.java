@@ -13,6 +13,7 @@ public class CicloCine extends Evento implements IEventoConInscripcion {
     private List<Pelicula> peliculas = new ArrayList<>();
     private boolean postCharla;
     private int inscriptos;
+    private int cupoMaximo;
 
     // Constructor
     public CicloCine(String nombre,
@@ -70,5 +71,21 @@ public class CicloCine extends Evento implements IEventoConInscripcion {
 
     public void setInscriptos(int inscriptos) {
         this.inscriptos = inscriptos;
+    }
+
+    public int getCupoMaximo() {
+        return cupoMaximo;
+    }
+
+    public void setCupoMaximo(int cupoMaximo) {
+        this.cupoMaximo = cupoMaximo;
+    }
+
+    // Validaciones específicas del ciclo de cine
+    public void validarDatos() {
+        if (cupoMaximo <= 0) {
+            throw new IllegalStateException("El cupo máximo debe ser mayor a 0");
+        }
+        // peliculas y postCharla son opcionales
     }
 }

@@ -13,7 +13,7 @@ import javafx.scene.layout.StackPane;
 
 public class ABMParticipanteController {
 
-    private Repositorio repositorio = new Repositorio();
+    private Repositorio repositorio = Repositorio.getInstance();
 
     // Filtros
     @FXML private ComboBox<Evento> comboEventoFiltro;
@@ -191,7 +191,7 @@ public class ABMParticipanteController {
             cerrarModal();
             // Actualizar información del evento por si cambió el cupo
             actualizarInfoEvento(evento);
-            // TODO: Actualizar tabla
+            // TODO: Actualizar tabla de participantes
 
         } catch (IllegalStateException e) {
             // Errores de lógica de negocio del modelo

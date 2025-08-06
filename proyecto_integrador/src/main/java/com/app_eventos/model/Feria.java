@@ -66,4 +66,12 @@ public class Feria extends Evento implements IEventoConInscripcion {
     public void setInscriptos(int inscriptos) {
         this.inscriptos = inscriptos;
     }
+
+    // Validaciones específicas de la feria
+    public void validarDatos() {
+        if (cantidadStands <= 0) {
+            throw new IllegalStateException("La cantidad de stands debe ser mayor a 0");
+        }
+        // tipoAmbiente es opcional, por defecto se puede asumir TECHADO
+    }
 }

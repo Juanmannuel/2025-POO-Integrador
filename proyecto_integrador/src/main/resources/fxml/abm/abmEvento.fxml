@@ -24,11 +24,12 @@
                 <Label text="Tipo:"/>
                 <ComboBox fx:id="comboTipoEventoFiltro" promptText="Todos" prefWidth="120"/>
                 <Label text="Estado:"/>
-                <ComboBox promptText="Todos" prefWidth="120"/>
+                <ComboBox fx:id="comboEstadoFiltro" promptText="Todos" prefWidth="120"/>
                 <Label text="Fecha desde:"/>
-                <DatePicker/>
+                <DatePicker fx:id="fechaDesde"/>
                 <Label text="Fecha hasta:"/>
-                <DatePicker/>
+                <DatePicker fx:id="fechaHasta"/>
+                <Button text="Limpiar" onAction="#limpiarFiltros" styleClass="btn-secondary"/>
             </HBox>
 
             <!-- TABLA -->
@@ -46,7 +47,7 @@
             <HBox spacing="12" alignment="CENTER_RIGHT">
                 <Button text="Alta" onAction="#mostrarModal" styleClass="btn-alta" />
                 <Button text="Modificar" styleClass="btn-modificar" onAction="#modificarEvento" />
-                <Button text="Baja" styleClass="btn-baja" />
+                <Button text="Baja" styleClass="btn-baja" onAction="#bajaEvento" />
             </HBox>
         </VBox>
     </VBox>
@@ -87,7 +88,14 @@
                         <ComboBox fx:id="comboEstado" promptText="Seleccione un estado" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
 
                         <Label text="Responsables" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
-                        <ListView prefHeight="100" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+                        <VBox GridPane.rowIndex="7" GridPane.columnIndex="1" spacing="5">
+                            <ListView fx:id="listViewResponsables" prefHeight="80"/>
+                            <HBox spacing="5" alignment="CENTER_LEFT">
+                                <ComboBox fx:id="comboPersonasDisponibles" promptText="Seleccionar persona" prefWidth="150"/>
+                                <Button text="Agregar" onAction="#agregarResponsable" styleClass="btn-secondary"/>
+                                <Button text="Quitar" onAction="#quitarResponsable" styleClass="btn-secondary"/>
+                            </HBox>
+                        </VBox>
 
                         <Pane fx:id="seccionDinamica" GridPane.rowIndex="8" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
                     </GridPane>

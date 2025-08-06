@@ -13,4 +13,14 @@ public class ExposicionController {
     public void initialize() {
         comboTipoArte.getItems().setAll(TipoArte.values());
     }
+
+    // Métodos getter
+    public TipoArte getTipoArteSeleccionado() {
+        return comboTipoArte.getValue();
+    }
+
+    // Métodos setter para cargar datos en modo edición
+    public void setTipoArte(TipoArte tipoArte) {
+        comboTipoArte.setValue(tipoArte);
+    }
 }

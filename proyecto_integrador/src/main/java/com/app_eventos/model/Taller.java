@@ -102,4 +102,12 @@ public class Taller extends Evento implements IEventoConCupo, IEventoConInscripc
     public void setInscriptos(int inscriptos) {
         this.inscriptos = inscriptos;
     }
+
+    // Validaciones específicas del taller
+    public void validarDatos() {
+        if (cupoMaximo <= 0) {
+            throw new IllegalStateException("El cupo máximo debe ser mayor a 0");
+        }
+        // Nota: instructor y modalidad son opcionales según el controller actual
+    }
 }

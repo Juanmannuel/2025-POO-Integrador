@@ -8,6 +8,9 @@ import java.util.List;
 
 public class Repositorio {
     
+    // Instancia única del repositorio (Singleton)
+    private static Repositorio instancia;
+    
     // Almacenamiento en memoria (simulando base de datos)
     private List<Evento> eventos = new ArrayList<>();
     private List<Persona> personas = new ArrayList<>();
@@ -16,6 +19,19 @@ public class Repositorio {
     private Long siguienteIdEvento = 1L;
     private Long siguienteIdPersona = 1L;
     private Long siguienteIdRol = 1L;
+    
+    // Constructor privado para Singleton
+    private Repositorio() {
+        // Constructor privado
+    }
+    
+    // Método para obtener la instancia única
+    public static Repositorio getInstance() {
+        if (instancia == null) {
+            instancia = new Repositorio();
+        }
+        return instancia;
+    }
     
     // ===== MÉTODOS PARA PERSONA =====
     
@@ -66,13 +82,22 @@ public class Repositorio {
     
     public Evento guardarEvento(Evento evento) {
         if (evento.getIdEvento() == null) {
+            // Nuevo evento
             evento.setIdEvento(siguienteIdEvento++);
             eventos.add(evento);
         } else {
-            // Actualizar evento existente
-            int index = eventos.indexOf(evento);
-            if (index >= 0) {
-                eventos.set(index, evento);
+            // Actualizar evento existente - buscar por ID
+            boolean actualizado = false;
+            for (int i = 0; i < eventos.size(); i++) {
+                if (eventos.get(i).getIdEvento().equals(evento.getIdEvento())) {
+                    eventos.set(i, evento);
+                    actualizado = true;
+                    break;
+                }
+            }
+            // Si no se encontró, agregarlo (caso edge)
+            if (!actualizado) {
+                eventos.add(evento);
             }
         }
         return evento;

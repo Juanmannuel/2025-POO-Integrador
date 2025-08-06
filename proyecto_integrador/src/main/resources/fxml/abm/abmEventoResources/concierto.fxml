@@ -21,7 +21,7 @@
         <HBox spacing="87" GridPane.rowIndex="2" GridPane.columnIndex="0">
             <VBox spacing="5">
                 <Label text="Cupo Máximo" />
-                <Spinner fx:id="spinnerCupoMaximo"/>
+                                        <TextField fx:id="txtCupoMaximo" promptText="Ingrese cupo máximo"/>
             </VBox>
             <VBox spacing="5">
                 <Label text="Tipo de Entrada" />
