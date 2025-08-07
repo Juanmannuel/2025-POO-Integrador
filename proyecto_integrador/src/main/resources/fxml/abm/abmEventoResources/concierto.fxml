@@ -14,8 +14,7 @@
 
         <!-- Artistas/Bandas -->
         <Label text="Artistas/Bandas" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <TextArea fx:id="textAreaArtistas" promptText="Ingrese un artista o banda" wrapText="true"
-                    prefWidth="400" prefRowCount="4" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <ListView fx:id="listViewArtistas" prefHeight="100" prefWidth="400" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
 
         <!-- Contenedor horizontal para Cupo Máximo y Tipo de Entrada -->
         <HBox spacing="87" GridPane.rowIndex="2" GridPane.columnIndex="0">

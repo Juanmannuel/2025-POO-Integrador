@@ -1,38 +1,43 @@
 package com.app_eventos.controllers;
 
+import com.app_eventos.model.enums.TipoAmbiente;
 import javafx.fxml.FXML;
-import javafx.scene.control.RadioButton;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
-import javafx.scene.control.ToggleGroup;
 
 public class FeriaController {
 
     @FXML private Spinner<Integer> spinnerCantidadStands;
-    @FXML private RadioButton radioAireLibre;
-    @FXML private RadioButton radioTechada;
+    @FXML private ComboBox<TipoAmbiente> comboAmbiente;
 
     @FXML
     public void initialize() {
+        // Spinner configuración
         SpinnerValueFactory<Integer> valueFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 500, 1);
         spinnerCantidadStands.setValueFactory(valueFactory);
-        spinnerCantidadStands.setEditable(false); // Deshabilita la edición directa
+        spinnerCantidadStands.setEditable(false);
 
-        ToggleGroup grupoAmbiente = new ToggleGroup();
-        radioAireLibre.setToggleGroup(grupoAmbiente);
-        radioTechada.setToggleGroup(grupoAmbiente);
+        // ComboBox de ambiente
+        comboAmbiente.getItems().setAll(TipoAmbiente.values());
+        comboAmbiente.setConverter(new javafx.util.StringConverter<>() {
+            @Override
+            public String toString(TipoAmbiente ambiente) {
+                return ambiente != null ? ambiente.name().charAt(0) + ambiente.name().substring(1).toLowerCase().replace("_", " ") : "";
+            }
 
-        // Opcional: seleccionar uno por defecto
-        radioAireLibre.setSelected(true);
+            @Override
+            public TipoAmbiente fromString(String s) {
+                return TipoAmbiente.valueOf(s.toUpperCase().replace(" ", "_"));
+            }
+        });
     }
 
-    // public int getCantidadStands() {
-    //     return spinnerCantidadStands.getValue();
-    // }
+    public int getCantidadStands() {
+        return spinnerCantidadStands.getValue();
+    }
 
-    // public String getAmbienteSeleccionado() {
-    //     if (radioAireLibre.isSelected()) return "AIRE_LIBRE";
-    //     if (radioTechada.isSelected()) return "TECHADO";
-    //     return null;
-    // }
+    public TipoAmbiente getAmbienteSeleccionado() {
+        return comboAmbiente.getValue();
+    }
 }

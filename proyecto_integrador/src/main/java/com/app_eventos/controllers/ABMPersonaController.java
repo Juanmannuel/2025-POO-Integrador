@@ -48,10 +48,10 @@ public class ABMPersonaController {
             double total = newWidth.doubleValue();
 
             colDNI.setPrefWidth(total * 0.15);        // 15%
-            colNombre.setPrefWidth(total * 0.20);          // 20%
+            colNombre.setPrefWidth(total * 0.20);     // 20%
             colApellido.setPrefWidth(total * 0.20);   // 20%
-            colTelefono.setPrefWidth(total * 0.15);      // 15%
-            colEmail.setPrefWidth(total * 0.30);        // 30%
+            colTelefono.setPrefWidth(total * 0.15);   // 15%
+            colEmail.setPrefWidth(total * 0.30);      // 30%
         });
 
         // Configuración de las columnas para que se muestren datos del modelo Persona

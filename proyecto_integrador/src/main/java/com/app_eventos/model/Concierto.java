@@ -14,6 +14,7 @@ public class Concierto extends Evento implements IEventoConInscripcion {
     private List<Persona> artistas = new ArrayList<>();
     private TipoEntrada tipoEntrada;
     private int inscriptos;
+    private int cupoMaximo;
 
     // Constructor
     public Concierto(String nombre,
@@ -31,7 +32,7 @@ public class Concierto extends Evento implements IEventoConInscripcion {
         this.inscriptos = 0;
     }
 
-    // Modelo RICO
+    
     @Override
     public void inscribir(Persona participante) {
         if (getEstado() != EstadoEvento.CONFIRMADO) {
@@ -74,5 +75,13 @@ public class Concierto extends Evento implements IEventoConInscripcion {
 
     public void setInscriptos(int inscriptos) {
         this.inscriptos = inscriptos;
+    }
+
+    public int getCupoMaximo() {
+        return cupoMaximo;
+    }
+
+    public void setCupoMaximo(int cupoMaximo) {
+        this.cupoMaximo = cupoMaximo;
     }
 }

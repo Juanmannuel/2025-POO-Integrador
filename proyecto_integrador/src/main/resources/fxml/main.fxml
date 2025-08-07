@@ -9,7 +9,7 @@
 <HBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.app_eventos.controllers.MainController">
 
     <!-- Menú de navegación -->
-    <VBox fx:id="menuLateral" spacing="10" styleClass="sidebar" prefWidth="200">
+    <VBox fx:id="menuLateral" spacing="10" styleClass="sidebar" prefWidth="200" minWidth="200" maxWidth="200">
         <Label text="Menú" style="-fx-text-fill: white; -fx-font-size: 20px;" />
         <Button fx:id="btnInicio" text="Inicio" styleClass="sidebar-button selected" />
         <Button fx:id="btnEventos" text="Eventos" onAction="#mostrarEventos" styleClass="sidebar-button" />

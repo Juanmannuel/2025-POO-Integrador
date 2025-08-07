@@ -1,5 +1,4 @@
 package com.app_eventos.model;
-
 import com.app_eventos.model.enums.TipoRol;
 
 public class RolEvento {
@@ -22,8 +21,8 @@ public class RolEvento {
     public RolEvento() {}
 
     // Métodos de utilidad
-    public boolean esResponsable() {
-        return rol == TipoRol.ORGANIZADOR || rol == TipoRol.ORGANIZADOR;
+    public boolean esOrganizador() {
+        return rol == TipoRol.ORGANIZADOR;
     }
 
     public boolean esInstructor() {
@@ -74,6 +73,19 @@ public class RolEvento {
 
     @Override
     public String toString() {
-        return persona + " como " + rol + " en evento " + evento.getNombre();
+        return persona + " se encuentra como " + rol + " en el evento " + evento.getNombre();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        RolEvento that = (RolEvento) obj;
+        return persona.equals(that.persona) && rol == that.rol;
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(persona, rol);
     }
 }

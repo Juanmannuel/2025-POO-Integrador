@@ -1,26 +1,39 @@
 package com.app_eventos.controllers;
 
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 
+import com.app_eventos.model.Evento;
+import com.app_eventos.model.Persona;
+import com.app_eventos.model.RolEvento;
 import com.app_eventos.model.enums.EstadoEvento;
+import com.app_eventos.model.enums.TipoAmbiente;
 import com.app_eventos.model.enums.TipoEntrada;
 import com.app_eventos.model.enums.TipoEvento;
+import com.app_eventos.services.Servicio;
 import com.app_eventos.utils.ComboBoxInicializador;
+
 import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import javafx.util.StringConverter;
 
 import java.io.IOException;
 
-
-
 public class ABMEventoController {
+    private final Servicio servicio = new Servicio();
 
     // Campos de búsqueda y modal
     @FXML private TextField txtNombre;
@@ -33,51 +46,91 @@ public class ABMEventoController {
     @FXML private Spinner<LocalTime> spinnerHoraInicio;
     @FXML private Spinner<LocalTime> spinnerHoraFin;
     @FXML private Pane seccionDinamica;
-    @FXML private TableView<?> tablaEventos;
+    @FXML private VBox contenedorAsignacionRoles;
+    @FXML private TableColumn<Evento, Void> colAcciones;
 
-    @FXML private TableColumn<?, ?> colNombre;
-    @FXML private TableColumn<?, ?> colTipo;
-    @FXML private TableColumn<?, ?> colFechaInicio;
-    @FXML private TableColumn<?, ?> colDuracion;
-    @FXML private TableColumn<?, ?> colEstado;
-    @FXML private TableColumn<?, ?> colResponsables;
-
+    @FXML private TableView<Evento> tablaEventos;
+    @FXML private TableColumn<Evento, String> colNombre;
+    @FXML private TableColumn<Evento, TipoEvento> colTipo;
+    @FXML private TableColumn<Evento, String> colFechaInicio;
+    @FXML private TableColumn<Evento, String> colFechaFin;
+    @FXML private TableColumn<Evento, EstadoEvento> colEstado;
+    @FXML private TableColumn<Evento, String> colResponsables;
+    @FXML private AsigRolEventoController controladorAsignacionRoles;
 
     @FXML
     public void initialize() {
-         tablaEventos.widthProperty().addListener((obs, oldWidth, newWidth) -> { 
+        tablaEventos.widthProperty().addListener((obs, oldWidth, newWidth) -> {
             double total = newWidth.doubleValue();
 
-        colNombre.setPrefWidth(total * 0.20);        // 20%
-        colTipo.setPrefWidth(total * 0.10);          // 10%
-        colFechaInicio.setPrefWidth(total * 0.15);   // 15%
-        colDuracion.setPrefWidth(total * 0.10);      // 10%
-        colEstado.setPrefWidth(total * 0.15);        // 15%
-        colResponsables.setPrefWidth(total * 0.30);  // 30%
+            colNombre.setPrefWidth(total * 0.20);        // 20%
+            colTipo.setPrefWidth(total * 0.10);          // 10%
+            colFechaInicio.setPrefWidth(total * 0.15);   // 15%
+            colEstado.setPrefWidth(total * 0.10);        // 10%
+            colFechaFin.setPrefWidth(total * 0.15);      // 15%
+            colResponsables.setPrefWidth(total * 0.20);  // 20%
+            colAcciones.setPrefWidth(total * 0.10);      // 10%
         });
 
-        // Spinner de hora (de 00:00 a 23:59, con salto de 30 minutos)
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
+
+        colNombre.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombre()));
+        colTipo.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getTipoEvento()));
+        colFechaInicio.setCellValueFactory(data -> {
+            String formateada = data.getValue().getFechaInicio().format(formatter);
+            return new SimpleStringProperty(formateada);
+        });
+        colFechaFin.setCellValueFactory(data -> {
+            String formateada = data.getValue().getFechaFin().format(formatter);
+            return new SimpleStringProperty(formateada);
+        });
+        colEstado.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getEstado()));
+        colResponsables.setCellValueFactory(data -> {
+            String nombres = data.getValue().obtenerResponsables().stream()
+                    .map(p -> p.getNombre() + " " + p.getApellido())
+                    .collect(Collectors.joining(", "));
+            return new SimpleStringProperty(nombres);
+        });
+
+        // Spinner de hora (de 00:00 a 23:59, con salto de 5 minutos)
         spinnerHoraInicio.setValueFactory(crearFactoryHora());
         spinnerHoraFin.setValueFactory(crearFactoryHora());
-
-        // Evita edición manual incorrecta
-        spinnerHoraInicio.setEditable(false);
-        spinnerHoraFin.setEditable(false);
 
         ComboBoxInicializador.cargarTipoEvento(comboTipoEvento);
         ComboBoxInicializador.cargarEstadoEvento(comboEstado);
 
         // Cargar fragmento al cambiar tipo de evento
-        comboTipoEvento.valueProperty().addListener((obs, oldVal, newVal) -> {cargarFragmentoEspecifico(newVal);
-            comboTipoEvento.getStyleClass().remove("campo-invalido");
+        comboTipoEvento.valueProperty().addListener((obs, oldVal, newVal) -> {
+            cargarFragmentoEspecifico(newVal);
         });
+        // Cargar controlador del fragmento de asignación de roles
+        agregarBotonAsignarRol();
+    }
 
+    private void abrirModalAsignacionRoles(Evento evento) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmEventoResources/asignacionRoles.fxml"));
+            VBox vista = loader.load();
+            // Guardar el controlador para acceder luego
+            this.controladorAsignacionRoles = loader.getController();
+
+            Dialog<ButtonType> dialog = new Dialog<>();
+            dialog.setTitle("Asignar Roles");
+            dialog.getDialogPane().setContent(vista);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            dialog.showAndWait();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "No se pudo cargar el formulario de asignación de roles.");
+        }
     }
 
     private SpinnerValueFactory<LocalTime> crearFactoryHora() {
-        LocalTime horaInicial = LocalTime.of(8, 0);
-        LocalTime horaFinal = LocalTime.of(22, 0);
-        int intervaloMinutos = 30;
+        LocalTime horaInicial = LocalTime.of(7, 0);
+        LocalTime horaFinal = LocalTime.of(23, 59);
+        int intervaloMinutos = 5;
 
         return new SpinnerValueFactory<>() {
             private LocalTime value = horaInicial;
@@ -96,21 +149,48 @@ public class ABMEventoController {
                         return LocalTime.parse(s, formatter);
                     }
                 });
-                setValue(horaInicial);
+                setValue(value);
             }
 
             @Override
             public void decrement(int steps) {
                 LocalTime next = value.minusMinutes(steps * intervaloMinutos);
-                if (!next.isBefore(horaInicial)) setValue(next);
+                if (!next.isBefore(horaInicial)) {
+                    value = next;
+                    setValue(value);
+                }
             }
 
             @Override
             public void increment(int steps) {
                 LocalTime next = value.plusMinutes(steps * intervaloMinutos);
-                if (!next.isAfter(horaFinal)) setValue(next);
+                if (!next.isAfter(horaFinal)) {
+                    value = next;
+                    setValue(value);
+                }
             }
         };
+    }
+
+        private void agregarBotonAsignarRol() {
+        colAcciones.setCellFactory(col -> new TableCell<>() {
+            private final Button btn = new Button("Asignar Rol");
+
+            {
+                btn.setOnAction(e -> {
+                    Evento eventoSeleccionado = getTableView().getItems().get(getIndex());
+                    if (eventoSeleccionado != null) {
+                        abrirModalAsignacionRoles(eventoSeleccionado);
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : btn);
+            }
+        });
     }
 
     private void cargarFragmentoEspecifico(TipoEvento tipo) {
@@ -156,18 +236,56 @@ public class ABMEventoController {
 
     @FXML
     private void guardarEvento() {
-    // Captura de datos desde la vista
-    String nombre = txtNombre.getText();
-    TipoEvento tipo = comboTipoEvento.getValue();
-    LocalDate fechaInicio = dateInicio.getValue();
-    LocalDate fechaFin = dateFin.getValue();
-    LocalTime horaInicio = spinnerHoraInicio.getValue();
-    LocalTime horaFin = spinnerHoraFin.getValue();
-    EstadoEvento estado = comboEstado.getValue();
+        // Captura de datos comunes
+        String nombre = txtNombre.getText();
+        TipoEvento tipo = comboTipoEvento.getValue();
+        LocalDate fechaInicio = dateInicio.getValue();
+        LocalDate fechaFin = dateFin.getValue();
+        LocalTime horaInicio = spinnerHoraInicio.getValue();
+        LocalTime horaFin = spinnerHoraFin.getValue();
+        EstadoEvento estado = comboEstado.getValue();
+        List<RolEvento> responsables = new ArrayList<>();
 
-    // En este punto, se podría pasar todo a la capa de servicio (aún no implementada)
-    // Por ahora, simplemente cerramos el modal
-    cerrarModal();
+        // Verificamos que el tipo de evento sea FERIA
+        if (tipo == TipoEvento.FERIA) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmEventoResources/feria.fxml"));
+                Pane feriaPane = loader.load();
+                FeriaController feriaController = loader.getController();
+
+                int cantidadStands = feriaController.getCantidadStands();
+                TipoAmbiente tipoAmbiente = feriaController.getAmbienteSeleccionado();
+
+                // Llamada al método del servicio
+                servicio.crearFeria(nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado, cantidadStands, tipoAmbiente, responsables);
+                tablaEventos.getItems().setAll(servicio.listarEventos());
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                mostrarAlerta("Error", "No se pudo cargar el formulario de Feria.");
+            }
+        }
+
+        if (tipo == TipoEvento.CONCIERTO) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmEventoResources/concierto.fxml"));
+                Pane conciertoPane = loader.load();
+                ConciertoController conciertoController = loader.getController();
+
+                TipoEntrada tipoEntrada = conciertoController.getTipoEntradaSeleccionado();
+                int cupo = conciertoController.getCupoMaximo();
+                List<Persona> artistas = conciertoController.getArtistasSeleccionados();
+
+                servicio.crearConcierto(nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado, tipoEntrada, cupo, artistas);
+                tablaEventos.getItems().setAll(servicio.listarEventos());
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                mostrarAlerta("Error", "No se pudo cargar el formulario de Concierto.");
+            }
+        }
+
+        cerrarModal();
     }
 
     @FXML
