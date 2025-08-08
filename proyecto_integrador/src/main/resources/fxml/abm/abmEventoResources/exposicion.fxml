@@ -16,11 +16,5 @@
             <Label text="Tipo de Arte"/>
             <ComboBox fx:id="comboTipoArte" promptText="Seleccione un tipo" />
         </VBox>
-
-        <!-- Curador -->
-        <VBox spacing="5">
-            <Label text="Curador"/>
-            <ComboBox fx:id="comboCurador" promptText="Seleccione un curador" />
-        </VBox>
     </HBox>
 </VBox>

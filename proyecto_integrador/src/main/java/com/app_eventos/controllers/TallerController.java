@@ -13,9 +13,6 @@ public class TallerController {
     private Spinner<Integer> spinnerCupoMaximo;
 
     @FXML
-    private ComboBox<String> comboInstructor;
-
-    @FXML
     private ComboBox<Modalidad> comboModalidad;
 
     @FXML
@@ -37,8 +34,12 @@ public class TallerController {
 
         // Modalidad enum
         comboModalidad.getItems().setAll(Modalidad.values());
+    }
+    public int getCupoMaximo() {
+        return spinnerCupoMaximo.getValue();
+    }
 
-        // Combo instructor (vacío por ahora)
-        comboInstructor.getItems().clear();
+    public Modalidad getModalidadSeleccionada() {
+        return comboModalidad.getValue();
     }
 }

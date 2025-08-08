@@ -2,15 +2,13 @@ package com.app_eventos.controllers;
 
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 
 import com.app_eventos.model.Evento;
-import com.app_eventos.model.Persona;
-import com.app_eventos.model.RolEvento;
 import com.app_eventos.model.enums.EstadoEvento;
-import com.app_eventos.model.enums.TipoAmbiente;
 import com.app_eventos.model.enums.TipoEntrada;
 import com.app_eventos.model.enums.TipoEvento;
 import com.app_eventos.services.Servicio;
@@ -24,8 +22,6 @@ import javafx.scene.layout.VBox;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import javafx.util.StringConverter;
@@ -105,6 +101,9 @@ public class ABMEventoController {
         });
         // Cargar controlador del fragmento de asignación de roles
         agregarBotonAsignarRol();
+        
+        // Cargar eventos en la tabla
+        tablaEventos.setItems(FXCollections.observableArrayList(servicio.listarEventos()));
     }
 
     private void abrirModalAsignacionRoles(Evento evento) {
@@ -113,6 +112,7 @@ public class ABMEventoController {
             VBox vista = loader.load();
             // Guardar el controlador para acceder luego
             this.controladorAsignacionRoles = loader.getController();
+            controladorAsignacionRoles.setEvento(evento);
 
             Dialog<ButtonType> dialog = new Dialog<>();
             dialog.setTitle("Asignar Roles");
@@ -192,9 +192,11 @@ public class ABMEventoController {
             }
         });
     }
-
-    private void cargarFragmentoEspecifico(TipoEvento tipo) {
+        private Object controladorFragmento; 
+        private void cargarFragmentoEspecifico(TipoEvento tipo) {
         seccionDinamica.getChildren().clear();
+        controladorFragmento = null; // reseteamos
+
         if (tipo == null) return;
 
         String rutaFXML = switch (tipo) {
@@ -209,6 +211,7 @@ public class ABMEventoController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(rutaFXML));
             Node nodo = loader.load();
+            controladorFragmento = loader.getController(); // guardamos la referencia
             seccionDinamica.getChildren().add(nodo);
         } catch (IOException e) {
             e.printStackTrace();
@@ -236,7 +239,6 @@ public class ABMEventoController {
 
     @FXML
     private void guardarEvento() {
-        // Captura de datos comunes
         String nombre = txtNombre.getText();
         TipoEvento tipo = comboTipoEvento.getValue();
         LocalDate fechaInicio = dateInicio.getValue();
@@ -244,49 +246,56 @@ public class ABMEventoController {
         LocalTime horaInicio = spinnerHoraInicio.getValue();
         LocalTime horaFin = spinnerHoraFin.getValue();
         EstadoEvento estado = comboEstado.getValue();
-        List<RolEvento> responsables = new ArrayList<>();
 
-        // Verificamos que el tipo de evento sea FERIA
-        if (tipo == TipoEvento.FERIA) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmEventoResources/feria.fxml"));
-                Pane feriaPane = loader.load();
-                FeriaController feriaController = loader.getController();
-
-                int cantidadStands = feriaController.getCantidadStands();
-                TipoAmbiente tipoAmbiente = feriaController.getAmbienteSeleccionado();
-
-                // Llamada al método del servicio
-                servicio.crearFeria(nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado, cantidadStands, tipoAmbiente, responsables);
-                tablaEventos.getItems().setAll(servicio.listarEventos());
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                mostrarAlerta("Error", "No se pudo cargar el formulario de Feria.");
+        try {
+            if (tipo == TipoEvento.FERIA) {
+                FeriaController feriaCtrl = (FeriaController) controladorFragmento;
+                servicio.crearFeria(
+                    nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado,
+                    feriaCtrl.getCantidadStands(),
+                    feriaCtrl.getAmbienteSeleccionado()
+                );
+            } else if (tipo == TipoEvento.CONCIERTO) {
+                if (controladorFragmento instanceof ConciertoController concCtrl) {
+                    servicio.crearConcierto(
+                    nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado,
+                    concCtrl.getTipoEntradaSeleccionada(),
+                    concCtrl.getCupoMaximo());
+                }
+            } else if (tipo == TipoEvento.EXPOSICION) {
+                if (controladorFragmento instanceof ExposicionController expoCtrl) {
+                    servicio.crearExposicion(
+                        nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado,
+                        expoCtrl.getTipoArteSeleccionado()
+                    );
+                }
+            } else if (tipo == TipoEvento.TALLER) {
+                if (controladorFragmento instanceof TallerController tallerCtrl) {
+                    servicio.crearTaller(
+                        nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado,
+                        tallerCtrl.getCupoMaximo(),
+                        tallerCtrl.getModalidadSeleccionada()
+                    );
+                }
+            } else if (tipo == TipoEvento.CICLO_CINE) {
+                if (controladorFragmento instanceof CicloCineController cineCtrl) {
+                    servicio.crearCicloCine(
+                        nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado,
+                        cineCtrl.isPostCharla(),
+                        cineCtrl.getCupoMaximo(),
+                        cineCtrl.getPeliculasTexto() // por ahora como texto
+                    );
+                }
             }
-        }
 
-        if (tipo == TipoEvento.CONCIERTO) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmEventoResources/concierto.fxml"));
-                Pane conciertoPane = loader.load();
-                ConciertoController conciertoController = loader.getController();
-
-                TipoEntrada tipoEntrada = conciertoController.getTipoEntradaSeleccionado();
-                int cupo = conciertoController.getCupoMaximo();
-                List<Persona> artistas = conciertoController.getArtistasSeleccionados();
-
-                servicio.crearConcierto(nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado, tipoEntrada, cupo, artistas);
-                tablaEventos.getItems().setAll(servicio.listarEventos());
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                mostrarAlerta("Error", "No se pudo cargar el formulario de Concierto.");
-            }
-        }
-
+        // se refresca la tabla
+        tablaEventos.getItems().setAll(FXCollections.observableArrayList(servicio.listarEventos()));
         cerrarModal();
+
+    } catch (IllegalArgumentException | IllegalStateException ex) {
+        mostrarAlerta("Error de validación", ex.getMessage());
     }
+}
 
     @FXML
     private void modificarEvento() {

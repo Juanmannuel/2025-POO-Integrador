@@ -4,35 +4,41 @@ import java.time.LocalDateTime;
 
 import com.app_eventos.model.enums.TipoAmbiente;
 import com.app_eventos.model.enums.TipoEvento;
+import com.app_eventos.model.enums.TipoRol;
 
 public class Feria extends Evento {
 
     private int cantidadStands;
     private TipoAmbiente tipoAmbiente;
 
-    // Constructor
     public Feria(String nombre,
                  LocalDateTime fechaInicio,
                  LocalDateTime fechaFin,
                  int cantidadStands,
                  TipoAmbiente tipoAmbiente) {
         super(nombre, fechaInicio, fechaFin, TipoEvento.FERIA);
-        this.cantidadStands = cantidadStands;
-        this.tipoAmbiente = tipoAmbiente;
+        setCantidadStands(cantidadStands);
+        setTipoAmbiente(tipoAmbiente);
     }
 
     public Feria() {
         super();
-        this.setTipoEvento(TipoEvento.FERIA);
+        setTipoEvento(TipoEvento.FERIA);
     }
 
-    // Getters y Setters
+    @Override
+    protected boolean rolPermitido(TipoRol rol) {
+        return rol == TipoRol.ORGANIZADOR;
+    }
 
     public int getCantidadStands() {
         return cantidadStands;
     }
 
     public void setCantidadStands(int cantidadStands) {
+        if (cantidadStands <= 0) {
+            throw new IllegalArgumentException("La cantidad de stands debe ser mayor a cero.");
+        }
         this.cantidadStands = cantidadStands;
     }
 
@@ -41,6 +47,9 @@ public class Feria extends Evento {
     }
 
     public void setTipoAmbiente(TipoAmbiente tipoAmbiente) {
+        if (tipoAmbiente == null) {
+            throw new IllegalArgumentException("El tipo de ambiente no puede ser nulo.");
+        }
         this.tipoAmbiente = tipoAmbiente;
     }
 }

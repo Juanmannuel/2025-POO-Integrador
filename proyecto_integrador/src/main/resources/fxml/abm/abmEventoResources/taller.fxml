@@ -10,12 +10,6 @@
     <Label text="Datos específicos de Taller" style="-fx-font-weight: bold;" />
 
     <GridPane hgap="188" vgap="12">
-
-        <!-- Instructor -->
-        <Label text="Instructor" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <ComboBox fx:id="comboInstructor" promptText="Seleccione un instructor"
-                GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-
         <!-- Cupo máximo -->
         <Label text="Cupo máximo" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
         <Spinner fx:id="spinnerCupoMaximo"

@@ -1,5 +1,6 @@
 package com.app_eventos.controllers;
 
+import com.app_eventos.model.Evento;
 import com.app_eventos.model.Persona;
 import com.app_eventos.model.RolEvento;
 import com.app_eventos.model.enums.TipoRol;
@@ -24,6 +25,7 @@ public class AsigRolEventoController {
 
     private final ObservableList<RolEvento> rolesEvento = FXCollections.observableArrayList();
     private final Servicio servicio = Servicio.getInstance();
+    private Evento evento;
 
     @FXML
     public void initialize() {
@@ -50,14 +52,13 @@ public class AsigRolEventoController {
             return;
         }
 
-        RolEvento nuevo = new RolEvento(null, persona, rol);
+        RolEvento nuevo = new RolEvento(evento, persona, rol); // ✅ USAMOS el evento recibido
         if (!rolesEvento.contains(nuevo)) {
             rolesEvento.add(nuevo);
         }
 
         comboPersona.getSelectionModel().clearSelection();
         comboTipoRol.getSelectionModel().clearSelection();
-        
     }
 
     @FXML
@@ -66,7 +67,7 @@ public class AsigRolEventoController {
         if (seleccionado != null) {
             rolesEvento.remove(seleccionado);
         } else {
-            mostrarAlerta("Atención", "Debe seleccionar un rol para eliminar.");
+            mostrarAlerta("Atención", "Debe seleccionar la persona con su rol para eliminarla.");
         }
     }
 
@@ -81,4 +82,10 @@ public class AsigRolEventoController {
     public ObservableList<RolEvento> getRolesAsignados() {
         return rolesEvento;
     }
+
+        public void setEvento(Evento evento) {
+        this.evento = evento;
+    }
+
+    
 }

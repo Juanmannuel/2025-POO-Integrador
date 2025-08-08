@@ -1,87 +1,105 @@
 package com.app_eventos.model;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.time.LocalDateTime;
 
-import com.app_eventos.model.enums.TipoEvento;
 import com.app_eventos.model.enums.TipoEntrada;
+import com.app_eventos.model.enums.TipoEvento;
+import com.app_eventos.model.enums.TipoRol;
 import com.app_eventos.model.enums.EstadoEvento;
-import com.app_eventos.model.interfaces.IEventoConInscripcion;
+import com.app_eventos.model.interfaces.IEventoConCupo;
 
-public class Concierto extends Evento implements IEventoConInscripcion {
+public class Concierto extends Evento implements IEventoConCupo {
 
-    private List<Persona> artistas = new ArrayList<>();
     private TipoEntrada tipoEntrada;
-    private int inscriptos;
     private int cupoMaximo;
+    private final List<Persona> participantes = new ArrayList<>();
 
-    // Constructor
     public Concierto(String nombre,
                      LocalDateTime fechaInicio,
                      LocalDateTime fechaFin,
-                     TipoEntrada tipoEntrada) {
+                     TipoEntrada tipoEntrada,
+                     int cupoMaximo) {
         super(nombre, fechaInicio, fechaFin, TipoEvento.CONCIERTO);
-        this.tipoEntrada = tipoEntrada;
-        this.inscriptos = 0;
+        setTipoEntrada(tipoEntrada);
+        setCupoMaximo(cupoMaximo);
     }
 
     public Concierto() {
         super();
-        this.setTipoEvento(TipoEvento.CONCIERTO);
-        this.inscriptos = 0;
+        setTipoEvento(TipoEvento.CONCIERTO);
     }
 
-    
+    // Implementación de IEventoConInscripcion 
     @Override
-    public void inscribir(Persona participante) {
+    public void inscribirParticipante(Persona persona) {
         if (getEstado() != EstadoEvento.CONFIRMADO) {
-            throw new IllegalStateException("El concierto debe estar confirmado para inscribir.");
+            throw new IllegalStateException("El concierto debe estar confirmado para inscribir participantes.");
         }
-        this.inscriptos++;
-    }
-
-    public void agregarArtista(Persona artista) {
-        if (!artistas.contains(artista)) {
-            artistas.add(artista);
+        if (participantes.size() >= cupoMaximo) {
+            throw new IllegalStateException("No se pueden inscribir más participantes, cupo completo.");
         }
+        if (participantes.contains(persona)) {
+            throw new IllegalArgumentException("El participante ya está inscrito.");
+        }
+        participantes.add(persona);
     }
 
-    public void quitarArtista(Persona artista) {
-        artistas.remove(artista);
+    @Override
+    public void desinscribirParticipante(Persona persona) {
+        participantes.remove(persona);
     }
 
-    // Getters y Setters
-
-    public List<Persona> getArtistas() {
-        return artistas;
+    @Override
+    public List<Persona> getParticipantes() {
+        return new ArrayList<>(participantes);
     }
 
-    public void setArtistas(List<Persona> artistas) {
-        this.artistas = artistas;
+    // Implementación de IEventoConCupo 
+    @Override
+    public boolean hayCupoDisponible() {
+        return participantes.size() < cupoMaximo;
     }
 
+    @Override
+    public boolean tieneCupoDisponible() {
+        return hayCupoDisponible();
+    }
+
+    @Override
+    public int getCupoMaximo() {
+        return cupoMaximo;
+    }
+
+    @Override
+    public void setCupoMaximo(int cupoMaximo) {
+        if (cupoMaximo <= 0) {
+            throw new IllegalArgumentException("El cupo máximo debe ser mayor a cero.");
+        }
+        this.cupoMaximo = cupoMaximo;
+    }
+
+    @Override
+    public int getCupoDisponible() {
+        return cupoMaximo - participantes.size();
+    }
+
+    // Lógica de roles permitidos
+    @Override
+    protected boolean rolPermitido(TipoRol rol) {
+        return rol == TipoRol.ARTISTA;
+    }
+
+    // Getters y setters propios
     public TipoEntrada getTipoEntrada() {
         return tipoEntrada;
     }
 
     public void setTipoEntrada(TipoEntrada tipoEntrada) {
+        if (tipoEntrada == null) {
+            throw new IllegalArgumentException("El tipo de entrada no puede ser nulo.");
+        }
         this.tipoEntrada = tipoEntrada;
-    }
-
-    public int getInscriptos() {
-        return inscriptos;
-    }
-
-    public void setInscriptos(int inscriptos) {
-        this.inscriptos = inscriptos;
-    }
-
-    public int getCupoMaximo() {
-        return cupoMaximo;
-    }
-
-    public void setCupoMaximo(int cupoMaximo) {
-        this.cupoMaximo = cupoMaximo;
     }
 }
