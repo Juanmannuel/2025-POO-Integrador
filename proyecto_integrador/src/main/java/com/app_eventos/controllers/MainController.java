@@ -43,6 +43,12 @@ public class MainController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmEvento.fxml"));
             Parent vistaEventos = loader.load();
             contenidoCentral.getChildren().setAll(vistaEventos);
+            
+            // Refrescar datos en la ventana de eventos
+            ABMEventoController eventoController = loader.getController();
+            if (eventoController != null) {
+                eventoController.refrescarDatos();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -54,7 +60,12 @@ public class MainController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmPersona.fxml"));
             Parent vistaPersonas = loader.load();
             contenidoCentral.getChildren().setAll(vistaPersonas);
-
+            
+            // Refrescar datos en la ventana de personas
+            ABMPersonaController personaController = loader.getController();
+            if (personaController != null) {
+                personaController.refrescarDatos();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -66,6 +77,12 @@ public class MainController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmParticipante.fxml"));
             Parent vistaParticipantes = loader.load();
             contenidoCentral.getChildren().setAll(vistaParticipantes);
+            
+            // Refrescar datos en la ventana de participantes
+            ABMParticipanteController participanteController = loader.getController();
+            if (participanteController != null) {
+                participanteController.refrescarDatos();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

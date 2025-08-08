@@ -28,7 +28,7 @@ import javafx.util.StringConverter;
 import java.io.IOException;
 
 public class ABMEventoController {
-    private final Servicio servicio = new Servicio();
+    private final Servicio servicio = Servicio.getInstance();
 
     // Campos de búsqueda y modal
     @FXML private TextField txtNombre;
@@ -310,5 +310,10 @@ public class ABMEventoController {
         alerta.setHeaderText(null);
         alerta.setContentText(mensaje);
         alerta.showAndWait();
+    }
+    
+    // Método para refrescar datos cuando se navega a esta ventana
+    public void refrescarDatos() {
+        tablaEventos.getItems().setAll(servicio.listarEventos());
     }
 }
