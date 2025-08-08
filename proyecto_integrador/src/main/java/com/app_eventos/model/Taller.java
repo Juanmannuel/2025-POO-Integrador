@@ -15,6 +15,7 @@ public class Taller extends Evento implements IEventoConCupo {
     private int cupoMaximo;
     private final List<Persona> participantes = new ArrayList<>();
     private Modalidad modalidad;
+    private Persona instructor;
 
     // Constructor con datos obligatorios
     public Taller(String nombre,
@@ -57,10 +58,31 @@ public class Taller extends Evento implements IEventoConCupo {
         return new ArrayList<>(participantes);
     }
 
-    // Implementación de IEventoConCupo
+    @Override
+    public boolean hayCupoDisponible() {
+        return participantes.size() < cupoMaximo;
+    }
+
+    @Override
+    public boolean tieneCupoDisponible() {
+        return hayCupoDisponible();
+    }
+
     @Override
     public int getCupoMaximo() {
         return cupoMaximo;
+    }
+
+    // Lógica para asignar instructor
+    public void asignarInstructor(Persona persona) {
+        if (this.instructor != null) {
+            throw new IllegalStateException("Ya hay un instructor asignado.");
+        }
+        this.instructor = persona;
+    }
+
+    public void quitarInstructor() {
+        this.instructor = null;
     }
 
     @Override

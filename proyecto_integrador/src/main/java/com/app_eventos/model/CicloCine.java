@@ -67,6 +67,16 @@ public class CicloCine extends Evento implements IEventoConCupo {
 
     // Implementación de IEventoConCupo 
     @Override
+    public boolean hayCupoDisponible() {
+        return participantes.size() < cupoMaximo;
+    }
+
+    @Override
+    public boolean tieneCupoDisponible() {
+        return hayCupoDisponible();
+    }
+
+    @Override
     public int getCupoMaximo() {
         return cupoMaximo;
     }

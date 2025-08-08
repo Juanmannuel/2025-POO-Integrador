@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.app_eventos.model.enums.EstadoEvento;
 import com.app_eventos.model.enums.TipoEvento;
@@ -74,6 +75,57 @@ public abstract class Evento {
     // Devuelve todos los responsables sin filtrar.
     public List<RolEvento> obtenerTodosLosRoles() {
         return new ArrayList<>(roles);
+    }
+
+    // ⭐ MÉTODOS DE NEGOCIO PARA PARTICIPACIONES
+
+    /**
+     * Verifica si el evento puede recibir inscripciones
+     */
+    public boolean puedeInscribirParticipantes() {
+        return this.estado == EstadoEvento.CONFIRMADO;
+    }
+
+    /**
+     * Verifica si una persona ya tiene un rol en este evento
+     */
+    public boolean personaTieneRol(Persona persona) {
+        return this.roles.stream()
+                .anyMatch(rol -> rol.getPersona().equals(persona) && rol.estaActivo());
+    }
+
+    /**
+     * Obtiene el rol activo de una persona en este evento
+     */
+    public Optional<RolEvento> obtenerRolPersona(Persona persona) {
+        return this.roles.stream()
+                .filter(rol -> rol.getPersona().equals(persona) && rol.estaActivo())
+                .findFirst();
+    }
+
+    /**
+     * Cuenta los participantes activos en el evento
+     */
+    public long contarParticipantesActivos() {
+        return this.roles.stream()
+                .filter(rol -> rol.esParticipante() && rol.estaActivo())
+                .count();
+    }
+
+    /**
+     * Obtiene todos los roles activos del evento
+     */
+    public List<RolEvento> obtenerRolesActivos() {
+        return this.roles.stream()
+                .filter(RolEvento::estaActivo)
+                .toList();
+    }
+
+    /**
+     * Agrega un rol al evento (usado internamente)
+     */
+    public void agregarRol(RolEvento rol) {
+        this.roles.add(rol);
     }
 
     // Calcula la duración estimada del evento.

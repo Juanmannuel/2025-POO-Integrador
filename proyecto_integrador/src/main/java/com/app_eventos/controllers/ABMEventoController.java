@@ -2,6 +2,7 @@ package com.app_eventos.controllers;
 
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -28,7 +29,7 @@ import javafx.util.StringConverter;
 import java.io.IOException;
 
 public class ABMEventoController {
-    private final Servicio servicio = new Servicio();
+    private final Servicio servicio = Servicio.getInstance();
 
     // Campos de búsqueda y modal
     @FXML private TextField txtNombre;
@@ -100,6 +101,9 @@ public class ABMEventoController {
         });
         // Cargar controlador del fragmento de asignación de roles
         agregarBotonAsignarRol();
+        
+        // Cargar eventos en la tabla
+        tablaEventos.setItems(FXCollections.observableArrayList(servicio.listarEventos()));
     }
 
     private void abrirModalAsignacionRoles(Evento evento) {
@@ -285,7 +289,7 @@ public class ABMEventoController {
             }
 
         // se refresca la tabla
-        tablaEventos.getItems().setAll(servicio.listarEventos());
+        tablaEventos.getItems().setAll(FXCollections.observableArrayList(servicio.listarEventos()));
         cerrarModal();
 
     } catch (IllegalArgumentException | IllegalStateException ex) {
