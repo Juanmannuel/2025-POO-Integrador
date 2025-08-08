@@ -36,7 +36,7 @@ public class RolEvento {
     public boolean esArtista() {
         return rol == TipoRol.ARTISTA;
     }
-
+    
     public boolean esParticipante() {
         return rol == TipoRol.PARTICIPANTE;
     }

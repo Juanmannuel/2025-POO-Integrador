@@ -1,47 +1,33 @@
 package com.app_eventos.controllers;
 
-import com.app_eventos.model.Persona;
 import com.app_eventos.model.enums.TipoEntrada;
-import com.app_eventos.services.Servicio;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
-
-import java.util.List;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 
 public class ConciertoController {
 
-    @FXML private ComboBox<TipoEntrada> comboTipoEntradaConcierto;
-    @FXML private Spinner<Integer> spinnerCupoMaximo;
-    @FXML private ListView<Persona> listViewArtistas;
+    @FXML
+    private Spinner<Integer> spinnerCupoMaximo;
 
-    private final Servicio servicio = new Servicio();
+    @FXML
+    private ComboBox<TipoEntrada> comboTipoEntradaConcierto;
 
     @FXML
     public void initialize() {
+        // Cupo máximo entre 1 y 100000, valor inicial 1
+        spinnerCupoMaximo.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 5000, 1));
+
+        // Cargar enum TipoEntrada
         comboTipoEntradaConcierto.getItems().setAll(TipoEntrada.values());
-        comboTipoEntradaConcierto.setPromptText("Seleccione una opción");
-
-        spinnerCupoMaximo.setValueFactory(
-            new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 5000, 0)
-        );
-        spinnerCupoMaximo.setEditable(false);
-
-        // Cargar artistas (filtrar por rol ARTISTA si tenés ese dato)
-        ObservableList<Persona> personas = servicio.obtenerPersonas();
-        listViewArtistas.setItems(personas);
-        listViewArtistas.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-    }
-
-    public TipoEntrada getTipoEntradaSeleccionado() {
-        return comboTipoEntradaConcierto.getValue();
     }
 
     public int getCupoMaximo() {
         return spinnerCupoMaximo.getValue();
     }
 
-    public List<Persona> getArtistasSeleccionados() {
-        return listViewArtistas.getSelectionModel().getSelectedItems();
+    public TipoEntrada getTipoEntradaSeleccionada() {
+        return comboTipoEntradaConcierto.getValue();
     }
 }

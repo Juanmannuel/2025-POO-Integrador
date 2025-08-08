@@ -12,12 +12,8 @@
 
     <GridPane hgap="10" vgap="10">
 
-        <!-- Artistas/Bandas -->
-        <Label text="Artistas/Bandas" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <ListView fx:id="listViewArtistas" prefHeight="100" prefWidth="400" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-
         <!-- Contenedor horizontal para Cupo Máximo y Tipo de Entrada -->
-        <HBox spacing="87" GridPane.rowIndex="2" GridPane.columnIndex="0">
+        <HBox spacing="87" GridPane.rowIndex="0" GridPane.columnIndex="0">
             <VBox spacing="5">
                 <Label text="Cupo Máximo" />
                 <Spinner fx:id="spinnerCupoMaximo"/>

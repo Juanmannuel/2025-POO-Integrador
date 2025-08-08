@@ -42,4 +42,16 @@ public class CicloCineController {
         // Seleccionar "No" por defecto (opcional)
         radioNo.setSelected(true);
     }
+    public int getCupoMaximo() {
+        return spinnerCupoMaximo.getValue();
+    }
+
+    public boolean isPostCharla() {
+        return radioSi.isSelected();
+    }
+
+    // Por ahora, el TextArea devuelve solo texto separado por saltos de línea
+    public String getPeliculasTexto() {
+        return txtPeliculas.getText();
+    }
 }
