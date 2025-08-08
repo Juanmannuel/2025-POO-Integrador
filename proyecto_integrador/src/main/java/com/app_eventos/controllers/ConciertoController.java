@@ -15,7 +15,7 @@ public class ConciertoController {
     @FXML private Spinner<Integer> spinnerCupoMaximo;
     @FXML private ListView<Persona> listViewArtistas;
 
-    private final Servicio servicio = new Servicio();
+    private final Servicio servicio = Servicio.getInstance();
 
     @FXML
     public void initialize() {

@@ -33,7 +33,7 @@ public class ABMPersonaController {
     @FXML private TextField txtTelefono;
     @FXML private TextField txtEmail;
 
-    private final Servicio servicio = new Servicio();
+    private final Servicio servicio = Servicio.getInstance();
 
     // Persona actualmente seleccionada en la tabla 
     private Persona personaSeleccionada = null;

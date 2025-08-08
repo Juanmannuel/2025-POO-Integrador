@@ -23,7 +23,7 @@ public class AsigRolEventoController {
     @FXML private TableColumn<RolEvento, String> colNombre;
 
     private final ObservableList<RolEvento> rolesEvento = FXCollections.observableArrayList();
-    private final Servicio servicio = new Servicio();
+    private final Servicio servicio = Servicio.getInstance();
 
     @FXML
     public void initialize() {

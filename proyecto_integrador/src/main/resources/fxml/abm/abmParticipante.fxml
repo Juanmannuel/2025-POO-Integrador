@@ -38,6 +38,7 @@
                     <TableColumn fx:id="colTelefono" text="Teléfono" />
                     <TableColumn fx:id="colEmail" text="Email" />
                     <TableColumn fx:id="colEstadoEvento" text="Estado Evento" />
+                    <TableColumn fx:id="colFechaAsignacion" text="Fecha Asignación" />
                 </columns>
             </TableView>
 

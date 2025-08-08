@@ -33,7 +33,7 @@ import javafx.util.StringConverter;
 import java.io.IOException;
 
 public class ABMEventoController {
-    private final Servicio servicio = new Servicio();
+    private final Servicio servicio = Servicio.getInstance();
 
     // Campos de búsqueda y modal
     @FXML private TextField txtNombre;

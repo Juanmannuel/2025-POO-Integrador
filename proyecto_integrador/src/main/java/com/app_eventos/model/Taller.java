@@ -51,6 +51,16 @@ public class Taller extends Evento implements IEventoConCupo, IEventoConInscripc
         return inscriptos < cupoMaximo;
     }
 
+    @Override
+    public boolean tieneCupoDisponible() {
+        return hayCupoDisponible();
+    }
+
+    @Override
+    public int getCupoMaximo() {
+        return cupoMaximo;
+    }
+
     // Lógica para asignar instructor
 
     public void asignarInstructor(Persona persona) {
@@ -66,9 +76,7 @@ public class Taller extends Evento implements IEventoConCupo, IEventoConInscripc
 
     // Getters y setters
 
-    public int getCupoMaximo() {
-        return cupoMaximo;
-    }
+    // getCupoMaximo() ya está implementado arriba para la interfaz
 
     public void setCupoMaximo(int cupoMaximo) {
         this.cupoMaximo = cupoMaximo;
