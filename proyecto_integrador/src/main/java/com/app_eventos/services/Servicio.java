@@ -15,7 +15,7 @@ import com.app_eventos.model.enums.TipoAmbiente;
 import com.app_eventos.model.enums.TipoArte;
 import com.app_eventos.model.enums.TipoEntrada;
 import com.app_eventos.model.enums.TipoRol;
-import com.app_eventos.model.interfaces.IEventoConInscripcion;
+import com.app_eventos.repository.Repositorio;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -29,22 +29,24 @@ import java.util.stream.Collectors;
 
 public class Servicio {
     
-    private static Servicio instance;
+    // Instancia estática compartida para todos los controladores
+    private static final Servicio INSTANCE = new Servicio();
     
-    public static Servicio getInstance() {
-        if (instance == null) {
-            instance = new Servicio();
-        }
-        return instance;
-    }
+    private List<Evento> eventos = new ArrayList<>();
+    private final Repositorio repositorio = new Repositorio();
     
-    private Servicio() {
-        cargarPersonasDePrueba();
-    }
-
-    private final List<Evento> eventos = new ArrayList<>();
-    private final ObservableList<RolEvento> participantesInscritos = FXCollections.observableArrayList();
+    // Simulación de base de datos en memoria
     private static final ObservableList<Persona> personas = FXCollections.observableArrayList();
+    
+    // Constructor privado para Singleton
+    private Servicio() {
+        cargarPersonasDePrueba(); // Datos de ejemplo para testeo
+    }
+    
+    // Método para obtener la instancia compartida
+    public static Servicio getInstance() {
+        return INSTANCE;
+    }
 
     // ====== MÉTODOS PRIVADOS AUXILIARES ======
     
@@ -55,6 +57,8 @@ public class Servicio {
     private void agregarEvento(Evento evento, EstadoEvento estado) {
         evento.setEstado(estado);
         eventos.add(evento);
+        // Sincronizar con el repositorio para que esté disponible en ABM Participante
+        repositorio.agregarEvento(evento);
     }
     
     private void procesarPeliculas(CicloCine ciclo, String peliculasTexto) {
@@ -129,32 +133,6 @@ public class Servicio {
         return new ArrayList<>(eventos);
     }
 
-    // ====== MÉTODOS PARA PARTICIPANTES ======
-    
-    public ObservableList<RolEvento> obtenerParticipantesInscritos() {
-        return participantesInscritos;
-    }
-    
-    public void inscribirParticipante(Evento evento, Persona persona) {
-        RolEvento inscripcion = new RolEvento(evento, persona, TipoRol.PARTICIPANTE);
-        participantesInscritos.add(inscripcion);
-        
-        if (evento instanceof IEventoConInscripcion eventoConInscripcion) {
-            eventoConInscripcion.inscribirParticipante(persona);
-        }
-    }
-    
-    public void eliminarParticipante(Evento evento, Persona persona) {
-        participantesInscritos.removeIf(rol -> 
-            rol.getEvento().equals(evento) && 
-            rol.getPersona().equals(persona) && 
-            rol.getRol() == TipoRol.PARTICIPANTE);
-        
-        if (evento instanceof IEventoConInscripcion eventoConInscripcion) {
-            eventoConInscripcion.desinscribirParticipante(persona);
-        }
-    }
-    
     // ====== MÉTODOS PARA PERSONAS ======
     
     public ObservableList<Persona> obtenerPersonas() {
@@ -188,9 +166,107 @@ public class Servicio {
     }
 
     private void cargarPersonasDePrueba() {
-        if (personas.isEmpty()) {
-            personas.add(new Persona("Ana", "González", "12345678", "12345678", "ana@mail.com"));
-            personas.add(new Persona("Luis", "Pérez", "87654321", "56781234", "luis@mail.com"));
+        try {
+            if (personas.isEmpty()) {
+                personas.add(new Persona("Ana", "González", "12345678", "12345678", "ana@mail.com"));
+                personas.add(new Persona("Luis", "Pérez", "87654321", "56781234", "luis@mail.com"));
+            }
+        } catch (Exception e) {
+            // Si hay error al cargar datos de prueba, no hacer nada
+            // Los datos se pueden cargar manualmente desde la UI
+            System.err.println("Error al cargar datos de prueba: " + e.getMessage());
+        }
+    }
+
+    // ⭐ NUEVOS MÉTODOS PARA ABM PARTICIPANTE - MODELO RICO
+
+    /**
+     * Factory method: Crea una nueva participación validando reglas de negocio
+     * La validación ocurre en el constructor del modelo RolEvento
+     */
+    public RolEvento crearParticipacion(Evento evento, Persona persona, TipoRol rol) {
+        try {
+            // El modelo rico valida todo en el constructor
+            return new RolEvento(evento, persona, rol);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al crear participación: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Guarda una participación (intermediario con repositorio)
+     */
+    public void guardarParticipacion(RolEvento rolEvento) {
+        try {
+            repositorio.guardarRolEvento(rolEvento);
+            // También agregar al evento para mantener consistencia
+            rolEvento.getEvento().agregarRol(rolEvento);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al guardar participación: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Elimina una participación (borrado lógico)
+     */
+    public void eliminarParticipacion(RolEvento rolEvento) {
+        try {
+            // La lógica de borrado está en el modelo
+            rolEvento.darDeBaja();
+            repositorio.actualizarRolEvento(rolEvento);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al eliminar participación: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Obtiene todas las participaciones activas (TODOS los roles)
+     */
+    public ObservableList<RolEvento> obtenerParticipacionesActivas() {
+        return repositorio.obtenerRolesActivos();
+    }
+
+    /**
+     * Obtiene SOLO participantes (rol PARTICIPANTE) activos
+     */
+    public ObservableList<RolEvento> obtenerSoloParticipantes() {
+        return repositorio.obtenerSoloParticipantes();
+    }
+
+    /**
+     * Filtra participaciones por criterios (delegado al repositorio)
+     */
+    public ObservableList<RolEvento> filtrarParticipaciones(String nombreEvento, String nombrePersona, String dni) {
+        return repositorio.filtrarRoles(nombreEvento, nombrePersona, dni);
+    }
+
+    /**
+     * Filtra SOLO participantes (rol PARTICIPANTE) por criterios
+     */
+    public ObservableList<RolEvento> filtrarSoloParticipantes(String nombreEvento, String nombrePersona, String dni) {
+        return repositorio.filtrarSoloParticipantes(nombreEvento, nombrePersona, dni);
+    }
+
+    /**
+     * Obtiene eventos disponibles para inscripción
+     */
+    public ObservableList<Evento> obtenerEventosDisponibles() {
+        // Usar la lista de eventos del Servicio (donde se guardan los eventos creados)
+        return eventos.stream()
+                .filter(evento -> evento.puedeInscribirParticipantes())
+                .collect(Collectors.toCollection(FXCollections::observableArrayList));
+    }
+
+    /**
+     * Reactiva una participación dada de baja
+     */
+    public void reactivarParticipacion(RolEvento rolEvento) {
+        try {
+            // La lógica de reactivación está en el modelo
+            rolEvento.reactivar();
+            repositorio.actualizarRolEvento(rolEvento);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al reactivar participación: " + e.getMessage(), e);
         }
     }
 }
