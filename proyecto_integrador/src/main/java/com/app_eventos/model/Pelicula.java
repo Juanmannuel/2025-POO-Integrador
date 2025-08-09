@@ -7,7 +7,7 @@ public class Pelicula {
     private Long idPelicula;
     private String titulo;
     private int duracionMinutos;
-    private TipoPelicula tipo; // ✅ ahora siempre enum
+    private TipoPelicula tipo;
 
     // Constructor principal (obligatorio título, duración y tipo)
     public Pelicula(String titulo, int duracionMinutos, TipoPelicula tipo) {
@@ -17,7 +17,6 @@ public class Pelicula {
     }
 
    // Validaciones
-
     public void setTitulo(String titulo) {
         if (titulo == null || titulo.isBlank()) {
             throw new IllegalArgumentException("El título no puede estar vacío");

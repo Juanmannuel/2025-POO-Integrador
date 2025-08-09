@@ -2,47 +2,42 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.fxml.*?>
 
 <VBox spacing="15"
       xmlns="http://javafx.com/javafx/21.0.1"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.app_eventos.controllers.CicloCineController">
 
-    <!-- TÍTULO -->
     <Label text="Datos específicos de Ciclo de Cine" style="-fx-font-weight: bold;" />
 
-    <!-- PELÍCULAS A PROYECTAR -->
-    <VBox spacing="5">
-        <Label text="Películas a Proyectar" />
-        <TextArea fx:id="txtPeliculas"
-                  promptText="Ingrese una película por línea, con su orden de proyección"
-                  prefRowCount="4"/>
+    <VBox spacing="8">
+        <Label text="Películas a proyectar" />
+
+        <!-- Filtro y contador -->
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Buscar:"/>
+            <TextField fx:id="txtFiltro" promptText="Título…"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="lblContador" text="0 seleccionadas"/>
+        </HBox>
+
+        <!-- Lista películas con checkboxes -->
+        <ListView fx:id="listaPeliculas" prefHeight="240"/>
     </VBox>
 
-    <!-- TIPO DE PELÍCULAS (2D / 3D) -->
-    <HBox spacing="10">
-        <Label text="Tipo de películas"/>
-        <!-- Se llena con TipoPelicula.values() en el controller -->
-        <ComboBox fx:id="comboTipoPelicula" promptText="Seleccione tipo" prefWidth="160"/>
-    </HBox>
-
-    <!-- CHARLAS Y CUPO -->
+    <!-- Charlas y cupo -->
     <GridPane hgap="100" vgap="10">
-
         <!-- Incluye charla -->
         <Label text="¿Incluye charlas posteriores?" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
         <HBox spacing="15" GridPane.rowIndex="1" GridPane.columnIndex="0">
-            <ToggleGroup fx:id="grupoCharlas"/>
-            <RadioButton fx:id="radioSi" text="Sí"  toggleGroup="$grupoCharlas"/>
-            <RadioButton fx:id="radioNo" text="No"  toggleGroup="$grupoCharlas" selected="true"/>
+            <fx:define> <ToggleGroup fx:id="charlaGroup"/></fx:define>
+            <RadioButton fx:id="radioSi" text="Sí" toggleGroup="$charlaGroup"/>
+            <RadioButton fx:id="radioNo" text="No" toggleGroup="$charlaGroup" selected="true"/>
         </HBox>
 
         <!-- Cupo máximo -->
         <Label text="Cupo Máximo" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-        <Spinner fx:id="spinnerCupoMaximo"
-                 editable="true"
-                 prefWidth="140"
-                 GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+        <Spinner fx:id="spinnerCupoMaximo" prefWidth="120" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
     </GridPane>
-
 </VBox>

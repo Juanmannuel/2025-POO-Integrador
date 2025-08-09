@@ -52,7 +52,7 @@ public class AsigRolEventoController {
             return;
         }
 
-        RolEvento nuevo = new RolEvento(evento, persona, rol); // ✅ USAMOS el evento recibido
+        RolEvento nuevo = new RolEvento(evento, persona, rol);
         if (!rolesEvento.contains(nuevo)) {
             rolesEvento.add(nuevo);
         }

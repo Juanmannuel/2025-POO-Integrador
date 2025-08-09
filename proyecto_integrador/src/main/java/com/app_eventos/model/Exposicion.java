@@ -10,10 +10,7 @@ public class Exposicion extends Evento {
 
     private TipoArte tipoArte;
 
-    public Exposicion(String nombre,
-                      LocalDateTime fechaInicio,
-                      LocalDateTime fechaFin,
-                      TipoArte tipoArte) {
+    public Exposicion(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin, TipoArte tipoArte) {
         super(nombre, fechaInicio, fechaFin, TipoEvento.EXPOSICION);
         setTipoArte(tipoArte);
     }
@@ -25,7 +22,7 @@ public class Exposicion extends Evento {
 
     @Override
     protected boolean rolPermitido(TipoRol rol) {
-        return rol == TipoRol.CURADOR;
+        return rol == TipoRol.CURADOR || rol == TipoRol.ORGANIZADOR;
     }
 
     public TipoArte getTipoArte() {

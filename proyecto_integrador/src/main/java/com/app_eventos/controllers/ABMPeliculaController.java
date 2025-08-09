@@ -1,15 +1,19 @@
-// ABMPeliculaController.java (fragmentos clave REESCRITOS para usar enum en el ComboBox)
-
 package com.app_eventos.controllers;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 import com.app_eventos.model.Pelicula;
 import com.app_eventos.model.enums.TipoPelicula;
 import com.app_eventos.services.Servicio;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
+import javafx.util.StringConverter;
+import javafx.scene.control.SpinnerValueFactory;
 
 public class ABMPeliculaController {
 
@@ -26,28 +30,31 @@ public class ABMPeliculaController {
     // Modal
     @FXML private StackPane modalOverlay;
     @FXML private TextField txtTitulo;
-    @FXML private TextField txtDuracionValor;
-    @FXML private ComboBox<String> comboDuracionUnidad;     // "Minutos" | "Horas"
-    @FXML private ComboBox<TipoPelicula> comboTipoPelicula; // ✅ enum directo
+    @FXML private Spinner<LocalTime> spinnerDuracion;
+    @FXML private ComboBox<TipoPelicula> comboTipoPelicula;
 
     private final Servicio servicio = Servicio.getInstance();
     private Pelicula peliculaSeleccionada;
     private boolean modoEdicion;
+    private static final DateTimeFormatter HHMM = DateTimeFormatter.ofPattern("HH:mm");
 
     @FXML
     public void initialize() {
-        // Configuración de las columnas
-        tablaPeliculas.widthProperty().addListener((obs, oldWidth, newWidth) -> { 
-            double total = newWidth.doubleValue();
-
-            colTitulo.setPrefWidth(total * 0.60);        // 60%
-            colDuracion.setPrefWidth(total * 0.20);     // 20%
-            colTipo.setPrefWidth(total * 0.20);   // 20%
+        // Ancho columnas
+        tablaPeliculas.widthProperty().addListener((obs, oldW, newW) -> {
+            double total = newW.doubleValue();
+            colTitulo.setPrefWidth(total * 0.60);
+            colDuracion.setPrefWidth(total * 0.20);
+            colTipo.setPrefWidth(total * 0.20);
         });
 
         // Columnas
         colTitulo.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getTitulo()));
-        colDuracion.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDuracionMinutos() + " min"));
+        colDuracion.setCellValueFactory(d -> {
+            int min = d.getValue().getDuracionMinutos();
+            String hhmm = String.format("%d:%02d", min / 60, min % 60);
+            return new SimpleStringProperty(hhmm);
+        });
         colTipo.setCellValueFactory(d -> {
             var p = d.getValue();
             String etiqueta = (p.getTipo() != null) ? p.getTipo().getEtiqueta() : "-";
@@ -57,40 +64,52 @@ public class ABMPeliculaController {
         // Datos
         tablaPeliculas.setItems(servicio.obtenerPeliculas());
 
-        // Combos
-        comboDuracionUnidad.setItems(FXCollections.observableArrayList("Minutos", "Horas"));
-        comboDuracionUnidad.getSelectionModel().select("Minutos");
+        // Combo TipoPelicula
         comboTipoPelicula.setItems(FXCollections.observableArrayList(TipoPelicula.values()));
         comboTipoPelicula.getSelectionModel().select(TipoPelicula.DOS_D);
 
-    // ✅ Personaliza cómo se muestran los ítems en la lista desplegable del ComboBox
-    comboTipoPelicula.setCellFactory(listView -> new ListCell<>() {
-        @Override
-        protected void updateItem(TipoPelicula item, boolean empty) {
-            super.updateItem(item, empty);
-            if (empty || item == null) {
-                setText(null); // Si no hay valor, dejamos la celda vacía
-            } else {
-                // Mostramos la etiqueta definida en el enum en vez del nombre de la constante
-                setText(item.getEtiqueta());
+        comboTipoPelicula.setCellFactory(listView -> new ListCell<>() {
+            @Override protected void updateItem(TipoPelicula item, boolean empty) {
+                super.updateItem(item, empty);
+                setText((empty || item == null) ? null : item.getEtiqueta());
             }
-        }
-    });
-
-    // ✅ Personaliza cómo se muestra el ítem seleccionado (parte visible del ComboBox)
-    comboTipoPelicula.setButtonCell(new ListCell<>() {
-        @Override
-        protected void updateItem(TipoPelicula item, boolean empty) {
-            super.updateItem(item, empty);
-            if (empty || item == null) {
-                setText(null); // Si no hay selección, se muestra vacío
-            } else {
-                // Mostramos la etiqueta también en la parte seleccionada
-                setText(item.getEtiqueta());
+        });
+        comboTipoPelicula.setButtonCell(new ListCell<>() {
+            @Override protected void updateItem(TipoPelicula item, boolean empty) {
+                super.updateItem(item, empty);
+                setText((empty || item == null) ? null : item.getEtiqueta());
             }
-        }
-    });
+        });
 
+        // Spinner duración HH:mm (paso 5 min, rango 00:01..09:59)
+        spinnerDuracion.setValueFactory(
+            crearFactoryDuracion(LocalTime.of(0, 1), LocalTime.of(9, 59), 5)
+        );
+        spinnerDuracion.setEditable(true);
+    } // <-- ¡cierra initialize!
+
+    // ===== fuera de initialize =====
+    private SpinnerValueFactory<LocalTime> crearFactoryDuracion(LocalTime min, LocalTime max, int stepMin) {
+        return new SpinnerValueFactory<>() {
+            private LocalTime value = LocalTime.of(1, 30);
+
+            {
+                setConverter(new StringConverter<>() {
+                    @Override public String toString(LocalTime t) { return (t == null) ? "" : t.format(HHMM); }
+                    @Override public LocalTime fromString(String s) { return LocalTime.parse(s, HHMM); }
+                });
+                setValue(value);
+            }
+
+            @Override public void decrement(int steps) {
+                LocalTime next = value.minusMinutes(steps * stepMin);
+                if (!next.isBefore(min)) { value = next; setValue(value); }
+            }
+            @Override public void increment(int steps) {
+                LocalTime next = value.plusMinutes(steps * stepMin);
+                if (!next.isAfter(max)) { value = next; setValue(value); }
+            }
+        };
     }
 
     @FXML
@@ -106,24 +125,24 @@ public class ABMPeliculaController {
         if (peliculaSeleccionada == null) { error("Seleccione una película."); return; }
         modoEdicion = true;
 
-        // Precarga con enum
         txtTitulo.setText(peliculaSeleccionada.getTitulo());
-        txtDuracionValor.setText(String.valueOf(peliculaSeleccionada.getDuracionMinutos()));
-        comboDuracionUnidad.getSelectionModel().select("Minutos"); // el modelo guarda en min
+        int min = peliculaSeleccionada.getDuracionMinutos();
+        spinnerDuracion.getValueFactory().setValue(LocalTime.of(min / 60, min % 60));
         comboTipoPelicula.getSelectionModel().select(peliculaSeleccionada.getTipo());
 
         modalOverlay.setVisible(true);
+    }
+
+    private int getDuracionMinutosTotales() {
+        LocalTime t = spinnerDuracion.getValue();
+        return t.getHour() * 60 + t.getMinute();
     }
 
     @FXML
     public void altaPelicula() {
         try {
             String titulo = txtTitulo.getText();
-            int valor = Integer.parseInt(txtDuracionValor.getText().trim());
-            String unidad = comboDuracionUnidad.getValue();
-            int duracionMin = "Horas".equals(unidad) ? valor * 60 : valor;
-
-            // ✅ uso directo del enum
+            int duracionMin = getDuracionMinutosTotales();
             TipoPelicula tipo = comboTipoPelicula.getValue();
 
             Pelicula nueva = new Pelicula(titulo, duracionMin, tipo);
@@ -136,8 +155,6 @@ public class ABMPeliculaController {
 
             tablaPeliculas.refresh();
             cerrarModal();
-        } catch (NumberFormatException e) {
-            error("La duración debe ser un número entero.");
         } catch (Exception e) {
             error(e.getMessage());
         }
@@ -153,8 +170,7 @@ public class ABMPeliculaController {
 
     private void limpiarFormulario() {
         txtTitulo.clear();
-        txtDuracionValor.clear();
-        comboDuracionUnidad.getSelectionModel().select("Minutos");
+        spinnerDuracion.getValueFactory().setValue(LocalTime.of(1, 30));
         comboTipoPelicula.getSelectionModel().select(TipoPelicula.DOS_D);
     }
 
@@ -172,10 +188,7 @@ public class ABMPeliculaController {
     @FXML
     public void eliminarPelicula() {
         Pelicula sel = tablaPeliculas.getSelectionModel().getSelectedItem();
-        if (sel == null) {
-            error("Seleccione una película para eliminar.");
-            return;
-        }
+        if (sel == null) { error("Seleccione una película para eliminar."); return; }
 
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setHeaderText(null);

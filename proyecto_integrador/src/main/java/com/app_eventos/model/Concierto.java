@@ -88,7 +88,7 @@ public class Concierto extends Evento implements IEventoConCupo {
     // Lógica de roles permitidos
     @Override
     protected boolean rolPermitido(TipoRol rol) {
-        return rol == TipoRol.ARTISTA;
+        return rol == TipoRol.ARTISTA  || rol == TipoRol.ORGANIZADOR;
     }
 
     // Getters y setters propios
