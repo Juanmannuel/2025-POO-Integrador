@@ -42,19 +42,15 @@ public class Servicio {
     private static final ObservableList<Persona> personas;
     static { personas = FXCollections.observableArrayList(); }
 
-    
-    // Constructor privado para Singleton
-    private Servicio() {
-        cargarPersonasDePrueba(); // Datos de ejemplo para testeo
-    }
+
     
     // Método para obtener la instancia compartida
     public static Servicio getInstance() {
         return INSTANCE;
     }
 
-    // ====== MÉTODOS PRIVADOS AUXILIARES ======
-    
+    // MÉTODOS PRIVADOS AUXILIARES
+
     private LocalDateTime crearDateTime(LocalDate fecha, LocalTime hora) {
         return LocalDateTime.of(fecha, hora);
     }
@@ -75,7 +71,7 @@ public class Servicio {
         }
     }
 
-    // ====== MÉTODOS PARA EVENTOS ======
+    // MÉTODOS PARA EVENTOS
     
     public void crearFeria(String nombre, LocalDate fechaInicio, LocalDate fechaFin,
                           LocalTime horaInicio, LocalTime horaFin,
@@ -119,22 +115,30 @@ public class Servicio {
     }
     
     public void crearCicloCine(String nombre, LocalDate fechaInicio, LocalDate fechaFin,
-                           LocalTime horaInicio, LocalTime horaFin, EstadoEvento estado,
-                           boolean postCharla, int cupoMaximo, String peliculasTexto,
-                           TipoPelicula tipo) {
+                            LocalTime horaInicio, LocalTime horaFin, EstadoEvento estado,
+                            boolean postCharla, int cupoMaximo,
+                            List<Pelicula> peliculasSeleccionadas) {
 
-        LocalDateTime inicio = crearDateTime(fechaInicio, horaInicio);
-        LocalDateTime fin = crearDateTime(fechaFin, horaFin);
-        CicloCine ciclo = new CicloCine(nombre, inicio, fin, postCharla, cupoMaximo);
-        procesarPeliculas(ciclo, peliculasTexto, tipo);
-        agregarEvento(ciclo, estado);
+        var inicio = LocalDateTime.of(fechaInicio, horaInicio);
+        var fin    = LocalDateTime.of(fechaFin, horaFin);
+
+        var ciclo = new CicloCine(nombre, inicio, fin, postCharla, cupoMaximo);
+        ciclo.setEstado(estado);
+
+        if (peliculasSeleccionadas != null) {
+            for (Pelicula p : peliculasSeleccionadas) {
+                ciclo.agregarPelicula(p); // usa las instancias ya cargadas en ABM
+            }
+        }
+
+        eventos.add(ciclo); // en memoria, sin BD
     }
 
     public List<Evento> listarEventos() {
         return new ArrayList<>(eventos);
     }
 
-    // ====== MÉTODOS PARA PERSONAS ======
+    // MÉTODOS PARA PERSONAS
     
     public ObservableList<Persona> obtenerPersonas() {
         return personas;
@@ -166,25 +170,9 @@ public class Servicio {
         return FXCollections.observableArrayList(filtradas);
     }
 
-    private void cargarPersonasDePrueba() {
-        try {
-            if (personas.isEmpty()) {
-                personas.add(new Persona("Ana", "González", "12345678", "12345678", "ana@mail.com"));
-                personas.add(new Persona("Luis", "Pérez", "87654321", "56781234", "luis@mail.com"));
-            }
-        } catch (Exception e) {
-            // Si hay error al cargar datos de prueba, no hacer nada
-            // Los datos se pueden cargar manualmente desde la UI
-            System.err.println("Error al cargar datos de prueba: " + e.getMessage());
-        }
-    }
+    // MÉTODOS PARA ABM PARTICIPANTE
 
-    // ⭐ NUEVOS MÉTODOS PARA ABM PARTICIPANTE - MODELO RICO
-
-    /**
-     * Factory method: Crea una nueva participación validando reglas de negocio
-     * La validación ocurre en el constructor del modelo RolEvento
-     */
+    // La validación ocurre en el constructor del modelo RolEvento
     public RolEvento crearParticipacion(Evento evento, Persona persona, TipoRol rol) {
         try {
             // El modelo rico valida todo en el constructor
@@ -194,9 +182,7 @@ public class Servicio {
         }
     }
 
-    /**
-     * Guarda una participación (intermediario con repositorio)
-     */
+    // Guarda una participación (intermediario con repositorio)
     public void guardarParticipacion(RolEvento rolEvento) {
         try {
             repositorio.guardarRolEvento(rolEvento);
@@ -207,9 +193,7 @@ public class Servicio {
         }
     }
 
-    /**
-     * Elimina una participación (borrado lógico)
-     */
+    // Elimina una participación (borrado lógico)
     public void eliminarParticipacion(RolEvento rolEvento) {
         try {
             // La lógica de borrado está en el modelo
@@ -220,37 +204,29 @@ public class Servicio {
         }
     }
 
-    /**
-     * Obtiene todas las participaciones activas (TODOS los roles)
-     */
+    // Obtiene todas las participaciones activas (TODOS los roles)
     public ObservableList<RolEvento> obtenerParticipacionesActivas() {
         return repositorio.obtenerRolesActivos();
     }
 
-    /**
-     * Obtiene SOLO participantes (rol PARTICIPANTE) activos
-     */
+    // Obtiene SOLO participantes (rol PARTICIPANTE) activos
     public ObservableList<RolEvento> obtenerSoloParticipantes() {
         return repositorio.obtenerSoloParticipantes();
     }
 
-    /**
-     * Filtra participaciones por criterios (delegado al repositorio)
-     */
+    // Filtra participaciones por criterios (delegado al repositorio)
     public ObservableList<RolEvento> filtrarParticipaciones(String nombreEvento, String nombrePersona, String dni) {
         return repositorio.filtrarRoles(nombreEvento, nombrePersona, dni);
     }
 
-    /**
-     * Filtra SOLO participantes (rol PARTICIPANTE) por criterios
-     */
+    // Filtra SOLO participantes (rol PARTICIPANTE) por criterios
+
     public ObservableList<RolEvento> filtrarSoloParticipantes(String nombreEvento, String nombrePersona, String dni) {
         return repositorio.filtrarSoloParticipantes(nombreEvento, nombrePersona, dni);
     }
 
-    /**
-     * Obtiene eventos disponibles para inscripción
-     */
+    // Obtiene eventos disponibles para inscripción
+
     public ObservableList<Evento> obtenerEventosDisponibles() {
         // Usar la lista de eventos del Servicio (donde se guardan los eventos creados)
         return eventos.stream()
@@ -258,9 +234,7 @@ public class Servicio {
                 .collect(Collectors.toCollection(FXCollections::observableArrayList));
     }
 
-    /**
-     * Reactiva una participación dada de baja
-     */
+    // Reactiva una participación dada de baja
     public void reactivarParticipacion(RolEvento rolEvento) {
         try {
             // La lógica de reactivación está en el modelo
@@ -271,9 +245,9 @@ public class Servicio {
         }
     }
     
-    // ====== PELÍCULAS (en memoria; sin persistencia real de momento) ======
+    // PELÍCULAS (en memoria, sin persistencia real por ahora)
 
-    /** Lista observable para enlazar con la TableView. */
+    // Lista observable para enlazar con la TableView.
     private static final javafx.collections.ObservableList<Pelicula> peliculas =
             javafx.collections.FXCollections.observableArrayList();
 
@@ -285,7 +259,7 @@ public class Servicio {
         // return FXCollections.observableArrayList(repositorioPelicula.obtenerTodas());
     }
 
-    /** Alta de película (el modelo rico valida). */
+    // Alta de película (el modelo rico valida).
     public void guardarPelicula(Pelicula pelicula) {
         peliculas.add(pelicula);
 
@@ -293,7 +267,7 @@ public class Servicio {
         // repositorioPelicula.guardar(pelicula);
     }
 
-    /** Baja de película. */
+    // Baja de película.
     public void eliminarPelicula(Pelicula pelicula) {
         peliculas.remove(pelicula);
 
@@ -301,7 +275,7 @@ public class Servicio {
         // repositorioPelicula.eliminar(pelicula);
     }
 
-    /** Modificación de película (respetando validaciones del modelo). */
+    // Modificación de película (respetando validaciones del modelo).
     public void actualizarPelicula(Pelicula original, Pelicula actualizada) {
         original.setTitulo(actualizada.getTitulo());
         original.setDuracionMinutos(actualizada.getDuracionMinutos());
@@ -311,7 +285,7 @@ public class Servicio {
         // repositorioPelicula.actualizar(original);
     }
 
-    /** Filtro por título (contains, case-insensitive) y por ID numérico exacto. */
+    // Filtro por título (contains, case-insensitive) y por ID numérico exacto.
     public javafx.collections.ObservableList<Pelicula> filtrarPeliculas(String titulo, String idTexto) {
         java.util.stream.Stream<Pelicula> stream = peliculas.stream();
 
@@ -333,19 +307,6 @@ public class Servicio {
         return stream.collect(java.util.stream.Collectors.toCollection(
                 javafx.collections.FXCollections::observableArrayList
         ));
-    }
-
-    /** (Opcional) Datos de prueba para la UI. Llamalo desde el constructor si querés. */
-    private void cargarPeliculasDePrueba() {
-        try {
-            if (peliculas.isEmpty()) {
-                peliculas.add(new Pelicula("Inception", 148, TipoPelicula.DOS_D));
-                peliculas.add(new Pelicula("Interstellar", 169, TipoPelicula.DOS_D));
-                peliculas.add(new Pelicula("El secreto de sus ojos", 129, TipoPelicula.DOS_D));
-            }
-        } catch (Exception e) {
-            System.err.println("Error al cargar películas de prueba: " + e.getMessage());
-        }
     }
 
 }

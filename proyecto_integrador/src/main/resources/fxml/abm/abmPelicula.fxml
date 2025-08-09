@@ -50,9 +50,9 @@
 
             <!-- ACCIONES -->
             <HBox alignment="CENTER_RIGHT" spacing="12">
-                <Button text="Alta"       styleClass="btn-alta"      onAction="#mostrarModal"/>
-                <Button text="Modificar"  styleClass="btn-modificar" onAction="#modificarPelicula"/>
-                <Button text="Baja"       styleClass="btn-baja"      onAction="#eliminarPelicula"/>
+                <Button text="Alta" styleClass="btn-alta" onAction="#mostrarModal"/>
+                <Button text="Modificar" styleClass="btn-modificar" onAction="#modificarPelicula"/>
+                <Button text="Baja" styleClass="btn-baja" onAction="#eliminarPelicula"/>
             </HBox>
         </VBox>
     </VBox>
@@ -70,14 +70,14 @@
 
                 <!-- TÍTULO -->
                 <Label text="Título" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-                <TextField fx:id="txtTitulo" promptText="Ingrese el título"
+                <TextField fx:id="txtTitulo" promptText="Ingrese el título de la película"
                            GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
                 <!-- DURACIÓN -->
                 <Label text="Duración" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
                 <HBox spacing="8" GridPane.rowIndex="1" GridPane.columnIndex="1">
-                    <TextField fx:id="txtDuracionValor" promptText="Ej: 120" prefWidth="140"/>
-                    <ComboBox fx:id="comboDuracionUnidad" promptText="Unidad" prefWidth="140"/>
+                    <Spinner fx:id="spinnerDuracion"/>
+                    <Label text="(HH:mm)"/>
                 </HBox>
 
                 <!-- TIPO -->

@@ -3,7 +3,6 @@ package com.app_eventos.controllers;
 import com.app_eventos.model.Evento;
 import com.app_eventos.model.Persona;
 import com.app_eventos.model.RolEvento;
-import com.app_eventos.model.enums.EstadoEvento;
 import com.app_eventos.model.enums.TipoRol;
 import com.app_eventos.model.interfaces.IEventoConCupo;
 import com.app_eventos.services.Servicio;
@@ -15,7 +14,6 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
-import javafx.util.StringConverter;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;

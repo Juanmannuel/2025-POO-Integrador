@@ -3,7 +3,6 @@ import com.app_eventos.model.enums.TipoRol;
 import com.app_eventos.model.interfaces.IEventoConCupo;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 public class RolEvento {
 

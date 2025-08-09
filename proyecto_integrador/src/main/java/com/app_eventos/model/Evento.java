@@ -49,12 +49,13 @@ public abstract class Evento {
 
     // Agrega un responsable al evento validando el rol permitido para esta subclase.
     public void agregarResponsable(Persona persona, TipoRol rol) {
-        if (persona == null || rol == null) {
-            throw new IllegalArgumentException("Persona y rol no pueden ser nulos.");
-        }
-        if (!rolPermitido(rol)) {
-            throw new IllegalArgumentException("Rol " + rol + " no permitido para el tipo de evento " + tipoEvento);
-        }
+        if (persona == null || rol == null) throw new IllegalArgumentException("Persona y rol no pueden ser nulos.");
+        if (!rolPermitido(rol)) throw new IllegalArgumentException("Rol " + rol + " no permitido para " + tipoEvento);
+
+        boolean existe = roles.stream()
+                .anyMatch(r -> r.getPersona().equals(persona) && r.getRol() == rol);
+        if (existe) throw new IllegalArgumentException("La persona ya tiene el rol " + rol + " en este evento.");
+
         this.roles.add(new RolEvento(this, persona, rol));
     }
 
@@ -65,7 +66,7 @@ public abstract class Evento {
     }
 
     // Devuelve una lista filtrada de responsables según rol.
-    public List<Persona> obtenerResponsablesPorRol(TipoRol rol) {
+    public List<Persona> obtenerResponsables(TipoRol rol) {
         return this.roles.stream()
                 .filter(r -> r.getRol() == rol)
                 .map(RolEvento::getPersona)

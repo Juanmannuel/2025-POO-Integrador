@@ -15,7 +15,7 @@ public class Taller extends Evento implements IEventoConCupo {
     private int cupoMaximo;
     private final List<Persona> participantes = new ArrayList<>();
     private Modalidad modalidad;
-    private Persona instructor;
+    private Persona instructor; // único
 
     // Constructor con datos obligatorios
     public Taller(String nombre,
@@ -33,11 +33,14 @@ public class Taller extends Evento implements IEventoConCupo {
         setTipoEvento(TipoEvento.TALLER);
     }
 
-    // Implementación de IEventoConInscripcion
+    // --- Inscripción participantes ---
     @Override
     public void inscribirParticipante(Persona persona) {
         if (getEstado() != EstadoEvento.CONFIRMADO) {
             throw new IllegalStateException("El taller debe estar confirmado para inscribir participantes.");
+        }
+        if (getEstado() == EstadoEvento.FINALIZADO) {
+            throw new IllegalStateException("El taller ya finalizó.");
         }
         if (participantes.size() >= cupoMaximo) {
             throw new IllegalStateException("Cupo lleno. No se pueden inscribir más participantes.");
@@ -73,18 +76,6 @@ public class Taller extends Evento implements IEventoConCupo {
         return cupoMaximo;
     }
 
-    // Lógica para asignar instructor
-    public void asignarInstructor(Persona persona) {
-        if (this.instructor != null) {
-            throw new IllegalStateException("Ya hay un instructor asignado.");
-        }
-        this.instructor = persona;
-    }
-
-    public void quitarInstructor() {
-        this.instructor = null;
-    }
-
     @Override
     public void setCupoMaximo(int cupoMaximo) {
         if (cupoMaximo <= 0) {
@@ -98,13 +89,35 @@ public class Taller extends Evento implements IEventoConCupo {
         return cupoMaximo - participantes.size();
     }
 
-    // Lógica de roles permitidos 
-    @Override
-    protected boolean rolPermitido(TipoRol rol) {
-        return rol == TipoRol.INSTRUCTOR;
+    // --- Instructor (único) ---
+    public void asignarInstructor(Persona persona) {
+        if (persona == null) throw new IllegalArgumentException("El instructor no puede ser nulo.");
+        if (this.instructor != null) {
+            throw new IllegalStateException("Ya hay un instructor asignado.");
+        }
+        this.instructor = persona;
+        // reflejar el rol en la lista de roles del evento
+        agregarResponsable(persona, TipoRol.INSTRUCTOR);
     }
 
-    // Getters y setters propios 
+    public void quitarInstructor() {
+        if (this.instructor != null) {
+            borrarResponsable(this.instructor, TipoRol.INSTRUCTOR);
+            this.instructor = null;
+        }
+    }
+
+    public Persona getInstructor() {
+        return instructor;
+    }
+
+    // --- Roles permitidos en Taller ---
+    @Override
+    protected boolean rolPermitido(TipoRol rol) {
+        return rol == TipoRol.INSTRUCTOR || rol == TipoRol.ORGANIZADOR;
+    }
+
+    // Getters/Setters propios
     public Modalidad getModalidad() {
         return modalidad;
     }
