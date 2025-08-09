@@ -1,58 +1,79 @@
 package com.app_eventos.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.app_eventos.model.enums.Modalidad;
 import com.app_eventos.model.enums.TipoEvento;
+import com.app_eventos.model.enums.TipoRol;
 import com.app_eventos.model.enums.EstadoEvento;
 import com.app_eventos.model.interfaces.IEventoConCupo;
-import com.app_eventos.model.interfaces.IEventoConInscripcion;
 
-public class Taller extends Evento implements IEventoConCupo, IEventoConInscripcion {
+public class Taller extends Evento implements IEventoConCupo {
 
     private int cupoMaximo;
-    private int inscriptos;
+    private final List<Persona> participantes = new ArrayList<>();
     private Modalidad modalidad;
     private Persona instructor;
 
-    // Constructor
-    public Taller(String nombre, 
-                  LocalDateTime fechaInicio, 
-                  LocalDateTime fechaFin, 
-                  int cupoMaximo, 
+    // Constructor con datos obligatorios
+    public Taller(String nombre,
+                  LocalDateTime fechaInicio,
+                  LocalDateTime fechaFin,
+                  int cupoMaximo,
                   Modalidad modalidad) {
         super(nombre, fechaInicio, fechaFin, TipoEvento.TALLER);
-        this.cupoMaximo = cupoMaximo;
-        this.modalidad = modalidad;
-        this.inscriptos = 0;
+        setCupoMaximo(cupoMaximo);
+        setModalidad(modalidad);
     }
 
     public Taller() {
         super();
-        this.setTipoEvento(TipoEvento.TALLER);
-        this.inscriptos = 0;
+        setTipoEvento(TipoEvento.TALLER);
     }
 
-    // Implementación lógica (modelo RICO)
+    // Implementación de IEventoConInscripcion
+    @Override
+    public void inscribirParticipante(Persona persona) {
+        if (getEstado() != EstadoEvento.CONFIRMADO) {
+            throw new IllegalStateException("El taller debe estar confirmado para inscribir participantes.");
+        }
+        if (participantes.size() >= cupoMaximo) {
+            throw new IllegalStateException("Cupo lleno. No se pueden inscribir más participantes.");
+        }
+        if (participantes.contains(persona)) {
+            throw new IllegalArgumentException("El participante ya está inscrito.");
+        }
+        participantes.add(persona);
+    }
 
     @Override
-    public void inscribir(Persona participante) {
-        if (getEstado() != EstadoEvento.CONFIRMADO) {
-            throw new IllegalStateException("No se puede inscribir. El taller no está confirmado.");
-        }
-        if (inscriptos >= cupoMaximo) {
-            throw new IllegalStateException("Cupo lleno. No se puede inscribir más participantes.");
-        }
-        inscriptos++;
+    public void desinscribirParticipante(Persona persona) {
+        participantes.remove(persona);
+    }
+
+    @Override
+    public List<Persona> getParticipantes() {
+        return new ArrayList<>(participantes);
     }
 
     @Override
     public boolean hayCupoDisponible() {
-        return inscriptos < cupoMaximo;
+        return participantes.size() < cupoMaximo;
+    }
+
+    @Override
+    public boolean tieneCupoDisponible() {
+        return hayCupoDisponible();
+    }
+
+    @Override
+    public int getCupoMaximo() {
+        return cupoMaximo;
     }
 
     // Lógica para asignar instructor
-
     public void asignarInstructor(Persona persona) {
         if (this.instructor != null) {
             throw new IllegalStateException("Ya hay un instructor asignado.");
@@ -64,37 +85,34 @@ public class Taller extends Evento implements IEventoConCupo, IEventoConInscripc
         this.instructor = null;
     }
 
-    // Getters y setters
-
-    public int getCupoMaximo() {
-        return cupoMaximo;
-    }
-
+    @Override
     public void setCupoMaximo(int cupoMaximo) {
+        if (cupoMaximo <= 0) {
+            throw new IllegalArgumentException("El cupo máximo debe ser mayor que cero.");
+        }
         this.cupoMaximo = cupoMaximo;
     }
 
-    public int getInscriptos() {
-        return inscriptos;
+    @Override
+    public int getCupoDisponible() {
+        return cupoMaximo - participantes.size();
     }
 
+    // Lógica de roles permitidos 
+    @Override
+    protected boolean rolPermitido(TipoRol rol) {
+        return rol == TipoRol.INSTRUCTOR;
+    }
+
+    // Getters y setters propios 
     public Modalidad getModalidad() {
         return modalidad;
     }
 
     public void setModalidad(Modalidad modalidad) {
+        if (modalidad == null) {
+            throw new IllegalArgumentException("La modalidad no puede ser nula.");
+        }
         this.modalidad = modalidad;
-    }
-
-    public Persona getInstructor() {
-        return instructor;
-    }
-
-    public void setInstructor(Persona instructor) {
-        this.instructor = instructor;
-    }
-
-    public void setInscriptos(int inscriptos) {
-        this.inscriptos = inscriptos;
     }
 }

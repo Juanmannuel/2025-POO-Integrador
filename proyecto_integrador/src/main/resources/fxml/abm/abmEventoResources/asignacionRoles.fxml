@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="8" xmlns="http://javafx.com/javafx/21.0.1"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.app_eventos.controllers.AsigRolEventoController">
+
+    <HBox spacing="10">
+        <ComboBox fx:id="comboPersona" promptText="Seleccionar persona" prefWidth="200"/>
+        <ComboBox fx:id="comboTipoRol" promptText="Seleccionar rol" prefWidth="150"/>
+        <Button text="Agregar" onAction="#agregarRol"/>
+        <Button text="Eliminar" onAction="#eliminarRolSeleccionado"/>
+    </HBox>
+
+    <TableView fx:id="tablaRoles" prefHeight="150">
+        <columns>
+            <TableColumn fx:id="colDni" text="DNI" prefWidth="100"/>
+            <TableColumn fx:id="colNombre" text="Nombre" prefWidth="200"/>
+            <TableColumn fx:id="colRol" text="Rol" prefWidth="150"/>
+        </columns>
+    </TableView>
+</VBox>

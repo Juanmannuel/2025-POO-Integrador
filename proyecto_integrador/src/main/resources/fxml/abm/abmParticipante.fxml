@@ -38,6 +38,7 @@
                     <TableColumn fx:id="colTelefono" text="Teléfono" />
                     <TableColumn fx:id="colEmail" text="Email" />
                     <TableColumn fx:id="colEstadoEvento" text="Estado Evento" />
+                    <TableColumn fx:id="colFechaAsignacion" text="Fecha Asignación" />
                 </columns>
             </TableView>
 
@@ -66,7 +67,7 @@
                                         
                     <!-- Información del Evento -->
                     <Label text="Info. del Evento:" GridPane.rowIndex="2" GridPane.columnIndex="0" />
-                    <VBox GridPane.rowIndex="2" GridPane.columnIndex="1" spacing="5" styleClass="info-box">
+                    <VBox GridPane.rowIndex="2" GridPane.columnIndex="1" spacing="5" styleClass="cuadro-info">
                         <Label fx:id="lblEstadoEvento" text="Estado: -" />
                         <Label fx:id="lblTipoEvento" text="Tipo: -" />
                         <Label fx:id="lblCupoDisponible" text="Cupo: -" />
@@ -75,7 +76,7 @@
 
                     <!-- Información del Participante -->
                     <Label text="Info. del Participante:" GridPane.rowIndex="3" GridPane.columnIndex="0" />
-                    <VBox GridPane.rowIndex="3" GridPane.columnIndex="1" spacing="5" styleClass="info-box">
+                    <VBox GridPane.rowIndex="3" GridPane.columnIndex="1" spacing="5" styleClass="cuadro-info">
                         <Label fx:id="lblNombreParticipante" text="Nombre: -" />
                         <Label fx:id="lblDniParticipante" text="DNI: -" />
                         <Label fx:id="lblTelefonoParticipante" text="Teléfono: -" />
@@ -85,22 +86,6 @@
                 <HBox spacing="10" alignment="CENTER_RIGHT">
                     <Button text="Cancelar" onAction="#cerrarModal" styleClass="btn-cancelar"/>
                     <Button text="Guardar" onAction="#altaParticipante" styleClass="btn-guardar"/>
-                </HBox>
-            </VBox>
-        </StackPane>
-
-        <!-- MODAL MODIFICAR -->
-        <StackPane fx:id="modalModificarOverlay" visible="false" styleClass="modal-overlay">
-            <VBox spacing="15" styleClass="modal-contenido" maxWidth="550" maxHeight="400">
-                <Label text="Detalles de Participación" styleClass="modal-titulo"/>
-                <GridPane hgap="15" vgap="10">
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="35"/>
-                        <ColumnConstraints percentWidth="65"/>
-                    </columnConstraints>
-                </GridPane>
-                <HBox spacing="10" alignment="CENTER_RIGHT">
-                    <Button text="Cancelar" onAction="#cerrarModalModificar" styleClass="btn-cancelar"/>
                 </HBox>
             </VBox>
         </StackPane>

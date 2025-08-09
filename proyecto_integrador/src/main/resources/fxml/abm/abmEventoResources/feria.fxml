@@ -3,10 +3,11 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="15" 
-        xmlns="http://javafx.com/javafx/21.0.1" 
-        xmlns:fx="http://javafx.com/fxml/1"
-        fx:controller="com.app_eventos.controllers.FeriaController">
+<VBox spacing="15"
+      xmlns="http://javafx.com/javafx/21.0.1"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.app_eventos.controllers.FeriaController">
+      
     <Label text="Datos específicos de Feria" style="-fx-font-weight: bold;" />
 
     <GridPane hgap="125" vgap="10">
@@ -21,9 +22,7 @@
 
         <!-- Ambiente -->
         <Label text="Ambiente" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-        <HBox spacing="10" GridPane.rowIndex="1" GridPane.columnIndex="1">
-            <RadioButton text="Aire Libre" fx:id="radioAireLibre"/>
-            <RadioButton text="Techada" fx:id="radioTechada"/>
-        </HBox>
+        <ComboBox fx:id="comboAmbiente" promptText="Seleccione un ambiente"
+                  GridPane.rowIndex="1" GridPane.columnIndex="1"/>
     </GridPane>
 </VBox>

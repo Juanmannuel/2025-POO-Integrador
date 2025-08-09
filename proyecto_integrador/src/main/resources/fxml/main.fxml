@@ -8,15 +8,27 @@
 
 <HBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.app_eventos.controllers.MainController">
 
+<<<<<<< HEAD
     <VBox fx:id="menuLateral" spacing="10" styleClass="sidebar" prefWidth="200">
+=======
+    <!-- Menú de navegación -->
+    <VBox fx:id="menuLateral" spacing="10" styleClass="sidebar" prefWidth="200" minWidth="200" maxWidth="200">
+>>>>>>> 5da64c39eb2444896c61f88146ef50f8a12e7173
         <Label text="Menú" style="-fx-text-fill: white; -fx-font-size: 20px;" />
 
         
         <Button fx:id="btnInicio" text="Inicio" onAction="#mostrarInicio" styleClass="sidebar-button selected" />
 
         <Button fx:id="btnEventos" text="Eventos" onAction="#mostrarEventos" styleClass="sidebar-button" />
+<<<<<<< HEAD
         <Button fx:id="btnParticipantes" text="Participantes" onAction="#mostrarParticipantes" styleClass="sidebar-button" />
         <Button fx:id="btnPersonas" text="Personas" onAction="#mostrarPersonas" styleClass="sidebar-button" />
+=======
+        <Button fx:id="btnPersona" text="Personas" onAction="#mostrarPersonas" styleClass="sidebar-button" />
+        <Button fx:id="btnParticipantes" text="Participantes" onAction="#mostrarParticipantes" styleClass="sidebar-button" />
+        <Button fx:id="btnPeliculas" text="Películas" onAction="#mostrarPeliculas" styleClass="sidebar-button"/>
+
+>>>>>>> 5da64c39eb2444896c61f88146ef50f8a12e7173
     </VBox>
 
     <VBox fx:id="mainContent" HBox.hgrow="ALWAYS">

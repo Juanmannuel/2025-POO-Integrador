@@ -4,50 +4,41 @@ import java.time.LocalDateTime;
 
 import com.app_eventos.model.enums.TipoAmbiente;
 import com.app_eventos.model.enums.TipoEvento;
-import com.app_eventos.model.enums.EstadoEvento;
-import com.app_eventos.model.interfaces.IEventoConInscripcion;
+import com.app_eventos.model.enums.TipoRol;
 
-public class Feria extends Evento implements IEventoConInscripcion {
+public class Feria extends Evento {
 
     private int cantidadStands;
     private TipoAmbiente tipoAmbiente;
-    private int inscriptos;
 
-    // Constructor
     public Feria(String nombre,
                  LocalDateTime fechaInicio,
                  LocalDateTime fechaFin,
                  int cantidadStands,
                  TipoAmbiente tipoAmbiente) {
         super(nombre, fechaInicio, fechaFin, TipoEvento.FERIA);
-        this.cantidadStands = cantidadStands;
-        this.tipoAmbiente = tipoAmbiente;
-        this.inscriptos = 0;
+        setCantidadStands(cantidadStands);
+        setTipoAmbiente(tipoAmbiente);
     }
 
     public Feria() {
         super();
-        this.setTipoEvento(TipoEvento.FERIA);
-        this.inscriptos = 0;
+        setTipoEvento(TipoEvento.FERIA);
     }
-
-    // Modelo RICO
 
     @Override
-    public void inscribir(Persona participante) {
-        if (getEstado() != EstadoEvento.CONFIRMADO) {
-            throw new IllegalStateException("La feria debe estar confirmada para inscribir.");
-        }
-        this.inscriptos++;
+    protected boolean rolPermitido(TipoRol rol) {
+        return rol == TipoRol.ORGANIZADOR;
     }
-
-    // Getters y Setters
 
     public int getCantidadStands() {
         return cantidadStands;
     }
 
     public void setCantidadStands(int cantidadStands) {
+        if (cantidadStands <= 0) {
+            throw new IllegalArgumentException("La cantidad de stands debe ser mayor a cero.");
+        }
         this.cantidadStands = cantidadStands;
     }
 
@@ -56,14 +47,9 @@ public class Feria extends Evento implements IEventoConInscripcion {
     }
 
     public void setTipoAmbiente(TipoAmbiente tipoAmbiente) {
+        if (tipoAmbiente == null) {
+            throw new IllegalArgumentException("El tipo de ambiente no puede ser nulo.");
+        }
         this.tipoAmbiente = tipoAmbiente;
-    }
-
-    public int getInscriptos() {
-        return inscriptos;
-    }
-
-    public void setInscriptos(int inscriptos) {
-        this.inscriptos = inscriptos;
     }
 }
