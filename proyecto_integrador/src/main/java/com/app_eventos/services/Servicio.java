@@ -16,6 +16,8 @@ import com.app_eventos.model.enums.TipoArte;
 import com.app_eventos.model.enums.TipoEntrada;
 import com.app_eventos.model.enums.TipoRol;
 import com.app_eventos.repository.Repositorio;
+import com.app_eventos.model.enums.TipoPelicula;
+
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -36,7 +38,10 @@ public class Servicio {
     private final Repositorio repositorio = new Repositorio();
     
     // Simulación de base de datos en memoria
-    private static final ObservableList<Persona> personas = FXCollections.observableArrayList();
+    // Opción B (estática con bloque estático)
+    private static final ObservableList<Persona> personas;
+    static { personas = FXCollections.observableArrayList(); }
+
     
     // Constructor privado para Singleton
     private Servicio() {
@@ -61,16 +66,12 @@ public class Servicio {
         repositorio.agregarEvento(evento);
     }
     
-    private void procesarPeliculas(CicloCine ciclo, String peliculasTexto) {
-        if (peliculasTexto == null || peliculasTexto.isBlank()) {
-            return;
-        }
-        
+    private void procesarPeliculas(CicloCine ciclo, String peliculasTexto, TipoPelicula tipo) {
+        if (peliculasTexto == null || peliculasTexto.isBlank()) return;
         String[] titulos = peliculasTexto.split("\\r?\\n");
         for (String titulo : titulos) {
-            if (!titulo.trim().isEmpty()) {
-                ciclo.agregarPelicula(new Pelicula(titulo.trim(), 90));
-            }
+            String t = titulo.trim();
+            if (!t.isEmpty()) ciclo.agregarPelicula(new Pelicula(t, 90, tipo));
         }
     }
 
@@ -118,14 +119,14 @@ public class Servicio {
     }
     
     public void crearCicloCine(String nombre, LocalDate fechaInicio, LocalDate fechaFin,
-                              LocalTime horaInicio, LocalTime horaFin, EstadoEvento estado,
-                              boolean postCharla, int cupoMaximo, String peliculasTexto) {
-        
+                           LocalTime horaInicio, LocalTime horaFin, EstadoEvento estado,
+                           boolean postCharla, int cupoMaximo, String peliculasTexto,
+                           TipoPelicula tipo) {
+
         LocalDateTime inicio = crearDateTime(fechaInicio, horaInicio);
         LocalDateTime fin = crearDateTime(fechaFin, horaFin);
         CicloCine ciclo = new CicloCine(nombre, inicio, fin, postCharla, cupoMaximo);
-        
-        procesarPeliculas(ciclo, peliculasTexto);
+        procesarPeliculas(ciclo, peliculasTexto, tipo);
         agregarEvento(ciclo, estado);
     }
 
@@ -269,4 +270,82 @@ public class Servicio {
             throw new RuntimeException("Error al reactivar participación: " + e.getMessage(), e);
         }
     }
+    
+    // ====== PELÍCULAS (en memoria; sin persistencia real de momento) ======
+
+    /** Lista observable para enlazar con la TableView. */
+    private static final javafx.collections.ObservableList<Pelicula> peliculas =
+            javafx.collections.FXCollections.observableArrayList();
+
+    /** Devuelve la lista observable para setItems(...) en la UI. */
+    public javafx.collections.ObservableList<Pelicula> obtenerPeliculas() {
+        return peliculas;
+
+        // Persistencia real:
+        // return FXCollections.observableArrayList(repositorioPelicula.obtenerTodas());
+    }
+
+    /** Alta de película (el modelo rico valida). */
+    public void guardarPelicula(Pelicula pelicula) {
+        peliculas.add(pelicula);
+
+        // Persistencia real:
+        // repositorioPelicula.guardar(pelicula);
+    }
+
+    /** Baja de película. */
+    public void eliminarPelicula(Pelicula pelicula) {
+        peliculas.remove(pelicula);
+
+        // Persistencia real:
+        // repositorioPelicula.eliminar(pelicula);
+    }
+
+    /** Modificación de película (respetando validaciones del modelo). */
+    public void actualizarPelicula(Pelicula original, Pelicula actualizada) {
+        original.setTitulo(actualizada.getTitulo());
+        original.setDuracionMinutos(actualizada.getDuracionMinutos());
+        original.setTipo(actualizada.getTipo());
+
+        // Persistencia real:
+        // repositorioPelicula.actualizar(original);
+    }
+
+    /** Filtro por título (contains, case-insensitive) y por ID numérico exacto. */
+    public javafx.collections.ObservableList<Pelicula> filtrarPeliculas(String titulo, String idTexto) {
+        java.util.stream.Stream<Pelicula> stream = peliculas.stream();
+
+        if (titulo != null && !titulo.isBlank()) {
+            String t = titulo.toLowerCase();
+            stream = stream.filter(p -> p.getTitulo() != null && p.getTitulo().toLowerCase().contains(t));
+        }
+
+        if (idTexto != null && !idTexto.isBlank()) {
+            try {
+                Long id = Long.parseLong(idTexto);
+                stream = stream.filter(p -> p.getIdPelicula() != null && p.getIdPelicula().equals(id));
+            } catch (NumberFormatException e) {
+                // Si el ID no es un número válido, el resultado es vacío:
+                stream = stream.filter(p -> false);
+            }
+        }
+
+        return stream.collect(java.util.stream.Collectors.toCollection(
+                javafx.collections.FXCollections::observableArrayList
+        ));
+    }
+
+    /** (Opcional) Datos de prueba para la UI. Llamalo desde el constructor si querés. */
+    private void cargarPeliculasDePrueba() {
+        try {
+            if (peliculas.isEmpty()) {
+                peliculas.add(new Pelicula("Inception", 148, TipoPelicula.DOS_D));
+                peliculas.add(new Pelicula("Interstellar", 169, TipoPelicula.DOS_D));
+                peliculas.add(new Pelicula("El secreto de sus ojos", 129, TipoPelicula.DOS_D));
+            }
+        } catch (Exception e) {
+            System.err.println("Error al cargar películas de prueba: " + e.getMessage());
+        }
+    }
+
 }

@@ -87,4 +87,19 @@ public class MainController {
             e.printStackTrace();
         }
     }
+    
+    @FXML
+    private void mostrarPeliculas() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmPelicula.fxml"));
+            Parent vista = loader.load();
+            contenidoCentral.getChildren().setAll(vista);
+
+            com.app_eventos.controllers.ABMPeliculaController c = loader.getController();
+            if (c != null) c.refrescarDatos();
+        } catch (IOException e) {
+            e.printStackTrace(); // mira la consola si algo truena al cargar el FXML
+        }
+    }
+
 }
