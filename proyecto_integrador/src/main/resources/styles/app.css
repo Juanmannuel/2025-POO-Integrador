@@ -227,3 +227,70 @@
     -fx-background-radius: 8;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 3, 0, 0, 1);
 }
+
+
+/* =================================================================
+ESTILOS PARA LAS TARJETAS DE ESTADÍSTICAS DEL DASHBOARD
+   ================================================================= */
+.card-estadistica {
+    -fx-background-color: white;
+    -fx-padding: 15px;
+    -fx-background-radius: 8px; /* Bordes redondeados */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0.5, 0, 2); /* Sombra suave */
+    -fx-alignment: center;
+}
+
+.dato-estadistica {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50; /* Un color de texto oscuro */
+    -fx-padding: 5px 0 0 0;
+}
+
+/* =================================================================
+   ESTILOS PARA EL CALENDARIO
+   ================================================================= */
+.calendario-grid {
+    -fx-border-color: #e0e0e0; /* Borde exterior de la cuadrícula */
+    -fx-border-width: 1px;
+}
+/* En app.css */
+
+.calendario-header {
+    -fx-background-color: #f8f9fa;
+    -fx-padding: 8px;
+    -fx-font-weight: bold;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 1px 1px 0;
+    -fx-alignment: center; /* Asegúrate de que esté centrado */
+}
+
+.calendario-celda {
+    -fx-min-height: 90px;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 1px 1px 0;
+    -fx-padding: 5px;
+    -fx-alignment: center; /* Añade esta línea para centrar el número del día */
+}
+
+.calendario-numero-dia {
+    -fx-font-size: 12px;
+}
+
+/* =================================================================
+   ESTILOS PARA EL PANEL LATERAL DE INFORMACIÓN
+   ================================================================= */
+.panel-info-lateral {
+    -fx-background-color: white;
+    -fx-padding: 15px;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0.5, 0, 2);
+}
+
+.titulo-panel {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent transparent #e0e0e0 transparent; /* Línea inferior */
+    -fx-border-width: 2px;
+    -fx-padding: 0 0 5px 0;
+}
