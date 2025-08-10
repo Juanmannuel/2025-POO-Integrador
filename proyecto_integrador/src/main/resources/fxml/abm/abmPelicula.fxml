@@ -33,10 +33,10 @@
 
             <!-- FILTROS -->
             <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="Título:"/>
-                <TextField fx:id="txtNombreFiltro" prefWidth="180" promptText="Buscar por título"/>
                 <Label text="ID:"/>
                 <TextField fx:id="txtIDFiltro" prefWidth="120" promptText="Buscar por ID"/>
+                <Label text="Título:"/>
+                <TextField fx:id="txtNombreFiltro" prefWidth="180" promptText="Buscar por título"/>
             </HBox>
 
             <!-- TABLA -->

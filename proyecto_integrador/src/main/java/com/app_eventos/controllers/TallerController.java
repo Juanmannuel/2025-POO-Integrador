@@ -35,11 +35,13 @@ public class TallerController {
         // Modalidad enum
         comboModalidad.getItems().setAll(Modalidad.values());
     }
-    public int getCupoMaximo() {
-        return spinnerCupoMaximo.getValue();
-    }
+    
+    public int getCupoMaximo() { return spinnerCupoMaximo.getValue(); }
 
-    public Modalidad getModalidadSeleccionada() {
-        return comboModalidad.getValue();
+    public Modalidad getModalidadSeleccionada() { return comboModalidad.getValue(); }
+
+    public void setValores(int cupo, Modalidad mod) {
+        spinnerCupoMaximo.getValueFactory().setValue(cupo);
+        comboModalidad.getSelectionModel().select(mod);
     }
 }

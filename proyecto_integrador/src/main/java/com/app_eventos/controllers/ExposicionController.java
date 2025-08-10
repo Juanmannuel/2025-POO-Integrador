@@ -14,7 +14,7 @@ public class ExposicionController {
         comboTipoArte.getItems().setAll(TipoArte.values());
     }
     
-    public TipoArte getTipoArteSeleccionado() {
-        return comboTipoArte.getValue();
-    }
+    public TipoArte getTipoArteSeleccionado() { return comboTipoArte.getValue(); }
+
+    public void setValores(TipoArte tipo) { comboTipoArte.getSelectionModel().select(tipo); }
 }
