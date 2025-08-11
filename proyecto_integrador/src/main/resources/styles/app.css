@@ -228,6 +228,7 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 3, 0, 0, 1);
 }
 
+
 /* =================================================================
 ESTILOS PARA LAS TARJETAS DE ESTADÍSTICAS DEL DASHBOARD
    ================================================================= */
@@ -265,15 +266,22 @@ ESTILOS PARA LAS TARJETAS DE ESTADÍSTICAS DEL DASHBOARD
 }
 
 .calendario-celda {
-    -fx-min-height: 90px;
-    -fx-border-color: #e0e0e0;
-    -fx-border-width: 0 1px 1px 0;
+    -fx-min-height: 80px;
+    -fx-border-color: #e0e0e0; /* Color del borde */
+    /* CORRECCIÓN: Dibuja borde inferior e izquierdo en cada celda */
+    -fx-border-width: 0 0 1px 1px;
     -fx-padding: 5px;
-    -fx-alignment: center; /* Añade esta línea para centrar el número del día */
+    -fx-alignment: top-left;
 }
-
 .calendario-numero-dia {
     -fx-font-size: 12px;
+}
+
+.calendario-celda-vacia {
+    -fx-min-height: 80px;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 1px 1px 0;
+    -fx-background-color: #fdfdfd; /* Un gris muy, muy claro */
 }
 
 /* =================================================================
