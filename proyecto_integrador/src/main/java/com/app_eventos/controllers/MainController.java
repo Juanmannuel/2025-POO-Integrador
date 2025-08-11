@@ -4,17 +4,26 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
 import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
 
 public class MainController {
 
     @FXML private Label fechaLabel;
     @FXML private StackPane contenidoCentral;
+
+    @FXML private Button btnInicio;
+    @FXML private Button btnEventos;
+    @FXML private Button btnPersona;
+    @FXML private Button btnParticipantes;
+    @FXML private Button btnPeliculas;
 
     @FXML
     public void initialize() {
@@ -41,30 +50,44 @@ public class MainController {
         }
     }
 
+    private void setActivo(Button activo) {
+        List<Button> todos = Arrays.asList(btnInicio, btnEventos, btnPersona, btnParticipantes, btnPeliculas);
+        for (Button b : todos) {
+            b.getStyleClass().remove("selected");
+        }
+        if (!activo.getStyleClass().contains("selected")) {
+            activo.getStyleClass().add("selected");
+        }
+    }
+
     // --- HANDLERS DE BOTONES ---
     @FXML
     private void mostrarInicio() {
         cargarContenidoCentral("/fxml/inicio.fxml");
-
+        setActivo(btnInicio);
     }
 
     @FXML
     private void mostrarEventos() {
         cargarContenidoCentral("/fxml/abm/abmEvento.fxml");
+        setActivo(btnEventos);
     }
 
     @FXML
     private void mostrarPersonas() {
         cargarContenidoCentral("/fxml/abm/abmPersona.fxml");
+        setActivo(btnPersona);
     }
 
     @FXML
     private void mostrarParticipantes() {
         cargarContenidoCentral("/fxml/abm/abmParticipante.fxml");
+        setActivo(btnParticipantes);
     }
 
     @FXML
     private void mostrarPeliculas() {
         cargarContenidoCentral("/fxml/abm/abmPelicula.fxml");
+        setActivo(btnPeliculas);
     }
 }
