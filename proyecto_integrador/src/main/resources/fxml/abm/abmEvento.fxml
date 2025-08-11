@@ -47,7 +47,7 @@
             <HBox spacing="12" alignment="CENTER_RIGHT">
                 <Button text="Alta" onAction="#mostrarModal" styleClass="btn-alta" />
                 <Button text="Modificar" styleClass="btn-modificar" onAction="#modificarEvento" />
-                <Button text="Baja" styleClass="btn-baja" />
+                <Button text="Baja" styleClass="btn-baja" onAction="#eliminarEvento"/>
             </HBox>
         </VBox>
     </VBox>

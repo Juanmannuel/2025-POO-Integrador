@@ -9,7 +9,8 @@ import com.app_eventos.model.enums.TipoRol;
 public class Feria extends Evento {
 
     private int cantidadStands;
-    private TipoAmbiente tipoAmbiente;
+    private TipoAmbiente ambiente;
+    
 
     public Feria(String nombre,
                  LocalDateTime fechaInicio,
@@ -31,25 +32,24 @@ public class Feria extends Evento {
         return rol == TipoRol.ORGANIZADOR;
     }
 
-    public int getCantidadStands() {
-        return cantidadStands;
+
+    public int getCantidadStands() { return cantidadStands; }
+    public void setCantidadStands(int cantStand) {
+        if (cantStand <= 0) 
+        throw new IllegalArgumentException("La cantidad de stands debe ser mayor a cero.");
+        this.cantidadStands = cantStand;
     }
 
-    public void setCantidadStands(int cantidadStands) {
-        if (cantidadStands <= 0) {
-            throw new IllegalArgumentException("La cantidad de stands debe ser mayor a cero.");
-        }
-        this.cantidadStands = cantidadStands;
-    }
-
-    public TipoAmbiente getTipoAmbiente() {
-        return tipoAmbiente;
+    public TipoAmbiente getAmbiente() { return ambiente; }
+    public void setAmbiente(TipoAmbiente amb) {
+        if (amb == null) throw new IllegalArgumentException("Ambiente obligatorio");
+        this.ambiente = amb;
     }
 
     public void setTipoAmbiente(TipoAmbiente tipoAmbiente) {
         if (tipoAmbiente == null) {
             throw new IllegalArgumentException("El tipo de ambiente no puede ser nulo.");
         }
-        this.tipoAmbiente = tipoAmbiente;
+        this.ambiente = tipoAmbiente;
     }
 }

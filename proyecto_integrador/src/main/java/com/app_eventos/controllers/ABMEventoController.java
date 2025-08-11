@@ -7,13 +7,21 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 
+import com.app_eventos.model.CicloCine;
+import com.app_eventos.model.Concierto;
 import com.app_eventos.model.Evento;
+import com.app_eventos.model.Exposicion;
+import com.app_eventos.model.Feria;
 import com.app_eventos.model.RolEvento;
+import com.app_eventos.model.Taller;
 import com.app_eventos.model.enums.EstadoEvento;
 import com.app_eventos.model.enums.TipoEntrada;
 import com.app_eventos.model.enums.TipoEvento;
 import com.app_eventos.services.Servicio;
 import com.app_eventos.utils.ComboBoxInicializador;
+import javafx.collections.FXCollections;
+import java.util.EnumSet;
+
 
 import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
@@ -46,6 +54,9 @@ public class ABMEventoController {
     @FXML private Pane seccionDinamica;
     @FXML private VBox contenedorAsignacionRoles;
     @FXML private TableColumn<Evento, Void> colAcciones;
+    private Evento eventoEnEdicion = null;
+    private boolean modoEdicion = false;
+    
 
     @FXML private TableView<Evento> tablaEventos;
     @FXML private TableColumn<Evento, String> colNombre;
@@ -132,7 +143,7 @@ public class ABMEventoController {
     }
 
     private SpinnerValueFactory<LocalTime> crearFactoryHora() {
-        LocalTime horaInicial = LocalTime.of(7, 0);
+        LocalTime horaInicial = LocalTime.of(6, 0);
         LocalTime horaFinal = LocalTime.of(23, 59);
         int intervaloMinutos = 5;
 
@@ -160,6 +171,18 @@ public class ABMEventoController {
                 if (!next.isAfter(horaFinal)) { value = next; setValue(value); }
             }
         };
+    }
+
+    private static final EnumSet<EstadoEvento> ESTADOS_ALTA =
+        EnumSet.of(EstadoEvento.PLANIFICACIÓN, EstadoEvento.CONFIRMADO, EstadoEvento.EJECUCIÓN);
+
+    private void setEstadosParaAlta() {
+        comboEstado.setItems(FXCollections.observableArrayList(ESTADOS_ALTA));
+        comboEstado.getSelectionModel().select(EstadoEvento.PLANIFICACIÓN); // por defecto
+    }
+
+    private void setEstadosParaEdicion() {
+        comboEstado.setItems(FXCollections.observableArrayList(EstadoEvento.values())); // todos
     }
 
     private void agregarBotonAsignarRol() {
@@ -204,79 +227,65 @@ public class ABMEventoController {
         }
     }
 
+    private void limpiarFormularioBasico() {
+        txtNombre.clear();
+        dateInicio.setValue(null);
+        dateFin.setValue(null);
+
+        comboTipoEvento.getSelectionModel().clearSelection();
+        comboEstado.getSelectionModel().clearSelection();
+
+        seccionDinamica.getChildren().clear();
+
+        // asegura que el Spinner tiene factory antes de setear valor
+        if (spinnerHoraInicio.getValueFactory() != null) {
+            spinnerHoraInicio.getValueFactory().setValue(LocalTime.of(0, 0));
+        }
+        if (spinnerHoraFin.getValueFactory() != null) {
+            spinnerHoraFin.getValueFactory().setValue(LocalTime.of(0, 0));
+        }
+    }
+
     // -- Modal --
     @FXML
     private void mostrarModal() {
+        modoEdicion = false;
+        eventoEnEdicion = null;
+        comboTipoEvento.setDisable(false);     // habilitado para alta
+        limpiarFormularioBasico();
+        setEstadosParaAlta();
         modalOverlay.setVisible(true);
-        modalOverlay.toFront();
     }
 
     @FXML
     private void cerrarModal() {
-        txtNombre.clear();
-        dateInicio.setValue(null);
-        dateFin.setValue(null);
-        comboTipoEvento.getSelectionModel().clearSelection();
-        seccionDinamica.getChildren().clear();
-        spinnerHoraInicio.getValueFactory().setValue(LocalTime.of(0, 0));
-        spinnerHoraFin.getValueFactory().setValue(LocalTime.of(0, 0));
         modalOverlay.setVisible(false);
+        modoEdicion = false;
+        eventoEnEdicion = null;
+        comboTipoEvento.setDisable(false);
+        limpiarFormularioBasico();
+        controladorFragmento = null;
     }
 
     @FXML
     private void guardarEvento() {
         String nombre = txtNombre.getText();
-        TipoEvento tipo = comboTipoEvento.getValue();
-        LocalDate fechaInicio = dateInicio.getValue();
-        LocalDate fechaFin = dateFin.getValue();
-        LocalTime horaInicio = spinnerHoraInicio.getValue();
-        LocalTime horaFin = spinnerHoraFin.getValue();
+        TipoEvento tipo = modoEdicion ? eventoEnEdicion.getTipoEvento(): comboTipoEvento.getValue();
+        LocalDate fIni = dateInicio.getValue();
+        LocalDate fFin = dateFin.getValue();
+        LocalTime hIni = spinnerHoraInicio.getValue();
+        LocalTime hFin = spinnerHoraFin.getValue();
         EstadoEvento estado = comboEstado.getValue();
 
         try {
-            if (tipo == TipoEvento.FERIA) {
-                if (controladorFragmento instanceof FeriaController feriaCtrl) {
-                    servicio.crearFeria(
-                        nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado,
-                        feriaCtrl.getCantidadStands(),
-                        feriaCtrl.getAmbienteSeleccionado()
-                    );
-                }
-            } else if (tipo == TipoEvento.CONCIERTO) {
-                if (controladorFragmento instanceof ConciertoController concCtrl) {
-                    servicio.crearConcierto(
-                        nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado,
-                        concCtrl.getTipoEntradaSeleccionada(),
-                        concCtrl.getCupoMaximo()
-                    );
-                }
-            } else if (tipo == TipoEvento.EXPOSICION) {
-                if (controladorFragmento instanceof ExposicionController expoCtrl) {
-                    servicio.crearExposicion(
-                        nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado,
-                        expoCtrl.getTipoArteSeleccionado()
-                    );
-                }
-            } else if (tipo == TipoEvento.TALLER) {
-                if (controladorFragmento instanceof TallerController tallerCtrl) {
-                    servicio.crearTaller(
-                        nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado,
-                        tallerCtrl.getCupoMaximo(),
-                        tallerCtrl.getModalidadSeleccionada()
-                    );
-                }
-            } else if (tipo == TipoEvento.CICLO_CINE) {
-                if (controladorFragmento instanceof CicloCineController cineCtrl) {
-                    servicio.crearCicloCine(
-                        nombre, fechaInicio, fechaFin, horaInicio, horaFin, estado,
-                        cineCtrl.isPostCharla(),
-                        cineCtrl.getCupoMaximo(),
-                        cineCtrl.getPeliculasSeleccionadas()   // <- solo esto
-                    );
-                }
+            if (!modoEdicion) {
+                // ALTA (tu código actual)
+                crearSegunTipo(nombre, tipo, fIni, fFin, hIni, hFin, estado);
+            } else {
+                // EDICIÓN
+                actualizarSegunTipo(eventoEnEdicion, nombre, tipo, fIni, fFin, hIni, hFin, estado);
             }
 
-            // Refrescar tabla
             tablaEventos.getItems().setAll(servicio.listarEventos());
             cerrarModal();
 
@@ -285,14 +294,142 @@ public class ABMEventoController {
         }
     }
 
+    private void crearSegunTipo(String nombre, TipoEvento tipo,
+                                LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
+        if (tipo == TipoEvento.FERIA && controladorFragmento instanceof FeriaController c) {
+            servicio.crearFeria(nombre, fIni, fFin, hIni, hFin, estado, c.getCantidadStands(), c.getAmbienteSeleccionado());
+        } else if (tipo == TipoEvento.CONCIERTO && controladorFragmento instanceof ConciertoController c) {
+            servicio.crearConcierto(nombre, fIni, fFin, hIni, hFin, estado, c.getTipoEntradaSeleccionada(), c.getCupoMaximo());
+        } else if (tipo == TipoEvento.EXPOSICION && controladorFragmento instanceof ExposicionController c) {
+            servicio.crearExposicion(nombre, fIni, fFin, hIni, hFin, estado, c.getTipoArteSeleccionado());
+        } else if (tipo == TipoEvento.TALLER && controladorFragmento instanceof TallerController c) {
+            servicio.crearTaller(nombre, fIni, fFin, hIni, hFin, estado, c.getCupoMaximo(), c.getModalidadSeleccionada());
+        } else if (tipo == TipoEvento.CICLO_CINE && controladorFragmento instanceof CicloCineController c) {
+            servicio.crearCicloCine(nombre, fIni, fFin, hIni, hFin, estado, c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas());
+        }
+    }
+
+    private void actualizarSegunTipo(Evento original, String nombre, TipoEvento tipo,
+                                    LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
+        switch (tipo) {
+            case FERIA -> {
+                if (controladorFragmento instanceof FeriaController c) {
+                    servicio.actualizarFeria((com.app_eventos.model.Feria) original,
+                            nombre, fIni, fFin, hIni, hFin, estado, c.getCantidadStands(), c.getAmbienteSeleccionado());
+                }
+            }
+            case CONCIERTO -> {
+                if (controladorFragmento instanceof ConciertoController c) {
+                    servicio.actualizarConcierto((com.app_eventos.model.Concierto) original,
+                            nombre, fIni, fFin, hIni, hFin, estado, c.getTipoEntradaSeleccionada(), c.getCupoMaximo());
+                }
+            }
+            case EXPOSICION -> {
+                if (controladorFragmento instanceof ExposicionController c) {
+                    servicio.actualizarExposicion((com.app_eventos.model.Exposicion) original,
+                            nombre, fIni, fFin, hIni, hFin, estado, c.getTipoArteSeleccionado());
+                }
+            }
+            case TALLER -> {
+                if (controladorFragmento instanceof TallerController c) {
+                    servicio.actualizarTaller((com.app_eventos.model.Taller) original,
+                            nombre, fIni, fFin, hIni, hFin, estado, c.getCupoMaximo(), c.getModalidadSeleccionada());
+                }
+            }
+            case CICLO_CINE -> {
+                if (controladorFragmento instanceof CicloCineController c) {
+                    servicio.actualizarCicloCine((com.app_eventos.model.CicloCine) original,
+                            nombre, fIni, fFin, hIni, hFin, estado, c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas());
+                }
+            }
+        }
+    }
+
+
     @FXML
     private void modificarEvento() {
-        Evento eventoSeleccionado = tablaEventos.getSelectionModel().getSelectedItem();
-        if (eventoSeleccionado != null) {
-            modalOverlay.setVisible(true);
-        } else {
+        Evento e = tablaEventos.getSelectionModel().getSelectedItem();
+        if (e == null) {
             mostrarAlerta("Selección requerida", "Debe seleccionar un evento en la tabla para modificar.");
+            return;
         }
+        modoEdicion = true;
+        eventoEnEdicion = e;
+        comboTipoEvento.setDisable(true);
+
+        setEstadosParaEdicion();
+        comboEstado.getSelectionModel().select(e.getEstado());
+        // básicos
+        txtNombre.setText(e.getNombre());
+        dateInicio.setValue(e.getFechaInicio().toLocalDate());
+        dateFin.setValue(e.getFechaFin().toLocalDate());
+        spinnerHoraInicio.getValueFactory().setValue(e.getFechaInicio().toLocalTime());
+        spinnerHoraFin.getValueFactory().setValue(e.getFechaFin().toLocalTime());
+        comboEstado.getSelectionModel().select(e.getEstado());
+
+        // específico por tipo
+        comboTipoEvento.getSelectionModel().select(e.getTipoEvento());
+        cargarFragmentoEspecifico(e.getTipoEvento()); // carga el FXML y deja controladorFragmento listo
+
+        // precargar fragmento
+        switch (e.getTipoEvento()) {
+        case FERIA -> {
+            if (controladorFragmento instanceof FeriaController c && e instanceof Feria f) {
+                c.setValores(f.getCantidadStands(), f.getAmbiente());
+            }
+        }
+        case CONCIERTO -> {
+            if (controladorFragmento instanceof ConciertoController c && e instanceof Concierto x) {
+                c.setValores(x.getTipoEntrada(), x.getCupoMaximo());
+            }
+        }
+        case EXPOSICION -> {
+            if (controladorFragmento instanceof ExposicionController c && e instanceof Exposicion x) {
+                c.setValores(x.getTipoArte());
+            }
+        }
+        case TALLER -> {
+            if (controladorFragmento instanceof TallerController c && e instanceof Taller x) {
+                c.setValores(x.getCupoMaximo(), x.getModalidad());
+            }
+        }
+        case CICLO_CINE -> {
+            if (controladorFragmento instanceof CicloCineController c && e instanceof CicloCine x) {
+                c.setCupoMaximo(x.getCupoMaximo());
+                c.setPostCharla(x.isPostCharla());
+                c.preseleccionarPeliculas(x.getPeliculas());
+            }
+        }
+    }
+
+        modalOverlay.setVisible(true);
+        modalOverlay.toFront();
+    }
+    
+    @FXML
+    private void eliminarEvento() {
+        Evento sel = tablaEventos.getSelectionModel().getSelectedItem();
+        if (sel == null) {
+            mostrarAlerta("Selección requerida", "Debe seleccionar un evento en la tabla para eliminar.");
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setHeaderText(null);
+        confirm.setTitle("Confirmar eliminación");
+        confirm.setContentText("¿Eliminar el evento \"" + sel.getNombre() + "\"?");
+        confirm.showAndWait().ifPresent(btn -> {
+            if (btn == ButtonType.OK) {
+                try {
+                    servicio.eliminarEvento(sel);          // <-- por objeto
+
+                    tablaEventos.getItems().setAll(servicio.listarEventos());
+                    tablaEventos.getSelectionModel().clearSelection();
+                } catch (IllegalStateException | IllegalArgumentException ex) {
+                    mostrarAlerta("No se pudo eliminar", ex.getMessage());
+                }
+            }
+        });
     }
 
     private void mostrarAlerta(String titulo, String mensaje) {

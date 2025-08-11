@@ -36,9 +36,11 @@ public class CicloCine extends Evento implements IEventoConCupo {
         peliculas.add(pelicula);
     }
 
-    public void quitarPelicula(Pelicula pelicula) {
+    public void sacarPelicula(Pelicula pelicula) {
         peliculas.remove(pelicula);
     }
+    
+    public void clearPeliculas() { peliculas.clear(); }
 
     // Implementación de IEventoConInscripcion 
     @Override

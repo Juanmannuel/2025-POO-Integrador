@@ -20,11 +20,12 @@ public class FeriaController {
         comboAmbiente.getItems().setAll(TipoAmbiente.values());
     }
 
-    public int getCantidadStands() {
-        return spinnerCantidadStands.getValue();
-    }
+    public int getCantidadStands() { return spinnerCantidadStands.getValue(); }
 
-    public TipoAmbiente getAmbienteSeleccionado() {
-        return comboAmbiente.getValue();
+    public TipoAmbiente getAmbienteSeleccionado() { return comboAmbiente.getValue(); }
+    
+    public void setValores(int cant, TipoAmbiente amb) {
+        spinnerCantidadStands.getValueFactory().setValue(cant);
+        comboAmbiente.getSelectionModel().select(amb);
     }
 }

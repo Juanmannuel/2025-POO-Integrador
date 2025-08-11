@@ -94,15 +94,32 @@ public class CicloCineController {
     }
 
     // === Getters usados por ABMEventoController ===
-    public boolean isPostCharla() {
-        return radioSi.isSelected();
-    }
+    public boolean isPostCharla() { return radioSi.isSelected(); }
 
-    public int getCupoMaximo() {
-        return spinnerCupoMaximo.getValue();
-    }
+    public void setPostCharla(boolean v) { if (v) radioSi.setSelected(true); else radioNo.setSelected(true); }
 
+    public int getCupoMaximo() { return spinnerCupoMaximo.getValue(); }
+
+    public void setCupoMaximo(int v) { spinnerCupoMaximo.getValueFactory().setValue(v); }
+    
+    public void preseleccionarPeliculas(List<Pelicula> pelis) {
+        seleccionadas.clear();
+        if (pelis != null) seleccionadas.addAll(pelis);
+        listaPeliculas.refresh();
+        actualizarContador();
+    }
+    
+    // Devuelve una copia inmutable de las seleccionadas (conjunto)
     public List<Pelicula> getPeliculasSeleccionadas() {
         return List.copyOf(seleccionadas);
+    }
+
+    // Opcional: mismas seleccionadas pero en el orden en que aparecen en la ListView
+    public List<Pelicula> getPeliculasSeleccionadasEnOrden() {
+        var out = new java.util.ArrayList<Pelicula>();
+        for (Pelicula p : listaPeliculas.getItems()) {
+            if (seleccionadas.contains(p)) out.add(p);
+        }
+        return out;
     }
 }

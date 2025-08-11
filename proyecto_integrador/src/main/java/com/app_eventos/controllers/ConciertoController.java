@@ -26,11 +26,12 @@ public class ConciertoController {
         comboTipoEntradaConcierto.getItems().setAll(TipoEntrada.values());
     }
 
-    public int getCupoMaximo() {
-        return spinnerCupoMaximo.getValue();
-    }
+    public int getCupoMaximo() { return spinnerCupoMaximo.getValue(); }
 
-    public TipoEntrada getTipoEntradaSeleccionada() {
-        return comboTipoEntradaConcierto.getValue();
+    public TipoEntrada getTipoEntradaSeleccionada() { return comboTipoEntradaConcierto.getValue(); }
+    
+    public void setValores(TipoEntrada tipo, int cupo) {
+        comboTipoEntradaConcierto.getSelectionModel().select(tipo);
+        spinnerCupoMaximo.getValueFactory().setValue(cupo);
     }
 }

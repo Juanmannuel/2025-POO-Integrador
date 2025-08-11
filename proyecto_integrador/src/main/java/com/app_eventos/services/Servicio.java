@@ -16,7 +16,6 @@ import com.app_eventos.model.enums.TipoArte;
 import com.app_eventos.model.enums.TipoEntrada;
 import com.app_eventos.model.enums.TipoRol;
 import com.app_eventos.repository.Repositorio;
-import com.app_eventos.model.enums.TipoPelicula;
 
 
 import javafx.collections.FXCollections;
@@ -58,17 +57,6 @@ public class Servicio {
     private void agregarEvento(Evento evento, EstadoEvento estado) {
         evento.setEstado(estado);
         eventos.add(evento);
-        // Sincronizar con el repositorio para que esté disponible en ABM Participante
-        repositorio.agregarEvento(evento);
-    }
-    
-    private void procesarPeliculas(CicloCine ciclo, String peliculasTexto, TipoPelicula tipo) {
-        if (peliculasTexto == null || peliculasTexto.isBlank()) return;
-        String[] titulos = peliculasTexto.split("\\r?\\n");
-        for (String titulo : titulos) {
-            String t = titulo.trim();
-            if (!t.isEmpty()) ciclo.agregarPelicula(new Pelicula(t, 90, tipo));
-        }
     }
 
     // MÉTODOS PARA EVENTOS
@@ -134,8 +122,83 @@ public class Servicio {
         eventos.add(ciclo); // en memoria, sin BD
     }
 
+    // Actualizar datos
+
+    // FERIA
+    public void actualizarFeria(Feria feria, String nombre, LocalDate fIni, LocalDate fFin,
+                                LocalTime hIni, LocalTime hFin, EstadoEvento estado,
+                                int cantidadStands, TipoAmbiente ambiente) {
+        feria.setNombre(nombre);
+        feria.setFechaInicio(fIni.atTime(hIni));
+        feria.setFechaFin(fFin.atTime(hFin));
+        feria.setEstado(estado);
+        feria.setCantidadStands(cantidadStands);
+        feria.setAmbiente(ambiente);
+    }
+
+    // CONCIERTO
+    public void actualizarConcierto(Concierto c, String nombre, LocalDate fIni, LocalDate fFin,
+                                    LocalTime hIni, LocalTime hFin, EstadoEvento estado,
+                                    TipoEntrada tipoEntrada, int cupoMaximo) {
+        c.setNombre(nombre);
+        c.setFechaInicio(fIni.atTime(hIni));
+        c.setFechaFin(fFin.atTime(hFin));
+        c.setEstado(estado);
+        c.setTipoEntrada(tipoEntrada);
+        c.setCupoMaximo(cupoMaximo);
+    }
+
+    // EXPOSICION
+    public void actualizarExposicion(Exposicion x, String nombre, LocalDate fIni, LocalDate fFin,
+                                    LocalTime hIni, LocalTime hFin, EstadoEvento estado,
+                                    TipoArte tipoArte) {
+        x.setNombre(nombre);
+        x.setFechaInicio(fIni.atTime(hIni));
+        x.setFechaFin(fFin.atTime(hFin));
+        x.setEstado(estado);
+        x.setTipoArte(tipoArte);
+    }
+
+    // TALLER
+    public void actualizarTaller(Taller t, String nombre, LocalDate fIni, LocalDate fFin,
+                                LocalTime hIni, LocalTime hFin, EstadoEvento estado,
+                                int cupoMaximo, Modalidad modalidad) {
+        t.setNombre(nombre);
+        t.setFechaInicio(fIni.atTime(hIni));
+        t.setFechaFin(fFin.atTime(hFin));
+        t.setEstado(estado);
+        t.setCupoMaximo(cupoMaximo);
+        t.setModalidad(modalidad);
+    }
+
+    // CICLO CINE
+    public void actualizarCicloCine(CicloCine cc, String nombre, LocalDate fIni, LocalDate fFin,
+                                    LocalTime hIni, LocalTime hFin, EstadoEvento estado,
+                                    boolean postCharla, int cupoMaximo, List<Pelicula> pelis) {
+        cc.setNombre(nombre);
+        cc.setFechaInicio(fIni.atTime(hIni));
+        cc.setFechaFin(fFin.atTime(hFin));
+        cc.setEstado(estado);
+        cc.setPostCharla(postCharla);
+        cc.setCupoMaximo(cupoMaximo);
+        // reemplazar películas
+        cc.clearPeliculas();
+        if (pelis != null) pelis.forEach(cc::agregarPelicula);
+    }
+
     public List<Evento> listarEventos() {
         return new ArrayList<>(eventos);
+    }
+
+    public void eliminarEvento(Evento e) {
+        if (e == null) throw new IllegalArgumentException("Evento inválido.");
+
+        // (opcional) Regla de negocio: no eliminar en ejecución/finalizado
+        if (e.getEstado() == EstadoEvento.CONFIRMADO) {
+            throw new IllegalStateException("No puede eliminarse un evento confirmado.");
+        }
+
+        eventos.remove(e); // 'eventos' es tu lista en memoria
     }
 
     // MÉTODOS PARA PERSONAS
