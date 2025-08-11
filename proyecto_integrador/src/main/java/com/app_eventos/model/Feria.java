@@ -12,11 +12,7 @@ public class Feria extends Evento {
     private TipoAmbiente ambiente;
     
 
-    public Feria(String nombre,
-                 LocalDateTime fechaInicio,
-                 LocalDateTime fechaFin,
-                 int cantidadStands,
-                 TipoAmbiente tipoAmbiente) {
+    public Feria(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin, int cantidadStands, TipoAmbiente tipoAmbiente) {
         super(nombre, fechaInicio, fechaFin, TipoEvento.FERIA);
         setCantidadStands(cantidadStands);
         setTipoAmbiente(tipoAmbiente);

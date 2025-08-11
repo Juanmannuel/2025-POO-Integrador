@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.app_eventos.model.enums.EstadoEvento;
 import com.app_eventos.model.enums.TipoEvento;
 import com.app_eventos.model.enums.TipoRol;
 import com.app_eventos.model.interfaces.IEventoConCupo;
@@ -45,9 +44,8 @@ public class CicloCine extends Evento implements IEventoConCupo {
     // Implementación de IEventoConInscripcion 
     @Override
     public void inscribirParticipante(Persona persona) {
-        if (getEstado() != EstadoEvento.CONFIRMADO) {
-            throw new IllegalStateException("El evento debe estar confirmado para inscribir participantes.");
-        }
+        // centraliza validación de estado/tiempo
+        validarPuedeInscribir(); 
         if (participantes.size() >= cupoMaximo) {
             throw new IllegalStateException("Cupo lleno. No se pueden inscribir más participantes.");
         }

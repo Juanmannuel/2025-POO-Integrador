@@ -42,7 +42,7 @@ public class ComboBoxInicializador {
     public static void cargarEstadoEvento(ComboBox<EstadoEvento> comboBox) {
         comboBox.getItems().setAll(
                 Arrays.stream(EstadoEvento.values())
-                        .filter(e -> e != EstadoEvento.CANCELADO && e != EstadoEvento.FINALIZADO)
+                        .filter(e -> e != EstadoEvento.FINALIZADO)
                         .toList()
         );
 

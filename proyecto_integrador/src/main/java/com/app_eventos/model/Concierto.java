@@ -7,7 +7,6 @@ import java.util.List;
 import com.app_eventos.model.enums.TipoEntrada;
 import com.app_eventos.model.enums.TipoEvento;
 import com.app_eventos.model.enums.TipoRol;
-import com.app_eventos.model.enums.EstadoEvento;
 import com.app_eventos.model.interfaces.IEventoConCupo;
 
 public class Concierto extends Evento implements IEventoConCupo {
@@ -16,11 +15,8 @@ public class Concierto extends Evento implements IEventoConCupo {
     private int cupoMaximo;
     private final List<Persona> participantes = new ArrayList<>();
 
-    public Concierto(String nombre,
-                     LocalDateTime fechaInicio,
-                     LocalDateTime fechaFin,
-                     TipoEntrada tipoEntrada,
-                     int cupoMaximo) {
+    public Concierto(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin,
+                     TipoEntrada tipoEntrada, int cupoMaximo) {
         super(nombre, fechaInicio, fechaFin, TipoEvento.CONCIERTO);
         setTipoEntrada(tipoEntrada);
         setCupoMaximo(cupoMaximo);
@@ -31,12 +27,10 @@ public class Concierto extends Evento implements IEventoConCupo {
         setTipoEvento(TipoEvento.CONCIERTO);
     }
 
-    // Implementación de IEventoConInscripcion 
+    // Participantes (inscripción) 
     @Override
     public void inscribirParticipante(Persona persona) {
-        if (getEstado() != EstadoEvento.CONFIRMADO) {
-            throw new IllegalStateException("El concierto debe estar confirmado para inscribir participantes.");
-        }
+        validarPuedeInscribir(); // valida estado/tiempo según Evento
         if (participantes.size() >= cupoMaximo) {
             throw new IllegalStateException("No se pueden inscribir más participantes, cupo completo.");
         }
@@ -56,7 +50,7 @@ public class Concierto extends Evento implements IEventoConCupo {
         return new ArrayList<>(participantes);
     }
 
-    // Implementación de IEventoConCupo 
+    // Cupo 
     @Override
     public boolean hayCupoDisponible() {
         return participantes.size() < cupoMaximo;
@@ -85,13 +79,18 @@ public class Concierto extends Evento implements IEventoConCupo {
         return cupoMaximo - participantes.size();
     }
 
-    // Lógica de roles permitidos
+    // Roles permitidos 
     @Override
     protected boolean rolPermitido(TipoRol rol) {
-        return rol == TipoRol.ARTISTA  || rol == TipoRol.ORGANIZADOR;
+        return rol == TipoRol.ORGANIZADOR || rol == TipoRol.ARTISTA;
     }
 
-    // Getters y setters propios
+    // Helpers específicos para artistas
+    public List<Persona> getArtistas() {
+        return obtenerResponsables(TipoRol.ARTISTA);
+    }
+
+    // Getters/Setters propios 
     public TipoEntrada getTipoEntrada() {
         return tipoEntrada;
     }

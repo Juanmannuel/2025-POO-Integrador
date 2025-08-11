@@ -7,7 +7,6 @@ import java.util.List;
 import com.app_eventos.model.enums.Modalidad;
 import com.app_eventos.model.enums.TipoEvento;
 import com.app_eventos.model.enums.TipoRol;
-import com.app_eventos.model.enums.EstadoEvento;
 import com.app_eventos.model.interfaces.IEventoConCupo;
 
 public class Taller extends Evento implements IEventoConCupo {
@@ -15,14 +14,10 @@ public class Taller extends Evento implements IEventoConCupo {
     private int cupoMaximo;
     private final List<Persona> participantes = new ArrayList<>();
     private Modalidad modalidad;
-    private Persona instructor; // único
 
     // Constructor con datos obligatorios
-    public Taller(String nombre,
-                  LocalDateTime fechaInicio,
-                  LocalDateTime fechaFin,
-                  int cupoMaximo,
-                  Modalidad modalidad) {
+    public Taller(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin,
+                  int cupoMaximo, Modalidad modalidad) {
         super(nombre, fechaInicio, fechaFin, TipoEvento.TALLER);
         setCupoMaximo(cupoMaximo);
         setModalidad(modalidad);
@@ -33,15 +28,10 @@ public class Taller extends Evento implements IEventoConCupo {
         setTipoEvento(TipoEvento.TALLER);
     }
 
-    // --- Inscripción participantes ---
+    //  Inscripción participantes 
     @Override
     public void inscribirParticipante(Persona persona) {
-        if (getEstado() != EstadoEvento.CONFIRMADO) {
-            throw new IllegalStateException("El taller debe estar confirmado para inscribir participantes.");
-        }
-        if (getEstado() == EstadoEvento.FINALIZADO) {
-            throw new IllegalStateException("El taller ya finalizó.");
-        }
+        validarPuedeInscribir(); // valida estado/tiempo según Evento
         if (participantes.size() >= cupoMaximo) {
             throw new IllegalStateException("Cupo lleno. No se pueden inscribir más participantes.");
         }
@@ -61,6 +51,7 @@ public class Taller extends Evento implements IEventoConCupo {
         return new ArrayList<>(participantes);
     }
 
+    // --- Cupo ---
     @Override
     public boolean hayCupoDisponible() {
         return participantes.size() < cupoMaximo;
@@ -81,6 +72,10 @@ public class Taller extends Evento implements IEventoConCupo {
         if (cupoMaximo <= 0) {
             throw new IllegalArgumentException("El cupo máximo debe ser mayor que cero.");
         }
+        // impedir dejar un cupo menor a los inscriptos actuales
+        if (cupoMaximo < participantes.size()) {
+            throw new IllegalStateException("El cupo no puede ser menor a los inscriptos actuales (" + participantes.size() + ").");
+         }
         this.cupoMaximo = cupoMaximo;
     }
 
@@ -89,35 +84,22 @@ public class Taller extends Evento implements IEventoConCupo {
         return cupoMaximo - participantes.size();
     }
 
-    // --- Instructor (único) ---
+    // Instructor (máximo 1)
     public void asignarInstructor(Persona persona) {
         if (persona == null) throw new IllegalArgumentException("El instructor no puede ser nulo.");
-        if (this.instructor != null) {
+        if (contarPorRol(TipoRol.INSTRUCTOR) >= 1) {
             throw new IllegalStateException("Ya hay un instructor asignado.");
         }
-        this.instructor = persona;
-        // reflejar el rol en la lista de roles del evento
-        agregarResponsable(persona, TipoRol.INSTRUCTOR);
+        super.agregarResponsable(persona, TipoRol.INSTRUCTOR);
     }
 
-    public void quitarInstructor() {
-        if (this.instructor != null) {
-            borrarResponsable(this.instructor, TipoRol.INSTRUCTOR);
-            this.instructor = null;
-        }
-    }
-
-    public Persona getInstructor() {
-        return instructor;
-    }
-
-    // --- Roles permitidos en Taller ---
+    // Roles permitidos en Taller
     @Override
     protected boolean rolPermitido(TipoRol rol) {
         return rol == TipoRol.INSTRUCTOR || rol == TipoRol.ORGANIZADOR;
     }
 
-    // Getters/Setters propios
+    // Getters/Setters propios 
     public Modalidad getModalidad() {
         return modalidad;
     }

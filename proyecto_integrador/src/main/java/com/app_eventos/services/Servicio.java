@@ -14,9 +14,9 @@ import com.app_eventos.model.enums.Modalidad;
 import com.app_eventos.model.enums.TipoAmbiente;
 import com.app_eventos.model.enums.TipoArte;
 import com.app_eventos.model.enums.TipoEntrada;
+import com.app_eventos.model.enums.TipoEvento;
 import com.app_eventos.model.enums.TipoRol;
 import com.app_eventos.repository.Repositorio;
-
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,8 +42,9 @@ public class Servicio {
     private static final ObservableList<Persona> personas;
     static { personas = FXCollections.observableArrayList(); }
 
+    // Reglas de validación temporal (ventana de 2 años desde el día actual)
+    private static final int MAX_YEARS_ADELANTE = 2;
 
-    
     // Método para obtener la instancia compartida
     public static Servicio getInstance() {
         return INSTANCE;
@@ -59,13 +61,52 @@ public class Servicio {
         eventos.add(evento);
     }
 
-    // MÉTODOS PARA EVENTOS
+    // Validación de altas: inicio y fin estrictamente futuros y dentro de los próximos 2 años (a nivel día)
+    private void validarAlta(LocalDate fIni, LocalTime hIni,
+                             LocalDate fFin, LocalTime hFin,
+                             EstadoEvento estado) {
+        LocalDate hoy = LocalDate.now();
+        LocalDateTime ahora = LocalDateTime.now();
+
+        LocalDateTime inicio = LocalDateTime.of(fIni, hIni);
+        LocalDateTime fin    = LocalDateTime.of(fFin,  hFin);
+
+        LocalDateTime limiteSuperior = hoy.plusYears(MAX_YEARS_ADELANTE).atTime(23, 59, 59);
+
+        if (!inicio.isAfter(ahora)) {
+            throw new IllegalArgumentException("La fecha/hora de inicio debe ser posterior al momento actual.");
+        }
+        if (!fin.isAfter(inicio)) {
+            throw new IllegalArgumentException("La fecha/hora de fin debe ser posterior al inicio.");
+        }
+        if (inicio.isAfter(limiteSuperior) || fin.isAfter(limiteSuperior)) {
+            throw new IllegalArgumentException("Las fechas no pueden superar 2 años desde el día de hoy.");
+        }
+    }
+
+    // Validación de updates: respeta ventana de 2 años desde hoy y orden temporal
+    private void validarUpdate(LocalDate fIni, LocalTime hIni,
+                               LocalDate fFin, LocalTime hFin) {
+        LocalDate hoy = LocalDate.now();
+        LocalDateTime inicio = LocalDateTime.of(fIni, hIni);
+        LocalDateTime fin    = LocalDateTime.of(fFin,  hFin);
+        LocalDateTime limiteSuperior = hoy.plusYears(MAX_YEARS_ADELANTE).atTime(23, 59, 59);
+
+        if (!fin.isAfter(inicio)) {
+            throw new IllegalArgumentException("La fecha/hora de fin debe ser posterior al inicio.");
+        }
+        if (inicio.isAfter(limiteSuperior) || fin.isAfter(limiteSuperior)) {
+            throw new IllegalArgumentException("Las fechas no pueden superar 2 años desde el día de hoy.");
+        }
+    }
+
+
     
     public void crearFeria(String nombre, LocalDate fechaInicio, LocalDate fechaFin,
                           LocalTime horaInicio, LocalTime horaFin,
                           EstadoEvento estado, int cantidadStands,
                           TipoAmbiente tipoAmbiente) {
-        
+        validarAlta(fechaInicio, horaInicio, fechaFin, horaFin, estado);
         LocalDateTime inicio = crearDateTime(fechaInicio, horaInicio);
         LocalDateTime fin = crearDateTime(fechaFin, horaFin);
         Feria feria = new Feria(nombre, inicio, fin, cantidadStands, tipoAmbiente);
@@ -75,7 +116,7 @@ public class Servicio {
     public void crearConcierto(String nombre, LocalDate fechaInicio, LocalDate fechaFin,
                               LocalTime horaInicio, LocalTime horaFin, EstadoEvento estado,
                               TipoEntrada tipoEntrada, int cupoMaximo) {
-        
+        validarAlta(fechaInicio, horaInicio, fechaFin, horaFin, estado);
         LocalDateTime inicio = crearDateTime(fechaInicio, horaInicio);
         LocalDateTime fin = crearDateTime(fechaFin, horaFin);
         Concierto concierto = new Concierto(nombre, inicio, fin, tipoEntrada, cupoMaximo);
@@ -85,7 +126,7 @@ public class Servicio {
     public void crearExposicion(String nombre, LocalDate fechaInicio, LocalDate fechaFin,
                                LocalTime horaInicio, LocalTime horaFin, EstadoEvento estado,
                                TipoArte tipoArte) {
-        
+        validarAlta(fechaInicio, horaInicio, fechaFin, horaFin, estado);
         LocalDateTime inicio = crearDateTime(fechaInicio, horaInicio);
         LocalDateTime fin = crearDateTime(fechaFin, horaFin);
         Exposicion exposicion = new Exposicion(nombre, inicio, fin, tipoArte);
@@ -95,7 +136,7 @@ public class Servicio {
     public void crearTaller(String nombre, LocalDate fechaInicio, LocalDate fechaFin,
                            LocalTime horaInicio, LocalTime horaFin, EstadoEvento estado,
                            int cupoMaximo, Modalidad modalidad) {
-        
+        validarAlta(fechaInicio, horaInicio, fechaFin, horaFin, estado);
         LocalDateTime inicio = crearDateTime(fechaInicio, horaInicio);
         LocalDateTime fin = crearDateTime(fechaFin, horaFin);
         Taller taller = new Taller(nombre, inicio, fin, cupoMaximo, modalidad);
@@ -106,7 +147,7 @@ public class Servicio {
                             LocalTime horaInicio, LocalTime horaFin, EstadoEvento estado,
                             boolean postCharla, int cupoMaximo,
                             List<Pelicula> peliculasSeleccionadas) {
-
+        validarAlta(fechaInicio, horaInicio, fechaFin, horaFin, estado);
         var inicio = LocalDateTime.of(fechaInicio, horaInicio);
         var fin    = LocalDateTime.of(fechaFin, horaFin);
 
@@ -115,19 +156,20 @@ public class Servicio {
 
         if (peliculasSeleccionadas != null) {
             for (Pelicula p : peliculasSeleccionadas) {
-                ciclo.agregarPelicula(p); // usa las instancias ya cargadas en ABM
+                ciclo.agregarPelicula(p);
             }
         }
 
         eventos.add(ciclo); // en memoria, sin BD
     }
 
-    // Actualizar datos
+    // ====== ACTUALIZAR DATOS ======
 
     // FERIA
     public void actualizarFeria(Feria feria, String nombre, LocalDate fIni, LocalDate fFin,
                                 LocalTime hIni, LocalTime hFin, EstadoEvento estado,
                                 int cantidadStands, TipoAmbiente ambiente) {
+        validarUpdate(fIni, hIni, fFin, hFin);
         feria.setNombre(nombre);
         feria.setFechaInicio(fIni.atTime(hIni));
         feria.setFechaFin(fFin.atTime(hFin));
@@ -140,6 +182,7 @@ public class Servicio {
     public void actualizarConcierto(Concierto c, String nombre, LocalDate fIni, LocalDate fFin,
                                     LocalTime hIni, LocalTime hFin, EstadoEvento estado,
                                     TipoEntrada tipoEntrada, int cupoMaximo) {
+        validarUpdate(fIni, hIni, fFin, hFin);
         c.setNombre(nombre);
         c.setFechaInicio(fIni.atTime(hIni));
         c.setFechaFin(fFin.atTime(hFin));
@@ -152,6 +195,7 @@ public class Servicio {
     public void actualizarExposicion(Exposicion x, String nombre, LocalDate fIni, LocalDate fFin,
                                     LocalTime hIni, LocalTime hFin, EstadoEvento estado,
                                     TipoArte tipoArte) {
+        validarUpdate(fIni, hIni, fFin, hFin);
         x.setNombre(nombre);
         x.setFechaInicio(fIni.atTime(hIni));
         x.setFechaFin(fFin.atTime(hFin));
@@ -163,6 +207,7 @@ public class Servicio {
     public void actualizarTaller(Taller t, String nombre, LocalDate fIni, LocalDate fFin,
                                 LocalTime hIni, LocalTime hFin, EstadoEvento estado,
                                 int cupoMaximo, Modalidad modalidad) {
+        validarUpdate(fIni, hIni, fFin, hFin);
         t.setNombre(nombre);
         t.setFechaInicio(fIni.atTime(hIni));
         t.setFechaFin(fFin.atTime(hFin));
@@ -175,6 +220,7 @@ public class Servicio {
     public void actualizarCicloCine(CicloCine cc, String nombre, LocalDate fIni, LocalDate fFin,
                                     LocalTime hIni, LocalTime hFin, EstadoEvento estado,
                                     boolean postCharla, int cupoMaximo, List<Pelicula> pelis) {
+        validarUpdate(fIni, hIni, fFin, hFin);
         cc.setNombre(nombre);
         cc.setFechaInicio(fIni.atTime(hIni));
         cc.setFechaFin(fFin.atTime(hFin));
@@ -193,7 +239,7 @@ public class Servicio {
     public void eliminarEvento(Evento e) {
         if (e == null) throw new IllegalArgumentException("Evento inválido.");
 
-        // (opcional) Regla de negocio: no eliminar en ejecución/finalizado
+        // Regla de negocio: no eliminar en estado CONFIRMADO
         if (e.getEstado() == EstadoEvento.CONFIRMADO) {
             throw new IllegalStateException("No puede eliminarse un evento confirmado.");
         }
@@ -201,7 +247,27 @@ public class Servicio {
         eventos.remove(e); // 'eventos' es tu lista en memoria
     }
 
-    // MÉTODOS PARA PERSONAS
+    // Búsqueda por tipo, estado y rango de fechas con superposición de intervalos
+    public List<Evento> buscarEventos(TipoEvento tipo, EstadoEvento estado,
+                                      LocalDate desde, LocalDate hasta) {
+
+        LocalDateTime from = (desde == null) ? null : desde.atStartOfDay();
+        LocalDateTime to   = (hasta == null) ? null : hasta.atTime(23, 59, 59);
+
+        return eventos.stream()
+                .filter(e -> tipo == null   || e.getTipoEvento() == tipo)
+                .filter(e -> estado == null || e.getEstado() == estado)
+                .filter(e -> {
+                    if (from == null && to == null) return true;
+                    if (from == null) return !e.getFechaInicio().isAfter(to);
+                    if (to == null)   return !e.getFechaFin().isBefore(from);
+                    return !(e.getFechaFin().isBefore(from) || e.getFechaInicio().isAfter(to));
+                })
+                .sorted(Comparator.comparing(Evento::getFechaInicio))
+                .toList();
+    }
+
+    // ====== MÉTODOS PARA PERSONAS ======
     
     public ObservableList<Persona> obtenerPersonas() {
         return personas;
@@ -233,12 +299,11 @@ public class Servicio {
         return FXCollections.observableArrayList(filtradas);
     }
 
-    // MÉTODOS PARA ABM PARTICIPANTE
+    // ====== MÉTODOS PARA ABM PARTICIPANTE ======
 
     // La validación ocurre en el constructor del modelo RolEvento
     public RolEvento crearParticipacion(Evento evento, Persona persona, TipoRol rol) {
         try {
-            // El modelo rico valida todo en el constructor
             return new RolEvento(evento, persona, rol);
         } catch (Exception e) {
             throw new RuntimeException("Error al crear participación: " + e.getMessage(), e);
@@ -247,6 +312,9 @@ public class Servicio {
 
     // Guarda una participación (intermediario con repositorio)
     public void guardarParticipacion(RolEvento rolEvento) {
+        if (!rolEvento.getEvento().Inscripcion()) {
+            throw new IllegalStateException("Inscripción no permitida para este evento.");
+        }
         try {
             repositorio.guardarRolEvento(rolEvento);
             // También agregar al evento para mantener consistencia
@@ -259,7 +327,6 @@ public class Servicio {
     // Elimina una participación (borrado lógico)
     public void eliminarParticipacion(RolEvento rolEvento) {
         try {
-            // La lógica de borrado está en el modelo
             rolEvento.darDeBaja();
             repositorio.actualizarRolEvento(rolEvento);
         } catch (Exception e) {
@@ -283,24 +350,20 @@ public class Servicio {
     }
 
     // Filtra SOLO participantes (rol PARTICIPANTE) por criterios
-
     public ObservableList<RolEvento> filtrarSoloParticipantes(String nombreEvento, String nombrePersona, String dni) {
         return repositorio.filtrarSoloParticipantes(nombreEvento, nombrePersona, dni);
     }
 
     // Obtiene eventos disponibles para inscripción
-
     public ObservableList<Evento> obtenerEventosDisponibles() {
-        // Usar la lista de eventos del Servicio (donde se guardan los eventos creados)
         return eventos.stream()
-                .filter(evento -> evento.puedeInscribirParticipantes())
+                .filter(Evento::Inscripcion)
                 .collect(Collectors.toCollection(FXCollections::observableArrayList));
     }
 
     // Reactiva una participación dada de baja
     public void reactivarParticipacion(RolEvento rolEvento) {
         try {
-            // La lógica de reactivación está en el modelo
             rolEvento.reactivar();
             repositorio.actualizarRolEvento(rolEvento);
         } catch (Exception e) {
@@ -308,7 +371,7 @@ public class Servicio {
         }
     }
     
-    // PELÍCULAS (en memoria, sin persistencia real por ahora)
+    // ====== PELÍCULAS (en memoria, sin persistencia real por ahora) ======
 
     // Lista observable para enlazar con la TableView.
     private static final javafx.collections.ObservableList<Pelicula> peliculas =
@@ -317,25 +380,16 @@ public class Servicio {
     /** Devuelve la lista observable para setItems(...) en la UI. */
     public javafx.collections.ObservableList<Pelicula> obtenerPeliculas() {
         return peliculas;
-
-        // Persistencia real:
-        // return FXCollections.observableArrayList(repositorioPelicula.obtenerTodas());
     }
 
     // Alta de película (el modelo rico valida).
     public void guardarPelicula(Pelicula pelicula) {
         peliculas.add(pelicula);
-
-        // Persistencia real:
-        // repositorioPelicula.guardar(pelicula);
     }
 
     // Baja de película.
     public void eliminarPelicula(Pelicula pelicula) {
         peliculas.remove(pelicula);
-
-        // Persistencia real:
-        // repositorioPelicula.eliminar(pelicula);
     }
 
     // Modificación de película (respetando validaciones del modelo).
@@ -343,9 +397,6 @@ public class Servicio {
         original.setTitulo(actualizada.getTitulo());
         original.setDuracionMinutos(actualizada.getDuracionMinutos());
         original.setTipo(actualizada.getTipo());
-
-        // Persistencia real:
-        // repositorioPelicula.actualizar(original);
     }
 
     // Filtro por título (contains, case-insensitive) y por ID numérico exacto.
@@ -362,7 +413,6 @@ public class Servicio {
                 Long id = Long.parseLong(idTexto);
                 stream = stream.filter(p -> p.getIdPelicula() != null && p.getIdPelicula().equals(id));
             } catch (NumberFormatException e) {
-                // Si el ID no es un número válido, el resultado es vacío:
                 stream = stream.filter(p -> false);
             }
         }
@@ -371,5 +421,4 @@ public class Servicio {
                 javafx.collections.FXCollections::observableArrayList
         ));
     }
-
 }

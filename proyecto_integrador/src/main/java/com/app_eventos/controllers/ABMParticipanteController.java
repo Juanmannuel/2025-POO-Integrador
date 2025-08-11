@@ -104,8 +104,6 @@ public class ABMParticipanteController {
             new SimpleStringProperty(data.getValue().getPersona().getNombre() + " " + 
                                    data.getValue().getPersona().getApellido()));
         
-        // No necesitamos configurar colRol porque siempre es PARTICIPANTE
-        
         colDNI.setCellValueFactory(data -> 
             new SimpleStringProperty(data.getValue().getPersona().getDni()));
         
@@ -117,9 +115,6 @@ public class ABMParticipanteController {
         
         colEstadoEvento.setCellValueFactory(data -> 
             new SimpleStringProperty(data.getValue().getEvento().getEstado().toString()));
-        
-        colFechaAsignacion.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().getFechaAsignacion().format(formatter)));
     }
 
     /**
@@ -194,7 +189,7 @@ public class ABMParticipanteController {
         });
     }
 
-    // ⭐ MÉTODOS PRINCIPALES DEL ABM
+    // MÉTODOS PRINCIPALES DEL ABM
 
     /**
      * Aplica filtros a la tabla de participaciones
@@ -232,4 +227,221 @@ public class ABMParticipanteController {
         lblTelefonoParticipante.setText("Teléfono: -");
         lblEmailParticipante.setText("Email: -");
     }
+
+    /**
+     * Actualiza las etiquetas informativas cuando se selecciona un evento
+     */
+    private void actualizarInfoEvento(Evento evento) {
+        if (evento == null) {
+            lblEstadoEvento.setText("Estado: -");
+            lblTipoEvento.setText("Tipo: -");
+            lblCupoDisponible.setText("Cupo: -");
+            lblFechaEvento.setText("Fecha: -");
+            return;
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
+        
+        lblEstadoEvento.setText("Estado: " + evento.getEstado());
+        lblTipoEvento.setText("Tipo: " + evento.getTipoEvento());
+        lblFechaEvento.setText("Fecha: " + evento.getFechaInicio().format(formatter));
+        
+        // Mostrar cupo si aplica
+        if (evento instanceof IEventoConCupo) {
+            IEventoConCupo eventoConCupo = (IEventoConCupo) evento;
+            long participantesActuales = evento.contarParticipantes();
+            lblCupoDisponible.setText("Cupo: " + participantesActuales + "/" + eventoConCupo.getCupoMaximo());
+        } else {
+            lblCupoDisponible.setText("Cupo: Sin límite");
+        }
+    }
+
+    /**
+     * Actualiza las etiquetas informativas cuando se selecciona una persona
+     */
+    private void actualizarInfoPersona(Persona persona) {
+        if (persona == null) {
+            lblNombreParticipante.setText("Nombre: -");
+            lblDniParticipante.setText("DNI: -");
+            lblTelefonoParticipante.setText("Teléfono: -");
+            lblEmailParticipante.setText("Email: -");
+            return;
+        }
+
+        lblNombreParticipante.setText("Nombre: " + persona.getNombre() + " " + persona.getApellido());
+        lblDniParticipante.setText("DNI: " + persona.getDni());
+        lblTelefonoParticipante.setText("Teléfono: " + persona.getTelefono());
+        lblEmailParticipante.setText("Email: " + persona.getEmail());
+    }
+
+    //MÉTODOS FXML DEL ABM
+
+    /**
+     * Abre el modal para crear nueva participación
+     */
+    @FXML
+    private void mostrarModalAlta() {
+        modoEdicion = false;
+        limpiarModal();
+        
+        // Configurar listeners para actualización dinámica
+        comboEvento.setOnAction(e -> actualizarInfoEvento(comboEvento.getValue()));
+        comboParticipante.setOnAction(e -> actualizarInfoPersona(comboParticipante.getValue()));
+        
+        modalOverlay.setVisible(true);
+    }
+
+    /**
+     * Cierra el modal sin guardar cambios
+     */
+    @FXML
+    private void cerrarModal() {
+        modalOverlay.setVisible(false);
+        limpiarModal();
+        participacionSeleccionada = null;
+    }
+
+    /**
+     * Asigna un rol a una persona en un evento (siguiendo modelo rico)
+     */
+    @FXML
+    private void altaParticipante() {
+        try {
+            if (!validarCamposUI()) {
+                return;
+            }
+
+            // 2. CREAR PARTICIPACIÓN (modelo rico valida reglas de negocio)
+            RolEvento nuevaParticipacion = servicio.crearParticipacion(
+                comboEvento.getValue(),
+                comboParticipante.getValue(), 
+                rolFijo // Siempre PARTICIPANTE
+            );
+
+            // 3. GUARDAR (service como intermediario)
+            servicio.guardarParticipacion(nuevaParticipacion);
+
+            // 4. ACTUALIZAR VISTA
+            tablaParticipantes.setItems(servicio.obtenerSoloParticipantes());
+            cerrarModal();
+            
+            mostrarAlerta("Éxito", "Participación asignada correctamente", Alert.AlertType.INFORMATION);
+
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            mostrarAlerta("Error", "Error inesperado: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    /**
+     * Modifica una participación existente
+     */
+    @FXML
+    private void modificarParticipante() {
+        if (participacionSeleccionada == null) {
+            mostrarAlerta("Selección requerida", 
+                         "Debe seleccionar una participación de la tabla para modificar.", 
+                         Alert.AlertType.WARNING);
+            return;
+        }
+
+        if (!participacionSeleccionada.puedeModificar()) {
+            mostrarAlerta("No se puede modificar", 
+                         "Esta participación no se puede modificar (evento finalizado o participación inactiva).", 
+                         Alert.AlertType.WARNING);
+            return;
+        }
+
+        // Cargar datos en el modal para edición
+        modoEdicion = true; // Indica que estamos editando una participación existente
+        comboEvento.setValue(participacionSeleccionada.getEvento());
+        comboParticipante.setValue(participacionSeleccionada.getPersona());
+        // No hay comboRol - siempre es PARTICIPANTE
+        
+        actualizarInfoEvento(participacionSeleccionada.getEvento());
+        actualizarInfoPersona(participacionSeleccionada.getPersona());
+        
+        modalOverlay.setVisible(true);
+    }
+
+    /**
+     * Elimina una participación (borrado lógico)
+     */
+    @FXML
+    private void bajaParticipante() {
+        if (participacionSeleccionada == null) {
+            mostrarAlerta("Selección requerida", 
+                         "Debe seleccionar una participación de la tabla para eliminar.", 
+                         Alert.AlertType.WARNING);
+            return;
+        }
+
+        // Confirmación de eliminación
+        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacion.setTitle("Confirmación");
+        confirmacion.setHeaderText("¿Está seguro que desea eliminar esta participación?");
+        confirmacion.setContentText(participacionSeleccionada.toString());
+
+        Optional<ButtonType> resultado = confirmacion.showAndWait();
+        if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
+            try {
+                // El modelo rico maneja la lógica de borrado
+                servicio.eliminarParticipacion(participacionSeleccionada);
+                
+                // Actualizar vista
+                tablaParticipantes.setItems(servicio.obtenerSoloParticipantes());
+                participacionSeleccionada = null;
+                
+                mostrarAlerta("Éxito", "Participación eliminada correctamente", Alert.AlertType.INFORMATION);
+                
+            } catch (Exception e) {
+                mostrarAlerta("Error", "Error al eliminar participación: " + e.getMessage(), Alert.AlertType.ERROR);
+            }
+        }
+    }
+
+    // MÉTODOS AUXILIARES
+
+    /**
+     * Valida los campos de la UI antes de guardar [[memory:5343529]]
+     */
+    private boolean validarCamposUI() {
+        if (comboEvento.getValue() == null) {
+            mostrarAlerta("Campo requerido", "Debe seleccionar un evento", Alert.AlertType.WARNING);
+            return false;
+        }
+        
+        if (comboParticipante.getValue() == null) {
+            mostrarAlerta("Campo requerido", "Debe seleccionar una persona", Alert.AlertType.WARNING);
+            return false;
+        }
+        
+        // No necesitamos validar rol - siempre es PARTICIPANTE
+        
+        return true;
+    }
+
+    /**
+     * Muestra alertas al usuario
+     */
+    private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
+        Alert alerta = new Alert(tipo);
+        alerta.setTitle(titulo);
+        alerta.setHeaderText(null);
+        alerta.setContentText(mensaje);
+        alerta.showAndWait();
+    }
+    
+    /**
+     * Método para refrescar datos cuando se navega a esta ventana
+     */
+    public void refrescarDatos() {
+        // Recargar datos en la tabla
+        tablaParticipantes.setItems(servicio.obtenerSoloParticipantes());
+        
+        // Recargar combos
+        comboEventoFiltro.setItems(servicio.obtenerEventosDisponibles());
+        comboEvento.setItems(servicio.obtenerEventosDisponibles());
+        comboParticipante.setItems(servicio.obtenerPersonas());
+    }
 }
+
