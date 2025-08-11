@@ -39,10 +39,17 @@ public abstract class Evento {
     // ====== MÉTODOS DE NEGOCIO ======
 
     // Cambia el estado del evento con validaciones de negocio.
-
     public void cambiarEstado(EstadoEvento nuevoEstado) {
-        if (nuevoEstado == EstadoEvento.CONFIRMADO && this.fechaInicio.isBefore(LocalDateTime.now())) {
+        // MOD: validaciones de transición por tiempo real
+        LocalDateTime now = LocalDateTime.now(); // MOD
+        if (nuevoEstado == EstadoEvento.CONFIRMADO && this.fechaInicio.isBefore(now)) { // MOD
             throw new IllegalStateException("No se puede confirmar un evento con fecha pasada.");
+        }
+        if (nuevoEstado == EstadoEvento.EJECUCIÓN && (now.isBefore(fechaInicio) || now.isAfter(fechaFin))) { // MOD
+            throw new IllegalStateException("Solo puede estar en ejecución entre inicio y fin.");
+        }
+        if (nuevoEstado == EstadoEvento.FINALIZADO && now.isBefore(fechaFin)) { // MOD
+            throw new IllegalStateException("No puede finalizar antes de la fecha/hora de fin.");
         }
         this.estado = nuevoEstado;
     }
@@ -60,7 +67,6 @@ public abstract class Evento {
     }
 
     // Elimina un responsable con un rol específico.
- 
     public void borrarResponsable(Persona persona, TipoRol rol) {
         this.roles.removeIf(r -> r.getPersona().equals(persona) && r.getRol() == rol);
     }
@@ -80,51 +86,48 @@ public abstract class Evento {
 
     // ⭐ MÉTODOS DE NEGOCIO PARA PARTICIPACIONES
 
-    /**
-     * Verifica si el evento puede recibir inscripciones
-     */
+    // Verifica si el evento puede recibir inscripciones
     public boolean puedeInscribirParticipantes() {
-        return this.estado == EstadoEvento.CONFIRMADO;
+        //  debe estar CONFIRMADO y no haber finalizado aún
+        LocalDateTime now = LocalDateTime.now(); // MOD
+        return this.estado == EstadoEvento.CONFIRMADO && now.isBefore(getFechaFin()); // MOD
     }
 
-    /**
-     * Verifica si una persona ya tiene un rol en este evento
-     */
+    // helper común para las subclases
+    protected void validarPuedeInscribir() {
+        if (!puedeInscribirParticipantes()) {
+            throw new IllegalStateException("No se permite inscribir: evento no confirmado o finalizado.");
+        }
+    }
+
+    // Verifica si una persona ya tiene un rol en este evento
     public boolean personaTieneRol(Persona persona) {
         return this.roles.stream()
                 .anyMatch(rol -> rol.getPersona().equals(persona) && rol.estaActivo());
     }
 
-    /**
-     * Obtiene el rol activo de una persona en este evento
-     */
+    // Obtiene el rol activo de una persona en este evento
     public Optional<RolEvento> obtenerRolPersona(Persona persona) {
         return this.roles.stream()
                 .filter(rol -> rol.getPersona().equals(persona) && rol.estaActivo())
                 .findFirst();
     }
 
-    /**
-     * Cuenta los participantes activos en el evento
-     */
+    // Cuenta los participantes activos en el evento
     public long contarParticipantesActivos() {
         return this.roles.stream()
                 .filter(rol -> rol.esParticipante() && rol.estaActivo())
                 .count();
     }
 
-    /**
-     * Obtiene todos los roles activos del evento
-     */
+    // Obtiene todos los roles activos del evento
     public List<RolEvento> obtenerRolesActivos() {
         return this.roles.stream()
                 .filter(RolEvento::estaActivo)
                 .toList();
     }
 
-    /**
-     * Agrega un rol al evento (usado internamente)
-     */
+    // Agrega un rol al evento (usado internamente)
     public void agregarRol(RolEvento rol) {
         this.roles.add(rol);
     }

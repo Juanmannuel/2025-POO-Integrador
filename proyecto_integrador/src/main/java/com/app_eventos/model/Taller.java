@@ -36,12 +36,8 @@ public class Taller extends Evento implements IEventoConCupo {
     // --- Inscripción participantes ---
     @Override
     public void inscribirParticipante(Persona persona) {
-        if (getEstado() != EstadoEvento.CONFIRMADO) {
-            throw new IllegalStateException("El taller debe estar confirmado para inscribir participantes.");
-        }
-        if (getEstado() == EstadoEvento.FINALIZADO) {
-            throw new IllegalStateException("El taller ya finalizó.");
-        }
+        // centraliza validación de estado/tiempo
+        validarPuedeInscribir(); // MOD
         if (participantes.size() >= cupoMaximo) {
             throw new IllegalStateException("Cupo lleno. No se pueden inscribir más participantes.");
         }

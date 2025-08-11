@@ -19,15 +19,13 @@ import com.app_eventos.model.enums.TipoEntrada;
 import com.app_eventos.model.enums.TipoEvento;
 import com.app_eventos.services.Servicio;
 import com.app_eventos.utils.ComboBoxInicializador;
-import javafx.collections.FXCollections;
 import java.util.EnumSet;
-
 
 import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-// MOD: import para acceder a los filtros por índice sin cambiar el FXML
+// se usa para ubicar los filtros definidos en el FXML sin fx:id
 import javafx.scene.layout.HBox;
 
 import java.time.LocalDate;
@@ -58,7 +56,6 @@ public class ABMEventoController {
     @FXML private TableColumn<Evento, Void> colAcciones;
     private Evento eventoEnEdicion = null;
     private boolean modoEdicion = false;
-    
 
     @FXML private TableView<Evento> tablaEventos;
     @FXML private TableColumn<Evento, String> colNombre;
@@ -71,15 +68,17 @@ public class ABMEventoController {
 
     private Object controladorFragmento; // referencia al controller dinámico cargado
 
-    // MOD: referencias a los filtros de la barra superior (solo uno tiene fx:id en tu FXML)
+    // Referencias a los filtros de la barra superior (solo uno tiene fx:id en el FXML)
     @FXML private ComboBox<TipoEvento> comboTipoEventoFiltro; // existe en FXML
-    // Los siguientes se obtienen por índice desde el HBox de filtros
-    private ComboBox<EstadoEvento> comboEstadoFiltro; // MOD
-    private DatePicker dateDesdeFiltro;               // MOD
-    private DatePicker dateHastaFiltro;               // MOD
+    private ComboBox<EstadoEvento> comboEstadoFiltro;          // se toma por índice del HBox
+    private DatePicker dateDesdeFiltro;                        // se toma por índice del HBox
+    private DatePicker dateHastaFiltro;                        // se toma por índice del HBox
 
     @FXML
     public void initialize() {
+        // Sincroniza estados por tiempo real al abrir la vista
+        servicio.sincronizarEstadosTiempoReal();
+
         tablaEventos.widthProperty().addListener((obs, oldWidth, newWidth) -> {
             double total = newWidth.doubleValue();
             colNombre.setPrefWidth(total * 0.20);        // 20%
@@ -105,7 +104,7 @@ public class ABMEventoController {
         });
         colEstado.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getEstado()));
 
-        // Mostrar responsables a partir de los roles del evento (evita método inexistente)
+        // Mostrar responsables a partir de los roles del evento
         colResponsables.setCellValueFactory(data -> {
             String nombres = data.getValue().getRoles().stream()
                     .map(RolEvento::getPersona)
@@ -114,7 +113,7 @@ public class ABMEventoController {
             return new SimpleStringProperty(nombres);
         });
 
-        // Spinners de hora (00:00 a 23:59, salto 5 min)
+        // Spinners de hora (06:00 a 23:59, salto 5 min)
         spinnerHoraInicio.setValueFactory(crearFactoryHora());
         spinnerHoraFin.setValueFactory(crearFactoryHora());
 
@@ -128,13 +127,13 @@ public class ABMEventoController {
         // Botón "Asignar Rol" en la tabla
         agregarBotonAsignarRol();
 
-        // Cargar eventos en la tabla
+        // Cargar eventos en la tabla (lista completa inicial)
         tablaEventos.setItems(FXCollections.observableArrayList(servicio.listarEventos()));
 
-        // MOD: inicializar filtros del listado sin cambiar el FXML
-        initFiltrosListado(); // MOD
-        // MOD: carga inicial aplicando los filtros actuales
-        buscarYRefrescarTabla(); // MOD
+        // Inicializar filtros del listado sin cambiar el FXML
+        initFiltrosListado();
+        // Primera búsqueda con filtros actuales
+        buscarYRefrescarTabla();
     }
 
     private void abrirModalAsignacionRoles(Evento evento) {
@@ -187,8 +186,9 @@ public class ABMEventoController {
         };
     }
 
+    // Estados válidos para ALTA (no permite EJECUCIÓN ni FINALIZADO)
     private static final EnumSet<EstadoEvento> ESTADOS_ALTA =
-        EnumSet.of(EstadoEvento.PLANIFICACIÓN, EstadoEvento.CONFIRMADO, EstadoEvento.EJECUCIÓN);
+        EnumSet.of(EstadoEvento.PLANIFICACIÓN, EstadoEvento.CONFIRMADO);
 
     private void setEstadosParaAlta() {
         comboEstado.setItems(FXCollections.observableArrayList(ESTADOS_ALTA));
@@ -293,18 +293,16 @@ public class ABMEventoController {
 
         try {
             if (!modoEdicion) {
-                // ALTA (tu código actual)
+                // Alta
                 crearSegunTipo(nombre, tipo, fIni, fFin, hIni, hFin, estado);
             } else {
-                // EDICIÓN
+                // Edición
                 actualizarSegunTipo(eventoEnEdicion, nombre, tipo, fIni, fFin, hIni, hFin, estado);
             }
 
-            tablaEventos.getItems().setAll(servicio.listarEventos());
+            // Refresco del listado respetando filtros
+            buscarYRefrescarTabla();
             cerrarModal();
-
-            // MOD: refresco con filtros activos en vez de setAll fijamente
-            buscarYRefrescarTabla(); // MOD
 
         } catch (IllegalArgumentException | IllegalStateException ex) {
             mostrarAlerta("Error de validación", ex.getMessage());
@@ -330,38 +328,32 @@ public class ABMEventoController {
                                     LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
         switch (tipo) {
             case FERIA -> {
-                if (controladorFragmento instanceof FeriaController c) {
-                    servicio.actualizarFeria((com.app_eventos.model.Feria) original,
-                            nombre, fIni, fFin, hIni, hFin, estado, c.getCantidadStands(), c.getAmbienteSeleccionado());
+                if (controladorFragmento instanceof FeriaController c && original instanceof Feria f) {
+                    servicio.actualizarFeria(f, nombre, fIni, fFin, hIni, hFin, estado, c.getCantidadStands(), c.getAmbienteSeleccionado());
                 }
             }
             case CONCIERTO -> {
-                if (controladorFragmento instanceof ConciertoController c) {
-                    servicio.actualizarConcierto((com.app_eventos.model.Concierto) original,
-                            nombre, fIni, fFin, hIni, hFin, estado, c.getTipoEntradaSeleccionada(), c.getCupoMaximo());
+                if (controladorFragmento instanceof ConciertoController c && original instanceof Concierto x) {
+                    servicio.actualizarConcierto(x, nombre, fIni, fFin, hIni, hFin, estado, c.getTipoEntradaSeleccionada(), c.getCupoMaximo());
                 }
             }
             case EXPOSICION -> {
-                if (controladorFragmento instanceof ExposicionController c) {
-                    servicio.actualizarExposicion((com.app_eventos.model.Exposicion) original,
-                            nombre, fIni, fFin, hIni, hFin, estado, c.getTipoArteSeleccionado());
+                if (controladorFragmento instanceof ExposicionController c && original instanceof Exposicion x) {
+                    servicio.actualizarExposicion(x, nombre, fIni, fFin, hIni, hFin, estado, c.getTipoArteSeleccionado());
                 }
             }
             case TALLER -> {
-                if (controladorFragmento instanceof TallerController c) {
-                    servicio.actualizarTaller((com.app_eventos.model.Taller) original,
-                            nombre, fIni, fFin, hIni, hFin, estado, c.getCupoMaximo(), c.getModalidadSeleccionada());
+                if (controladorFragmento instanceof TallerController c && original instanceof Taller x) {
+                    servicio.actualizarTaller(x, nombre, fIni, fFin, hIni, hFin, estado, c.getCupoMaximo(), c.getModalidadSeleccionada());
                 }
             }
             case CICLO_CINE -> {
-                if (controladorFragmento instanceof CicloCineController c) {
-                    servicio.actualizarCicloCine((com.app_eventos.model.CicloCine) original,
-                            nombre, fIni, fFin, hIni, hFin, estado, c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas());
+                if (controladorFragmento instanceof CicloCineController c && original instanceof CicloCine x) {
+                    servicio.actualizarCicloCine(x, nombre, fIni, fFin, hIni, hFin, estado, c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas());
                 }
             }
         }
     }
-
 
     @FXML
     private void modificarEvento() {
@@ -390,39 +382,39 @@ public class ABMEventoController {
 
         // precargar fragmento
         switch (e.getTipoEvento()) {
-        case FERIA -> {
-            if (controladorFragmento instanceof FeriaController c && e instanceof Feria f) {
-                c.setValores(f.getCantidadStands(), f.getAmbiente());
+            case FERIA -> {
+                if (controladorFragmento instanceof FeriaController c && e instanceof Feria f) {
+                    c.setValores(f.getCantidadStands(), f.getAmbiente());
+                }
+            }
+            case CONCIERTO -> {
+                if (controladorFragmento instanceof ConciertoController c && e instanceof Concierto x) {
+                    c.setValores(x.getTipoEntrada(), x.getCupoMaximo());
+                }
+            }
+            case EXPOSICION -> {
+                if (controladorFragmento instanceof ExposicionController c && e instanceof Exposicion x) {
+                    c.setValores(x.getTipoArte());
+                }
+            }
+            case TALLER -> {
+                if (controladorFragmento instanceof TallerController c && e instanceof Taller x) {
+                    c.setValores(x.getCupoMaximo(), x.getModalidad());
+                }
+            }
+            case CICLO_CINE -> {
+                if (controladorFragmento instanceof CicloCineController c && e instanceof CicloCine x) {
+                    c.setCupoMaximo(x.getCupoMaximo());
+                    c.setPostCharla(x.isPostCharla());
+                    c.preseleccionarPeliculas(x.getPeliculas());
+                }
             }
         }
-        case CONCIERTO -> {
-            if (controladorFragmento instanceof ConciertoController c && e instanceof Concierto x) {
-                c.setValores(x.getTipoEntrada(), x.getCupoMaximo());
-            }
-        }
-        case EXPOSICION -> {
-            if (controladorFragmento instanceof ExposicionController c && e instanceof Exposicion x) {
-                c.setValores(x.getTipoArte());
-            }
-        }
-        case TALLER -> {
-            if (controladorFragmento instanceof TallerController c && e instanceof Taller x) {
-                c.setValores(x.getCupoMaximo(), x.getModalidad());
-            }
-        }
-        case CICLO_CINE -> {
-            if (controladorFragmento instanceof CicloCineController c && e instanceof CicloCine x) {
-                c.setCupoMaximo(x.getCupoMaximo());
-                c.setPostCharla(x.isPostCharla());
-                c.preseleccionarPeliculas(x.getPeliculas());
-            }
-        }
-    }
 
         modalOverlay.setVisible(true);
         modalOverlay.toFront();
     }
-    
+
     @FXML
     private void eliminarEvento() {
         Evento sel = tablaEventos.getSelectionModel().getSelectedItem();
@@ -438,13 +430,10 @@ public class ABMEventoController {
         confirm.showAndWait().ifPresent(btn -> {
             if (btn == ButtonType.OK) {
                 try {
-                    servicio.eliminarEvento(sel);          // <-- por objeto
-
-                    tablaEventos.getItems().setAll(servicio.listarEventos());
+                    servicio.eliminarEvento(sel);          // por objeto
+                    // Refrescar listado respetando filtros
+                    buscarYRefrescarTabla();
                     tablaEventos.getSelectionModel().clearSelection();
-
-                    // refrescar listado respetando filtros
-                    buscarYRefrescarTabla(); // MOD
                 } catch (IllegalStateException | IllegalArgumentException ex) {
                     mostrarAlerta("No se pudo eliminar", ex.getMessage());
                 }
@@ -462,40 +451,42 @@ public class ABMEventoController {
 
     // Método para refrescar datos cuando se navega a esta ventana
     public void refrescarDatos() {
-        tablaEventos.getItems().setAll(servicio.listarEventos());
-        // MOD: aplicar filtros vigentes tras refrescar
-        buscarYRefrescarTabla(); // MOD
+        // Sincronizar estados y aplicar filtros al refrescar
+        servicio.sincronizarEstadosTiempoReal();
+        buscarYRefrescarTabla();
     }
 
-    // Búsqueda en la grilla
+    // ====== BÚSQUEDA EN LA GRILLA ======
 
-    // inicializa referencias a los filtros del HBox sin cambiar fx:id
+    // Inicializa referencias a los filtros del HBox sin cambiar fx:id
+    @SuppressWarnings("unchecked")
     private void initFiltrosListado() {
-        // VBox contenedor de la tabla es el padre directo de tablaEventos
+        // La estructura según el FXML:
+        // VBox(panel) -> HBox(filtros) en índice 0
         VBox panelContenedor = (VBox) tablaEventos.getParent();
-        // El HBox de filtros es su primer hijo
         HBox hboxFiltros = (HBox) panelContenedor.getChildren().get(0);
 
-        // Accedemos a los filtros por índice, ya que no tienen fx:id
+        // [0]=Label "Tipo:"         [1]=ComboBox fx:id="comboTipoEventoFiltro"
+        // [2]=Label "Estado:"       [3]=ComboBox (sin fx:id)
+        // [4]=Label "Fecha desde:"  [5]=DatePicker desde
+        // [6]=Label "Fecha hasta:"  [7]=DatePicker hasta
         this.comboEstadoFiltro = (ComboBox<EstadoEvento>) hboxFiltros.getChildren().get(3);
         this.dateDesdeFiltro   = (DatePicker)            hboxFiltros.getChildren().get(5);
         this.dateHastaFiltro   = (DatePicker)            hboxFiltros.getChildren().get(7);
 
-        // Poblado de combos
         comboTipoEventoFiltro.setItems(FXCollections.observableArrayList(TipoEvento.values()));
         comboTipoEventoFiltro.getSelectionModel().clearSelection(); // null = Todos
 
         comboEstadoFiltro.setItems(FXCollections.observableArrayList(EstadoEvento.values()));
         comboEstadoFiltro.getSelectionModel().clearSelection();     // null = Todos
 
-        // Listeners para disparar la búsqueda
         comboTipoEventoFiltro.valueProperty().addListener((o,a,b) -> buscarYRefrescarTabla());
         comboEstadoFiltro.valueProperty().addListener((o,a,b) -> buscarYRefrescarTabla());
         dateDesdeFiltro.valueProperty().addListener((o,a,b) -> buscarYRefrescarTabla());
         dateHastaFiltro.valueProperty().addListener((o,a,b) -> buscarYRefrescarTabla());
     }
 
-    // ejecuta la búsqueda en Servicio y refresca la TableView
+    // Ejecuta la búsqueda en Servicio y refresca la TableView
     private void buscarYRefrescarTabla() {
         LocalDate desde = (dateDesdeFiltro != null) ? dateDesdeFiltro.getValue() : null;
         LocalDate hasta = (dateHastaFiltro != null) ? dateHastaFiltro.getValue() : null;

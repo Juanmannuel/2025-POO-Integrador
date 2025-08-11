@@ -34,9 +34,8 @@ public class Concierto extends Evento implements IEventoConCupo {
     // Implementación de IEventoConInscripcion 
     @Override
     public void inscribirParticipante(Persona persona) {
-        if (getEstado() != EstadoEvento.CONFIRMADO) {
-            throw new IllegalStateException("El concierto debe estar confirmado para inscribir participantes.");
-        }
+        // centraliza validación de estado/tiempo
+        validarPuedeInscribir(); 
         if (participantes.size() >= cupoMaximo) {
             throw new IllegalStateException("No se pueden inscribir más participantes, cupo completo.");
         }
