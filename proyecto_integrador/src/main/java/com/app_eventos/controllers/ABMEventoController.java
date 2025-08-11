@@ -3,6 +3,7 @@ package com.app_eventos.controllers;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -12,7 +13,6 @@ import com.app_eventos.model.Concierto;
 import com.app_eventos.model.Evento;
 import com.app_eventos.model.Exposicion;
 import com.app_eventos.model.Feria;
-import com.app_eventos.model.RolEvento;
 import com.app_eventos.model.Taller;
 import com.app_eventos.model.enums.EstadoEvento;
 import com.app_eventos.model.enums.TipoEntrada;
@@ -31,7 +31,6 @@ import javafx.scene.layout.HBox;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.stream.Collectors;
 
 import javafx.util.StringConverter;
 
@@ -47,7 +46,7 @@ public class ABMEventoController {
     @FXML private DatePicker dateFin;
     @FXML private StackPane modalOverlay;
     @FXML private ComboBox<TipoEvento> comboTipoEvento;
-    @FXML private ComboBox<TipoEntrada> comboTipoEntrada; // (si no se usa, lo podés quitar)
+    @FXML private ComboBox<TipoEntrada> comboTipoEntrada;
     @FXML private ComboBox<EstadoEvento> comboEstado;
     @FXML private Spinner<LocalTime> spinnerHoraInicio;
     @FXML private Spinner<LocalTime> spinnerHoraFin;
@@ -56,6 +55,7 @@ public class ABMEventoController {
     @FXML private TableColumn<Evento, Void> colAcciones;
     private Evento eventoEnEdicion = null;
     private boolean modoEdicion = false;
+    private final ObservableList<Evento> modeloTabla = FXCollections.observableArrayList();
 
     @FXML private TableView<Evento> tablaEventos;
     @FXML private TableColumn<Evento, String> colNombre;
@@ -77,7 +77,6 @@ public class ABMEventoController {
     @FXML
     public void initialize() {
         // Sincroniza estados por tiempo real al abrir la vista
-        servicio.sincronizarEstadosTiempoReal();
 
         tablaEventos.widthProperty().addListener((obs, oldWidth, newWidth) -> {
             double total = newWidth.doubleValue();
@@ -106,10 +105,13 @@ public class ABMEventoController {
 
         // Mostrar responsables a partir de los roles del evento
         colResponsables.setCellValueFactory(data -> {
-            String nombres = data.getValue().getRoles().stream()
-                    .map(RolEvento::getPersona)
-                    .map(p -> p.getNombre() + " " + p.getApellido())
-                    .collect(Collectors.joining(", "));
+            Evento ev = data.getValue();
+            String nombres = ev.getRoles().stream()
+                .map(r -> r.getPersona().getNombre() + " " + r.getPersona().getApellido()
+                        + " (" + r.getRol().name() + ")")
+                .distinct()
+                .reduce((a, b) -> a + ", " + b)
+                .orElse("");
             return new SimpleStringProperty(nombres);
         });
 
@@ -130,23 +132,57 @@ public class ABMEventoController {
         // Cargar eventos en la tabla (lista completa inicial)
         tablaEventos.setItems(FXCollections.observableArrayList(servicio.listarEventos()));
 
-        // Inicializar filtros del listado sin cambiar el FXML
+        // Inicializar filtros del listado
         initFiltrosListado();
         // Primera búsqueda con filtros actuales
         buscarYRefrescarTabla();
+
+        tablaEventos.setItems(modeloTabla);
+        // carga inicial
+        modeloTabla.setAll(servicio.listarEventos());
     }
 
     private void abrirModalAsignacionRoles(Evento evento) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmEventoResources/asignacionRoles.fxml"));
             VBox vista = loader.load();
-            this.controladorAsignacionRoles = loader.getController();
-            controladorAsignacionRoles.setEvento(evento);
+            AsigRolEventoController ctrl = loader.getController();
+
+            // Pasar el evento al modal (filtra roles y carga la tabla interna)
+            ctrl.setEvento(evento);
+
+            // Notificar al padre cuando se agregan/quitan roles para refrescar la grilla principal
+            ctrl.setOnRolesChanged(ev -> {
+                if (tablaEventos != null) {
+                    tablaEventos.refresh();
+                }
+            });
 
             Dialog<ButtonType> dialog = new Dialog<>();
             dialog.setTitle("Asignar Roles");
             dialog.getDialogPane().setContent(vista);
-            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+            dialog.getDialogPane().getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
+            dialog.setResizable(true);
+
+            // Interceptar el botón OK para validar la invariante antes de cerrar
+            Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+            okButton.addEventFilter(javafx.event.ActionEvent.ACTION, evt -> {
+                try {
+                    // "Todo evento debe tener al menos un organizador."
+                    evento.validarInvariantes();
+                    // Si quisieras además forzar un refresh final:
+                    if (tablaEventos != null) tablaEventos.refresh();
+                } catch (IllegalStateException ex) {
+                    evt.consume(); // NO cerrar el diálogo
+                    mostrarAlerta("Validación", ex.getMessage()); // usa tu helper existente
+                }
+            });
+
+            // Al cerrar el diálogo por cualquier vía, refrescar la tabla principal
+            dialog.setOnHidden(e -> {
+                if (tablaEventos != null) tablaEventos.refresh();
+            });
+
             dialog.showAndWait();
 
         } catch (IOException e) {
@@ -154,6 +190,7 @@ public class ABMEventoController {
             mostrarAlerta("Error", "No se pudo cargar el formulario de asignación de roles.");
         }
     }
+
 
     private SpinnerValueFactory<LocalTime> crearFactoryHora() {
         LocalTime horaInicial = LocalTime.of(6, 0);
@@ -186,9 +223,9 @@ public class ABMEventoController {
         };
     }
 
-    // Estados válidos para ALTA (no permite EJECUCIÓN ni FINALIZADO)
+    // Estados válidos para ALTA (no permite FINALIZADO)
     private static final EnumSet<EstadoEvento> ESTADOS_ALTA =
-        EnumSet.of(EstadoEvento.PLANIFICACIÓN, EstadoEvento.CONFIRMADO);
+        EnumSet.of(EstadoEvento.PLANIFICACIÓN, EstadoEvento.CONFIRMADO, EstadoEvento.EJECUCIÓN);
 
     private void setEstadosParaAlta() {
         comboEstado.setItems(FXCollections.observableArrayList(ESTADOS_ALTA));
@@ -452,24 +489,18 @@ public class ABMEventoController {
     // Método para refrescar datos cuando se navega a esta ventana
     public void refrescarDatos() {
         // Sincronizar estados y aplicar filtros al refrescar
-        servicio.sincronizarEstadosTiempoReal();
         buscarYRefrescarTabla();
     }
 
-    // ====== BÚSQUEDA EN LA GRILLA ======
+    // BÚSQUEDA EN LA GRILLA 
 
     // Inicializa referencias a los filtros del HBox sin cambiar fx:id
     @SuppressWarnings("unchecked")
     private void initFiltrosListado() {
         // La estructura según el FXML:
-        // VBox(panel) -> HBox(filtros) en índice 0
         VBox panelContenedor = (VBox) tablaEventos.getParent();
         HBox hboxFiltros = (HBox) panelContenedor.getChildren().get(0);
 
-        // [0]=Label "Tipo:"         [1]=ComboBox fx:id="comboTipoEventoFiltro"
-        // [2]=Label "Estado:"       [3]=ComboBox (sin fx:id)
-        // [4]=Label "Fecha desde:"  [5]=DatePicker desde
-        // [6]=Label "Fecha hasta:"  [7]=DatePicker hasta
         this.comboEstadoFiltro = (ComboBox<EstadoEvento>) hboxFiltros.getChildren().get(3);
         this.dateDesdeFiltro   = (DatePicker)            hboxFiltros.getChildren().get(5);
         this.dateHastaFiltro   = (DatePicker)            hboxFiltros.getChildren().get(7);
@@ -500,6 +531,7 @@ public class ABMEventoController {
         EstadoEvento estado = (comboEstadoFiltro != null) ? comboEstadoFiltro.getValue() : null;
 
         var resultados = servicio.buscarEventos(tipo, estado, desde, hasta);
-        tablaEventos.setItems(FXCollections.observableArrayList(resultados));
+        modeloTabla.setAll(resultados);  // <-- no reemplaza la lista, solo su contenido
+        tablaEventos.refresh();          // <-- asegura repintado
     }
 }

@@ -104,8 +104,6 @@ public class ABMParticipanteController {
             new SimpleStringProperty(data.getValue().getPersona().getNombre() + " " + 
                                    data.getValue().getPersona().getApellido()));
         
-        // No necesitamos configurar colRol porque siempre es PARTICIPANTE
-        
         colDNI.setCellValueFactory(data -> 
             new SimpleStringProperty(data.getValue().getPersona().getDni()));
         
@@ -117,9 +115,6 @@ public class ABMParticipanteController {
         
         colEstadoEvento.setCellValueFactory(data -> 
             new SimpleStringProperty(data.getValue().getEvento().getEstado().toString()));
-        
-        colFechaAsignacion.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().getFechaAsignacion().format(formatter)));
     }
 
     /**
@@ -194,7 +189,7 @@ public class ABMParticipanteController {
         });
     }
 
-    // ⭐ MÉTODOS PRINCIPALES DEL ABM
+    // MÉTODOS PRINCIPALES DEL ABM
 
     /**
      * Aplica filtros a la tabla de participaciones
@@ -257,7 +252,7 @@ public class ABMParticipanteController {
         // Mostrar cupo si aplica
         if (evento instanceof IEventoConCupo) {
             IEventoConCupo eventoConCupo = (IEventoConCupo) evento;
-            long participantesActuales = evento.contarParticipantesActivos();
+            long participantesActuales = evento.contarParticipantes();
             lblCupoDisponible.setText("Cupo: " + participantesActuales + "/" + eventoConCupo.getCupoMaximo());
         } else {
             lblCupoDisponible.setText("Cupo: Sin límite");
@@ -282,7 +277,7 @@ public class ABMParticipanteController {
         lblEmailParticipante.setText("Email: " + persona.getEmail());
     }
 
-    // ⭐ MÉTODOS FXML DEL ABM
+    //MÉTODOS FXML DEL ABM
 
     /**
      * Abre el modal para crear nueva participación
@@ -315,7 +310,6 @@ public class ABMParticipanteController {
     @FXML
     private void altaParticipante() {
         try {
-            // 1. VALIDACIONES DE UI [[memory:5343529]]
             if (!validarCamposUI()) {
                 return;
             }
@@ -337,10 +331,6 @@ public class ABMParticipanteController {
             mostrarAlerta("Éxito", "Participación asignada correctamente", Alert.AlertType.INFORMATION);
 
         } catch (IllegalStateException | IllegalArgumentException e) {
-            // Errores de reglas de negocio del modelo rico
-            mostrarAlerta("Regla de negocio", e.getMessage(), Alert.AlertType.WARNING);
-        } catch (Exception e) {
-            // Errores técnicos
             mostrarAlerta("Error", "Error inesperado: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
@@ -412,7 +402,7 @@ public class ABMParticipanteController {
         }
     }
 
-    // ⭐ MÉTODOS AUXILIARES
+    // MÉTODOS AUXILIARES
 
     /**
      * Valida los campos de la UI antes de guardar [[memory:5343529]]

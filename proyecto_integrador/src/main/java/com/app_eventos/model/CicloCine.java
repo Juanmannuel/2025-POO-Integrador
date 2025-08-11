@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.app_eventos.model.enums.EstadoEvento;
 import com.app_eventos.model.enums.TipoEvento;
 import com.app_eventos.model.enums.TipoRol;
 import com.app_eventos.model.interfaces.IEventoConCupo;

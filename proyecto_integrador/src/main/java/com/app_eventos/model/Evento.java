@@ -1,15 +1,13 @@
 package com.app_eventos.model;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import com.app_eventos.model.enums.EstadoEvento;
 import com.app_eventos.model.enums.TipoEvento;
 import com.app_eventos.model.enums.TipoRol;
-
+import java.util.EnumSet;
 public abstract class Evento {
 
     private Long idEvento;
@@ -31,7 +29,7 @@ public abstract class Evento {
         this.estado = EstadoEvento.PLANIFICACIÓN;
     }
 
-    // Constructor vacío
+    // Constructor vacío (estado inicial en PLANIFICACIÓN)
     public Evento() {
         this.estado = EstadoEvento.PLANIFICACIÓN;
     }
@@ -40,34 +38,41 @@ public abstract class Evento {
 
     // Cambia el estado del evento con validaciones de negocio.
     public void cambiarEstado(EstadoEvento nuevoEstado) {
-        // MOD: validaciones de transición por tiempo real
-        LocalDateTime now = LocalDateTime.now(); // MOD
-        if (nuevoEstado == EstadoEvento.CONFIRMADO && this.fechaInicio.isBefore(now)) { // MOD
+        LocalDateTime now = LocalDateTime.now();
+        if (nuevoEstado == EstadoEvento.CONFIRMADO && this.fechaInicio.isBefore(now)) {
             throw new IllegalStateException("No se puede confirmar un evento con fecha pasada.");
         }
-        if (nuevoEstado == EstadoEvento.EJECUCIÓN && (now.isBefore(fechaInicio) || now.isAfter(fechaFin))) { // MOD
+        if (nuevoEstado == EstadoEvento.EJECUCIÓN && (now.isBefore(fechaInicio) || now.isAfter(fechaFin))) {
             throw new IllegalStateException("Solo puede estar en ejecución entre inicio y fin.");
         }
-        if (nuevoEstado == EstadoEvento.FINALIZADO && now.isBefore(fechaFin)) { // MOD
+        if (nuevoEstado == EstadoEvento.FINALIZADO && now.isBefore(fechaFin)) {
             throw new IllegalStateException("No puede finalizar antes de la fecha/hora de fin.");
         }
+        // Nota: no invocamos validarInvariantes() automáticamente.
         this.estado = nuevoEstado;
     }
 
     // Agrega un responsable al evento validando el rol permitido para esta subclase.
     public void agregarResponsable(Persona persona, TipoRol rol) {
-        if (persona == null || rol == null) throw new IllegalArgumentException("Persona y rol no pueden ser nulos.");
-        if (!rolPermitido(rol)) throw new IllegalArgumentException("Rol " + rol + " no permitido para " + tipoEvento);
+        if (persona == null || rol == null) {
+            throw new IllegalArgumentException("Persona y rol no pueden ser nulos.");
+        }
+        if (!rolPermitido(rol)) {
+            throw new IllegalArgumentException("Rol " + rol + " no permitido para " + tipoEvento);
+        }
 
         boolean existe = roles.stream()
                 .anyMatch(r -> r.getPersona().equals(persona) && r.getRol() == rol);
-        if (existe) throw new IllegalArgumentException("La persona ya tiene el rol " + rol + " en este evento.");
+        if (existe) {
+            throw new IllegalArgumentException("La persona ya tiene el rol " + rol + " en este evento.");
+        }
 
         this.roles.add(new RolEvento(this, persona, rol));
     }
 
-    // Elimina un responsable con un rol específico.
+    // Elimina un responsable con un rol específico
     public void borrarResponsable(Persona persona, TipoRol rol) {
+        if (persona == null || rol == null) return;
         this.roles.removeIf(r -> r.getPersona().equals(persona) && r.getRol() == rol);
     }
 
@@ -79,23 +84,17 @@ public abstract class Evento {
                 .toList();
     }
 
-    // Devuelve todos los responsables sin filtrar.
-    public List<RolEvento> obtenerTodosLosRoles() {
-        return new ArrayList<>(roles);
-    }
-
-    // ⭐ MÉTODOS DE NEGOCIO PARA PARTICIPACIONES
+    // MÉTODOS DE NEGOCIO PARA PARTICIPACIONES
 
     // Verifica si el evento puede recibir inscripciones
-    public boolean puedeInscribirParticipantes() {
-        //  debe estar CONFIRMADO y no haber finalizado aún
-        LocalDateTime now = LocalDateTime.now(); // MOD
-        return this.estado == EstadoEvento.CONFIRMADO && now.isBefore(getFechaFin()); // MOD
+    public boolean Inscripcion() {
+        LocalDateTime now = LocalDateTime.now();
+        return this.estado == EstadoEvento.CONFIRMADO && now.isBefore(getFechaFin());
     }
 
     // helper común para las subclases
     protected void validarPuedeInscribir() {
-        if (!puedeInscribirParticipantes()) {
+        if (!Inscripcion()) {
             throw new IllegalStateException("No se permite inscribir: evento no confirmado o finalizado.");
         }
     }
@@ -106,25 +105,11 @@ public abstract class Evento {
                 .anyMatch(rol -> rol.getPersona().equals(persona) && rol.estaActivo());
     }
 
-    // Obtiene el rol activo de una persona en este evento
-    public Optional<RolEvento> obtenerRolPersona(Persona persona) {
-        return this.roles.stream()
-                .filter(rol -> rol.getPersona().equals(persona) && rol.estaActivo())
-                .findFirst();
-    }
-
     // Cuenta los participantes activos en el evento
-    public long contarParticipantesActivos() {
+    public long contarParticipantes() {
         return this.roles.stream()
                 .filter(rol -> rol.esParticipante() && rol.estaActivo())
                 .count();
-    }
-
-    // Obtiene todos los roles activos del evento
-    public List<RolEvento> obtenerRolesActivos() {
-        return this.roles.stream()
-                .filter(RolEvento::estaActivo)
-                .toList();
     }
 
     // Agrega un rol al evento (usado internamente)
@@ -132,19 +117,30 @@ public abstract class Evento {
         this.roles.add(rol);
     }
 
-    // Calcula la duración estimada del evento.
-    public Duration getDuracionEstimada() {
-        return Duration.between(fechaInicio, fechaFin);
+    /** Cantidad de personas con un rol dado. */
+    public long contarPorRol(TipoRol rol) {
+        return this.roles.stream()
+                .filter(r -> r.getRol() == rol)
+                .count();
     }
 
-    // Descripción básica del evento.
-    public String descripcionDetallada() {
-        return nombre + " (" + tipoEvento + ") - " +
-                "Inicio: " + fechaInicio + ", Fin: " + fechaFin + ", Estado: " + estado;
+    /** Lanza excepción si el evento no cumple los invariantes de negocio mínimos. */
+    public void validarInvariantes() {
+        if (contarPorRol(TipoRol.ORGANIZADOR) == 0) {
+            throw new IllegalStateException("Todo evento debe tener al menos un organizador.");
+        }
     }
 
     // Método que cada subclase debe implementar para validar los roles permitidos.
     protected abstract boolean rolPermitido(TipoRol rol);
+
+    public EnumSet<TipoRol> rolesPermitidosParaAsignacion() {
+        EnumSet<TipoRol> set = EnumSet.noneOf(TipoRol.class);
+        for (TipoRol r : TipoRol.values()) {
+            if (rolPermitido(r)) set.add(r);
+        }
+        return set;
+    }
 
     // GETTERS & SETTERS
     public Long getIdEvento() {

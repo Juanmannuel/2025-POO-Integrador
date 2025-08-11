@@ -2,17 +2,13 @@ package com.app_eventos.model;
 import com.app_eventos.model.enums.TipoRol;
 import com.app_eventos.model.interfaces.IEventoConCupo;
 
-import java.time.LocalDateTime;
-
 public class RolEvento {
 
     private Long id;
     private Evento evento;
     private Persona persona;
     private TipoRol rol;
-    private LocalDateTime fechaAsignacion;
     private boolean baja = false;
-    private LocalDateTime fechaBaja;
 
     // Constructor con validaciones de negocio
     public RolEvento(Evento evento, Persona persona, TipoRol rol) {
@@ -20,7 +16,6 @@ public class RolEvento {
         this.evento = evento;
         this.persona = persona;
         this.rol = rol;
-        this.fechaAsignacion = LocalDateTime.now();
     }
 
     public RolEvento() {}
@@ -46,24 +41,17 @@ public class RolEvento {
         return rol == TipoRol.PARTICIPANTE;
     }
 
-    // ⭐ MÉTODOS DE NEGOCIO DEL MODELO RICO
+    // MÉTODOS DE NEGOCIO DEL MODELO RICO
 
-    /**
-     * Valida que se pueda asignar el rol según las reglas de negocio
-     */
+    // Valida que se pueda asignar el rol según las reglas de negocio
     private void validarAsignacionRol(Evento evento, Persona persona, TipoRol rol) {
         if (evento == null || persona == null || rol == null) {
             throw new IllegalArgumentException("Evento, persona y rol no pueden ser nulos");
         }
         
         // REGLA: Solo eventos confirmados permiten inscripciones
-        if (!evento.puedeInscribirParticipantes()) {
+        if (!evento.Inscripcion()) {
             throw new IllegalStateException("No se puede asignar roles a eventos no confirmados o finalizados");
-        }
-        
-        // REGLA: Una persona no puede tener más de un rol en el mismo evento
-        if (evento.personaTieneRol(persona)) {
-            throw new IllegalStateException("La persona ya tiene un rol asignado en este evento");
         }
         
         // REGLA: Validar cupo si es participante
@@ -75,44 +63,33 @@ public class RolEvento {
         }
     }
     
-    /**
-     * Dar de baja la participación (borrado lógico)
-     */
+    // Dar de baja la participación (borrado lógico)
     public void darDeBaja() {
         if (this.baja) {
             throw new IllegalStateException("Esta asignación ya está dada de baja");
         }
         this.baja = true;
-        this.fechaBaja = LocalDateTime.now();
     }
     
-    /**
-     * Reactivar la participación
-     */
+    // Reactivar la participación
     public void reactivar() {
         if (!this.baja) {
             throw new IllegalStateException("Esta asignación ya está activa");
         }
         this.baja = false;
-        this.fechaBaja = null;
     }
     
-    /**
-     * Consulta si la participación está activa
-     */
+    // Consultar si la participación está activa
     public boolean estaActivo() {
         return !baja;
     }
     
-    /**
-     * Consulta si se puede modificar la participación
-     */
+    // Consultar si se puede modificar la participación
     public boolean puedeModificar() {
-        return estaActivo() && evento.puedeInscribirParticipantes();
+        return estaActivo() && evento.Inscripcion();
     }
 
     // Getters y setters
-
     public Long getId() {
         return id;
     }
@@ -141,16 +118,8 @@ public class RolEvento {
         this.rol = rol;
     }
 
-    public LocalDateTime getFechaAsignacion() {
-        return fechaAsignacion;
-    }
-
     public boolean isBaja() {
         return baja;
-    }
-
-    public LocalDateTime getFechaBaja() {
-        return fechaBaja;
     }
 
     @Override

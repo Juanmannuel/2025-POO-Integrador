@@ -20,9 +20,18 @@ public class Exposicion extends Evento {
         setTipoEvento(TipoEvento.EXPOSICION);
     }
 
+    /** Asigna el curador (máximo 1 por exposición). */
+    public void asignarCurador(Persona persona) {
+        if (persona == null) throw new IllegalArgumentException("El curador no puede ser nulo.");
+        if (contarPorRol(TipoRol.CURADOR) >= 1) {
+            throw new IllegalStateException("Ya hay un curador asignado.");
+        }
+        agregarResponsable(persona, TipoRol.CURADOR);
+    }
+
     @Override
     protected boolean rolPermitido(TipoRol rol) {
-        return rol == TipoRol.CURADOR || rol == TipoRol.ORGANIZADOR;
+        return rol == TipoRol.ORGANIZADOR || rol == TipoRol.CURADOR;
     }
 
     public TipoArte getTipoArte() {

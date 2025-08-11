@@ -74,7 +74,7 @@ public class Repositorio {
      */
     public ObservableList<Evento> obtenerEventosConfirmados() {
         return eventos.stream()
-                .filter(evento -> evento.puedeInscribirParticipantes())
+                .filter(evento -> evento.Inscripcion())
                 .collect(Collectors.toCollection(FXCollections::observableArrayList));
     }
 

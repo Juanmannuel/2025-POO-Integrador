@@ -82,9 +82,6 @@ public class Servicio {
         if (inicio.isAfter(limiteSuperior) || fin.isAfter(limiteSuperior)) {
             throw new IllegalArgumentException("Las fechas no pueden superar 2 años desde el día de hoy.");
         }
-        if (estado == EstadoEvento.EJECUCIÓN || estado == EstadoEvento.FINALIZADO) {
-            throw new IllegalArgumentException("En alta solo se permite PLANIFICACIÓN o CONFIRMADO.");
-        }
     }
 
     // Validación de updates: respeta ventana de 2 años desde hoy y orden temporal
@@ -103,24 +100,7 @@ public class Servicio {
         }
     }
 
-    // Transición automática de estado según tiempo real
-    private void actualizarEstadosSegunTiempo() {
-        LocalDateTime now = LocalDateTime.now();
-        for (Evento e : eventos) {
-            if (now.isAfter(e.getFechaFin())) {
-                if (e.getEstado() != EstadoEvento.FINALIZADO) e.setEstado(EstadoEvento.FINALIZADO);
-            } else if (!now.isBefore(e.getFechaInicio()) && !now.isAfter(e.getFechaFin())) {
-                if (e.getEstado() != EstadoEvento.EJECUCIÓN) e.setEstado(EstadoEvento.EJECUCIÓN);
-            }
-        }
-    }
 
-    // Expuesto para que los controladores puedan forzar la sincronización
-    public void sincronizarEstadosTiempoReal() {
-        actualizarEstadosSegunTiempo();
-    }
-
-    // ====== MÉTODOS PARA EVENTOS ======
     
     public void crearFeria(String nombre, LocalDate fechaInicio, LocalDate fechaFin,
                           LocalTime horaInicio, LocalTime horaFin,
@@ -131,7 +111,6 @@ public class Servicio {
         LocalDateTime fin = crearDateTime(fechaFin, horaFin);
         Feria feria = new Feria(nombre, inicio, fin, cantidadStands, tipoAmbiente);
         agregarEvento(feria, estado);
-        actualizarEstadosSegunTiempo();
     }
 
     public void crearConcierto(String nombre, LocalDate fechaInicio, LocalDate fechaFin,
@@ -142,7 +121,6 @@ public class Servicio {
         LocalDateTime fin = crearDateTime(fechaFin, horaFin);
         Concierto concierto = new Concierto(nombre, inicio, fin, tipoEntrada, cupoMaximo);
         agregarEvento(concierto, estado);
-        actualizarEstadosSegunTiempo();
     }
 
     public void crearExposicion(String nombre, LocalDate fechaInicio, LocalDate fechaFin,
@@ -153,7 +131,6 @@ public class Servicio {
         LocalDateTime fin = crearDateTime(fechaFin, horaFin);
         Exposicion exposicion = new Exposicion(nombre, inicio, fin, tipoArte);
         agregarEvento(exposicion, estado);
-        actualizarEstadosSegunTiempo();
     }
 
     public void crearTaller(String nombre, LocalDate fechaInicio, LocalDate fechaFin,
@@ -164,7 +141,6 @@ public class Servicio {
         LocalDateTime fin = crearDateTime(fechaFin, horaFin);
         Taller taller = new Taller(nombre, inicio, fin, cupoMaximo, modalidad);
         agregarEvento(taller, estado);
-        actualizarEstadosSegunTiempo();
     }
     
     public void crearCicloCine(String nombre, LocalDate fechaInicio, LocalDate fechaFin,
@@ -185,7 +161,6 @@ public class Servicio {
         }
 
         eventos.add(ciclo); // en memoria, sin BD
-        actualizarEstadosSegunTiempo();
     }
 
     // ====== ACTUALIZAR DATOS ======
@@ -201,7 +176,6 @@ public class Servicio {
         feria.setEstado(estado);
         feria.setCantidadStands(cantidadStands);
         feria.setAmbiente(ambiente);
-        actualizarEstadosSegunTiempo();
     }
 
     // CONCIERTO
@@ -215,7 +189,6 @@ public class Servicio {
         c.setEstado(estado);
         c.setTipoEntrada(tipoEntrada);
         c.setCupoMaximo(cupoMaximo);
-        actualizarEstadosSegunTiempo();
     }
 
     // EXPOSICION
@@ -228,7 +201,6 @@ public class Servicio {
         x.setFechaFin(fFin.atTime(hFin));
         x.setEstado(estado);
         x.setTipoArte(tipoArte);
-        actualizarEstadosSegunTiempo();
     }
 
     // TALLER
@@ -242,7 +214,6 @@ public class Servicio {
         t.setEstado(estado);
         t.setCupoMaximo(cupoMaximo);
         t.setModalidad(modalidad);
-        actualizarEstadosSegunTiempo();
     }
 
     // CICLO CINE
@@ -259,11 +230,9 @@ public class Servicio {
         // reemplazar películas
         cc.clearPeliculas();
         if (pelis != null) pelis.forEach(cc::agregarPelicula);
-        actualizarEstadosSegunTiempo();
     }
 
     public List<Evento> listarEventos() {
-        actualizarEstadosSegunTiempo();
         return new ArrayList<>(eventos);
     }
 
@@ -281,7 +250,6 @@ public class Servicio {
     // Búsqueda por tipo, estado y rango de fechas con superposición de intervalos
     public List<Evento> buscarEventos(TipoEvento tipo, EstadoEvento estado,
                                       LocalDate desde, LocalDate hasta) {
-        actualizarEstadosSegunTiempo();
 
         LocalDateTime from = (desde == null) ? null : desde.atStartOfDay();
         LocalDateTime to   = (hasta == null) ? null : hasta.atTime(23, 59, 59);
@@ -344,7 +312,7 @@ public class Servicio {
 
     // Guarda una participación (intermediario con repositorio)
     public void guardarParticipacion(RolEvento rolEvento) {
-        if (!rolEvento.getEvento().puedeInscribirParticipantes()) {
+        if (!rolEvento.getEvento().Inscripcion()) {
             throw new IllegalStateException("Inscripción no permitida para este evento.");
         }
         try {
@@ -389,7 +357,7 @@ public class Servicio {
     // Obtiene eventos disponibles para inscripción
     public ObservableList<Evento> obtenerEventosDisponibles() {
         return eventos.stream()
-                .filter(Evento::puedeInscribirParticipantes)
+                .filter(Evento::Inscripcion)
                 .collect(Collectors.toCollection(FXCollections::observableArrayList));
     }
 
