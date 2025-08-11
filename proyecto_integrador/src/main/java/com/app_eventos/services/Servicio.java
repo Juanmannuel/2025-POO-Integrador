@@ -14,9 +14,9 @@ import com.app_eventos.model.enums.Modalidad;
 import com.app_eventos.model.enums.TipoAmbiente;
 import com.app_eventos.model.enums.TipoArte;
 import com.app_eventos.model.enums.TipoEntrada;
+import com.app_eventos.model.enums.TipoEvento; 
 import com.app_eventos.model.enums.TipoRol;
 import com.app_eventos.repository.Repositorio;
-
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -27,6 +27,8 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+// MOD: imports para buscarEventos
+import java.util.Comparator;
 
 public class Servicio {
     
@@ -201,6 +203,21 @@ public class Servicio {
         eventos.remove(e); // 'eventos' es tu lista en memoria
     }
 
+    // Método para búsqueda por tipo, estado y rango de fechas en memoria
+    public List<Evento> buscarEventos(TipoEvento tipo, EstadoEvento estado,
+                                      LocalDate desde, LocalDate hasta) {
+        LocalDateTime from = (desde == null) ? null : desde.atStartOfDay();
+        LocalDateTime to   = (hasta == null) ? null : hasta.atTime(23, 59, 59);
+
+        return eventos.stream()
+                .filter(e -> tipo == null   || e.getTipoEvento() == tipo)
+                .filter(e -> estado == null || e.getEstado() == estado)
+                .filter(e -> from == null   || !e.getFechaInicio().isBefore(from))
+                .filter(e -> to == null     || !e.getFechaFin().isAfter(to))
+                .sorted(Comparator.comparing(Evento::getFechaInicio))
+                .toList();
+    }
+
     // MÉTODOS PARA PERSONAS
     
     public ObservableList<Persona> obtenerPersonas() {
@@ -348,7 +365,7 @@ public class Servicio {
         // repositorioPelicula.actualizar(original);
     }
 
-    // Filtro por título (contains, case-insensitive) y por ID numérico exacto.
+    // Filtro por título y por ID numérico exacto.
     public javafx.collections.ObservableList<Pelicula> filtrarPeliculas(String titulo, String idTexto) {
         java.util.stream.Stream<Pelicula> stream = peliculas.stream();
 

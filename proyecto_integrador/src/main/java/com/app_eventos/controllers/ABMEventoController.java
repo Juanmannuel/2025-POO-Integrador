@@ -27,6 +27,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+// MOD: import para acceder a los filtros por índice sin cambiar el FXML
+import javafx.scene.layout.HBox;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -68,6 +70,13 @@ public class ABMEventoController {
     @FXML private AsigRolEventoController controladorAsignacionRoles;
 
     private Object controladorFragmento; // referencia al controller dinámico cargado
+
+    // MOD: referencias a los filtros de la barra superior (solo uno tiene fx:id en tu FXML)
+    @FXML private ComboBox<TipoEvento> comboTipoEventoFiltro; // existe en FXML
+    // Los siguientes se obtienen por índice desde el HBox de filtros
+    private ComboBox<EstadoEvento> comboEstadoFiltro; // MOD
+    private DatePicker dateDesdeFiltro;               // MOD
+    private DatePicker dateHastaFiltro;               // MOD
 
     @FXML
     public void initialize() {
@@ -121,6 +130,11 @@ public class ABMEventoController {
 
         // Cargar eventos en la tabla
         tablaEventos.setItems(FXCollections.observableArrayList(servicio.listarEventos()));
+
+        // MOD: inicializar filtros del listado sin cambiar el FXML
+        initFiltrosListado(); // MOD
+        // MOD: carga inicial aplicando los filtros actuales
+        buscarYRefrescarTabla(); // MOD
     }
 
     private void abrirModalAsignacionRoles(Evento evento) {
@@ -289,6 +303,9 @@ public class ABMEventoController {
             tablaEventos.getItems().setAll(servicio.listarEventos());
             cerrarModal();
 
+            // MOD: refresco con filtros activos en vez de setAll fijamente
+            buscarYRefrescarTabla(); // MOD
+
         } catch (IllegalArgumentException | IllegalStateException ex) {
             mostrarAlerta("Error de validación", ex.getMessage());
         }
@@ -425,6 +442,9 @@ public class ABMEventoController {
 
                     tablaEventos.getItems().setAll(servicio.listarEventos());
                     tablaEventos.getSelectionModel().clearSelection();
+
+                    // refrescar listado respetando filtros
+                    buscarYRefrescarTabla(); // MOD
                 } catch (IllegalStateException | IllegalArgumentException ex) {
                     mostrarAlerta("No se pudo eliminar", ex.getMessage());
                 }
@@ -443,5 +463,52 @@ public class ABMEventoController {
     // Método para refrescar datos cuando se navega a esta ventana
     public void refrescarDatos() {
         tablaEventos.getItems().setAll(servicio.listarEventos());
+        // MOD: aplicar filtros vigentes tras refrescar
+        buscarYRefrescarTabla(); // MOD
+    }
+
+    // Búsqueda en la grilla
+
+    // inicializa referencias a los filtros del HBox sin cambiar fx:id
+    private void initFiltrosListado() {
+        // VBox contenedor de la tabla es el padre directo de tablaEventos
+        VBox panelContenedor = (VBox) tablaEventos.getParent();
+        // El HBox de filtros es su primer hijo
+        HBox hboxFiltros = (HBox) panelContenedor.getChildren().get(0);
+
+        // Accedemos a los filtros por índice, ya que no tienen fx:id
+        this.comboEstadoFiltro = (ComboBox<EstadoEvento>) hboxFiltros.getChildren().get(3);
+        this.dateDesdeFiltro   = (DatePicker)            hboxFiltros.getChildren().get(5);
+        this.dateHastaFiltro   = (DatePicker)            hboxFiltros.getChildren().get(7);
+
+        // Poblado de combos
+        comboTipoEventoFiltro.setItems(FXCollections.observableArrayList(TipoEvento.values()));
+        comboTipoEventoFiltro.getSelectionModel().clearSelection(); // null = Todos
+
+        comboEstadoFiltro.setItems(FXCollections.observableArrayList(EstadoEvento.values()));
+        comboEstadoFiltro.getSelectionModel().clearSelection();     // null = Todos
+
+        // Listeners para disparar la búsqueda
+        comboTipoEventoFiltro.valueProperty().addListener((o,a,b) -> buscarYRefrescarTabla());
+        comboEstadoFiltro.valueProperty().addListener((o,a,b) -> buscarYRefrescarTabla());
+        dateDesdeFiltro.valueProperty().addListener((o,a,b) -> buscarYRefrescarTabla());
+        dateHastaFiltro.valueProperty().addListener((o,a,b) -> buscarYRefrescarTabla());
+    }
+
+    // ejecuta la búsqueda en Servicio y refresca la TableView
+    private void buscarYRefrescarTabla() {
+        LocalDate desde = (dateDesdeFiltro != null) ? dateDesdeFiltro.getValue() : null;
+        LocalDate hasta = (dateHastaFiltro != null) ? dateHastaFiltro.getValue() : null;
+
+        if (desde != null && hasta != null && desde.isAfter(hasta)) {
+            mostrarAlerta("Rango inválido", "Fecha desde mayor que fecha hasta");
+            return;
+        }
+
+        TipoEvento tipo = (comboTipoEventoFiltro != null) ? comboTipoEventoFiltro.getValue() : null;
+        EstadoEvento estado = (comboEstadoFiltro != null) ? comboEstadoFiltro.getValue() : null;
+
+        var resultados = servicio.buscarEventos(tipo, estado, desde, hasta);
+        tablaEventos.setItems(FXCollections.observableArrayList(resultados));
     }
 }
