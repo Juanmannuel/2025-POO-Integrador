@@ -92,6 +92,23 @@ public abstract class Evento {
         return this.estado == EstadoEvento.CONFIRMADO && now.isBefore(getFechaFin());
     }
 
+    /**
+     * Verifica y actualiza automáticamente el estado del evento según la fecha/hora actual
+     * Si la fecha de fin ya pasó, el evento pasa automáticamente a FINALIZADO
+     */
+    public void verificarEstadoAutomatico() {
+        LocalDateTime now = LocalDateTime.now();
+        
+        // Si el evento está en ejecución y ya pasó la fecha de fin, pasarlo a FINALIZADO
+        if (this.estado == EstadoEvento.EJECUCIÓN && now.isAfter(this.fechaFin)) {
+            this.estado = EstadoEvento.FINALIZADO;
+        }
+        // Si el evento está confirmado y ya pasó la fecha de fin, pasarlo a FINALIZADO
+        else if (this.estado == EstadoEvento.CONFIRMADO && now.isAfter(this.fechaFin)) {
+            this.estado = EstadoEvento.FINALIZADO;
+        }
+    }
+
     // helper común para las subclases
     protected void validarPuedeInscribir() {
         if (!Inscripcion()) {

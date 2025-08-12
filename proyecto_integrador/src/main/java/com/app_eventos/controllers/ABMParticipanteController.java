@@ -62,6 +62,9 @@ public class ABMParticipanteController {
 
     @FXML
     public void initialize() {
+        // Verificar estados de eventos automáticamente al inicializar
+        servicio.verificarEstadosEventos();
+        
         // Configuración de la tabla responsive
         configurarTabla();
         
@@ -449,6 +452,9 @@ public class ABMParticipanteController {
      * Método para refrescar datos cuando se navega a esta ventana
      */
     public void refrescarDatos() {
+        // Verificar estados de eventos automáticamente antes de cargar datos
+        servicio.verificarEstadosEventos();
+        
         // Recargar datos en la tabla
         tablaParticipantes.setItems(servicio.obtenerSoloParticipantes());
         
