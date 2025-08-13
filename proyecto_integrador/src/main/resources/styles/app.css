@@ -255,31 +255,31 @@ ESTILOS PARA LAS TARJETAS DE ESTADÍSTICAS DEL DASHBOARD
 }
 
 /* =================================================================
-   ESTILOS PARA EL CALENDARIO
+   ESTILOS PARA EL CALENDARIO (VERSIÓN FINAL)
    ================================================================= */
-.calendario-grid {
-    -fx-border-color: #e0e0e0; /* Borde exterior de la cuadrícula */
-    -fx-border-width: 1px;
-}
-/* En app.css */
 
 .calendario-header {
     -fx-background-color: #f8f9fa;
     -fx-padding: 8px;
     -fx-font-weight: bold;
     -fx-border-color: #e0e0e0;
-    -fx-border-width: 0 1px 1px 0;
-    -fx-alignment: center; /* Asegúrate de que esté centrado */
+    -fx-border-width: 1px;
+    -fx-alignment: center;
 }
 
 .calendario-celda {
-    -fx-min-height: 80px;
-    -fx-border-color: #e0e0e0; /* Color del borde */
-    /* CORRECCIÓN: Dibuja borde inferior e izquierdo en cada celda */
-    -fx-border-width: 0 0 1px 1px;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 1px 1px 0; /* Borde derecho e inferior */
     -fx-padding: 5px;
-    -fx-alignment: top-left;
+    -fx-background-color: white;
 }
+
+/* EFECTO NUEVO: Cambia el color cuando el ratón está encima */
+.calendario-celda:hover {
+    -fx-background-color: #f0f0f0; /* Un gris muy claro */
+    -fx-cursor: hand;
+}
+
 .calendario-numero-dia {
     -fx-font-size: 12px;
 }
@@ -288,15 +288,12 @@ ESTILOS PARA LAS TARJETAS DE ESTADÍSTICAS DEL DASHBOARD
     -fx-min-height: 80px;
     -fx-border-color: #e0e0e0;
     -fx-border-width: 0 1px 1px 0;
-    -fx-background-color: #fdfdfd; /* Un gris muy, muy claro */
+    -fx-background-color: #fdfdfd;
 }
 
-/*
- * ESTILO PARA CONTROLAR EL TEXTO LARGO EN EL CALENDARIO
- */
 .calendario-nombre-evento-pequeno {
-    -fx-max-width: 120px; /* Le damos un ancho máximo a la etiqueta del nombre */
-    -fx-text-overflow: ellipsis; /* Si el texto es más largo, pone "..." */
+    -fx-max-width: 120px;
+    -fx-text-overflow: ellipsis;
     -fx-font-size: 11px;
 }
 /* =================================================================

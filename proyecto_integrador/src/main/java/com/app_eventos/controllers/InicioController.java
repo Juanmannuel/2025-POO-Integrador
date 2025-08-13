@@ -20,7 +20,6 @@ import com.app_eventos.services.Servicio;
 import javafx.fxml.FXML; // <-- AÑADE ESTA LÍNEA
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -28,10 +27,10 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+
 
 public class InicioController {
 
@@ -147,18 +146,21 @@ public class InicioController {
         panelCalendario.getChildren().add(calendarioGrid);
     }
 
-    private Node crearCeldaDia(int dia) {
-        Button celdaBoton = new Button();
-        celdaBoton.setMaxWidth(Double.MAX_VALUE);
-        celdaBoton.getStyleClass().add("calendario-celda");
+     private Node crearCeldaDia(int dia) {
+        // 1. Usamos un VBox como la celda principal, no un Button
+        VBox celda = new VBox(2);
+        celda.setAlignment(Pos.TOP_LEFT);
+        celda.getStyleClass().add("calendario-celda");
+        
+        // 2. --- AQUÍ ESTÁ LA MAGIA: Forzamos un tamaño fijo ---
+        celda.setPrefHeight(90); // Altura preferida
+        celda.setMinHeight(90);  // No te encojas
+        celda.setMaxHeight(90);  // No te estires
 
-        VBox contenidoCelda = new VBox(2);
-        contenidoCelda.setAlignment(Pos.TOP_LEFT);
-        contenidoCelda.setMaxWidth(Region.USE_PREF_SIZE);
-
+        // 3. El resto del contenido va dentro de este VBox
         Label lblNumeroDia = new Label(String.valueOf(dia));
         lblNumeroDia.getStyleClass().add("calendario-numero-dia");
-        contenidoCelda.getChildren().add(lblNumeroDia);
+        celda.getChildren().add(lblNumeroDia);
 
         List<Evento> eventosDelDia = eventosFiltrados.stream()
             .filter(e -> e.getFechaInicio().toLocalDate().equals(fechaActual.withDayOfMonth(dia)))
@@ -171,16 +173,16 @@ public class InicioController {
             Circle punto = new Circle(5, getColorPorTipo(evento.getTipoEvento()));
             String tipoTexto = capitalizar(evento.getTipoEvento().toString());
             Label lblTipoEvento = new Label(tipoTexto);
-            lblTipoEvento.getStyleClass().add("calendario-nombre-evento");
+            lblTipoEvento.getStyleClass().add("calendario-nombre-eventon-pequeno");
 
             contenedorEvento.getChildren().addAll(punto, lblTipoEvento);
-            contenidoCelda.getChildren().add(contenedorEvento);
+            celda.getChildren().add(contenedorEvento);
         }
+        
+        // 4. Hacemos que toda la celda (el VBox) sea clicable
+        celda.setOnMouseClicked(e -> mostrarEventosDelDia(dia, eventosDelDia));
 
-        celdaBoton.setGraphic(contenidoCelda);
-        celdaBoton.setOnAction(e -> mostrarEventosDelDia(dia, eventosDelDia));
-
-        return celdaBoton;
+        return celda;
     }
 
     private void mostrarEventosDelDia(int dia, List<Evento> eventos) {
