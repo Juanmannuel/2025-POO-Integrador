@@ -29,10 +29,10 @@
 
             <!-- FILTROS -->
             <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="Nombre:" />
-                <TextField fx:id="txtNombreFiltro" prefWidth="120" promptText="Buscar por nombre" />
                 <Label text="DNI:" />
                 <TextField fx:id="txtDNIFiltro" prefWidth="120" promptText="Buscar por DNI" />
+                <Label text="Nombre:" />
+                <TextField fx:id="txtNombreFiltro" prefWidth="120" promptText="Buscar por nombre" />
             </HBox>
 
             <!-- TABLA -->
