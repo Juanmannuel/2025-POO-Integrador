@@ -291,6 +291,14 @@ ESTILOS PARA LAS TARJETAS DE ESTADÍSTICAS DEL DASHBOARD
     -fx-background-color: #fdfdfd; /* Un gris muy, muy claro */
 }
 
+/*
+ * ESTILO PARA CONTROLAR EL TEXTO LARGO EN EL CALENDARIO
+ */
+.calendario-nombre-evento-pequeno {
+    -fx-max-width: 120px; /* Le damos un ancho máximo a la etiqueta del nombre */
+    -fx-text-overflow: ellipsis; /* Si el texto es más largo, pone "..." */
+    -fx-font-size: 11px;
+}
 /* =================================================================
    ESTILOS PARA EL PANEL LATERAL DE INFORMACIÓN
    ================================================================= */

@@ -3,10 +3,14 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.app_eventos.controllers.InicioController">
-    <VBox spacing="20" style="-fx-padding: 20;" styleClass="panel-contenedor"
-          AnchorPane.topAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">
+<AnchorPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.app_eventos.controllers.InicioController">
 
+    <VBox spacing="20" style="-fx-padding: 20;" styleClass="panel-contenedor"
+          AnchorPane.topAnchor="0.0" AnchorPane.rightAnchor="0.0" 
+          AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">
+
+        <!-- Tarjetas de estadísticas -->
         <HBox spacing="20" alignment="CENTER">
             <VBox styleClass="card-estadistica" alignment="CENTER" HBox.hgrow="ALWAYS">
                 <Label text="Total Eventos" />
@@ -27,15 +31,16 @@
         </HBox>
 
         <HBox spacing="20" VBox.vgrow="ALWAYS">
+            <!-- Calendario -->
             <VBox spacing="10" HBox.hgrow="ALWAYS">
-                
-                <Label text="Calendario de Eventos" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                <Label text="Calendario de Eventos" 
+                       style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
                 
                 <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">
                     <Button text="&lt;" onAction="#mesAnterior" styleClass="btn-navegacion-calendario"/>
-                    <Label fx:id="lblMesAnio" text="Agosto 2025" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                    <Label fx:id="lblMesAnio" text="Agosto 2025" 
+                           style="-fx-font-size: 16px; -fx-font-weight: bold;" />
                     <Button text=">" onAction="#mesSiguiente" styleClass="btn-navegacion-calendario"/>
-                    
                     
                     <CheckBox fx:id="chkFerias" text="Ferias" selected="true"/>
                     <CheckBox fx:id="chkConciertos" text="Conciertos" selected="true"/>
@@ -46,9 +51,9 @@
                 </HBox>
                 
                 <VBox fx:id="panelCalendario" styleClass="calendario-grid" VBox.vgrow="ALWAYS" />
-
             </VBox>
 
+            <!-- Panel lateral de eventos del día -->
             <VBox spacing="15" minWidth="250" maxWidth="250">
                 <VBox styleClass="panel-info-lateral">
                     <Label text="Eventos del Día Seleccionado" styleClass="titulo-panel"/>
@@ -61,5 +66,5 @@
                 </VBox>
             </VBox>
         </HBox>
-        </VBox>
+    </VBox>
 </AnchorPane>
