@@ -33,7 +33,6 @@
                 <TextField fx:id="txtDNIFiltro" prefWidth="120" promptText="Buscar por DNI" />
                 <Label text="Nombre:" />
                 <TextField fx:id="txtNombreFiltro" prefWidth="120" promptText="Buscar por nombre" />
-
             </HBox>
 
             <!-- TABLA -->

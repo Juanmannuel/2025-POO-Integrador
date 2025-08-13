@@ -1,142 +1,46 @@
 package com.app_eventos.model;
+
 import com.app_eventos.model.enums.TipoRol;
-import com.app_eventos.model.interfaces.IEventoConCupo;
+import jakarta.persistence.*;
 
+/** Rol asignado a una persona dentro de un evento. Mapea a columnas reales. */
+@Entity
+@Table(name = "rol_evento")
 public class RolEvento {
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Evento evento;
-    private Persona persona;
-    private TipoRol rol;
-    private boolean baja = false;
 
-    // Constructor con validaciones de negocio
-    public RolEvento(Evento evento, Persona persona, TipoRol rol) {
-        validarAsignacionRol(evento, persona, rol);
-        this.evento = evento;
-        this.persona = persona;
-        this.rol = rol;
-    }
+    /** FK: rol_evento.evento_idevento → evento.idEvento */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "evento_idevento", nullable = false)
+    private Evento evento;
+
+    /** FK: rol_evento.persona_idpersona → persona.idPersona */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "persona_idpersona", nullable = false)
+    private Persona persona;
+
+    /**
+     * IMPORTANTE: en tu BD la columna válida es "tipo".
+     * Si sigue existiendo una columna "rol" con NOT NULL, debes quitarla o volverla NULL.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo", nullable = false, length = 32)
+    private TipoRol rol;
 
     public RolEvento() {}
-
-    // Métodos de utilidad
-    public boolean esOrganizador() {
-        return rol == TipoRol.ORGANIZADOR;
-    }
-
-    public boolean esInstructor() {
-        return rol == TipoRol.INSTRUCTOR;
-    }
-
-    public boolean esCurador() {
-        return rol == TipoRol.CURADOR;
-    }
-
-    public boolean esArtista() {
-        return rol == TipoRol.ARTISTA;
-    }
-    
-    public boolean esParticipante() {
-        return rol == TipoRol.PARTICIPANTE;
-    }
-
-    // MÉTODOS DE NEGOCIO DEL MODELO RICO
-
-    // Valida que se pueda asignar el rol según las reglas de negocio
-    private void validarAsignacionRol(Evento evento, Persona persona, TipoRol rol) {
-        if (evento == null || persona == null || rol == null) {
-            throw new IllegalArgumentException("Evento, persona y rol no pueden ser nulos");
-        }
-        
-        // REGLA: Solo eventos confirmados permiten inscripciones
-        if (!evento.Inscripcion()) {
-            throw new IllegalStateException("No se puede asignar roles a eventos no confirmados o finalizados");
-        }
-        
-        // REGLA: Validar cupo si es participante
-        if (rol == TipoRol.PARTICIPANTE && evento instanceof IEventoConCupo) {
-            IEventoConCupo eventoConCupo = (IEventoConCupo) evento;
-            if (!eventoConCupo.tieneCupoDisponible()) {
-                throw new IllegalStateException("No hay cupo disponible para este evento");
-            }
-        }
-    }
-    
-    // Dar de baja la participación (borrado lógico)
-    public void darDeBaja() {
-        if (this.baja) {
-            throw new IllegalStateException("Esta asignación ya está dada de baja");
-        }
-        this.baja = true;
-    }
-    
-    // Reactivar la participación
-    public void reactivar() {
-        if (!this.baja) {
-            throw new IllegalStateException("Esta asignación ya está activa");
-        }
-        this.baja = false;
-    }
-    
-    // Consultar si la participación está activa
-    public boolean estaActivo() {
-        return !baja;
-    }
-    
-    // Consultar si se puede modificar la participación
-    public boolean puedeModificar() {
-        return estaActivo() && evento.Inscripcion();
-    }
-
-    // Getters y setters
-    public Long getId() {
-        return id;
-    }
-
-    public Evento getEvento() {
-        return evento;
-    }
-
-    public void setEvento(Evento evento) {
+    public RolEvento(Evento evento, Persona persona, TipoRol rol) {
         this.evento = evento;
-    }
-
-    public Persona getPersona() {
-        return persona;
-    }
-
-    public void setPersona(Persona persona) {
         this.persona = persona;
-    }
-
-    public TipoRol getRol() {
-        return rol;
-    }
-
-    public void setRol(TipoRol rol) {
         this.rol = rol;
     }
 
-    public boolean isBaja() {
-        return baja;
-    }
-
-    @Override
-    public String toString() {
-        return persona + " se encuentra como " + rol + " en el evento " + evento.getNombre();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        RolEvento that = (RolEvento) obj;
-        return persona.equals(that.persona) && rol == that.rol;
-    }
-
-    @Override
-    public int hashCode() {
-        return java.util.Objects.hash(persona, rol);
-    }
+    public Long getId() { return id; }
+    public Evento getEvento() { return evento; }
+    public void setEvento(Evento evento) { this.evento = evento; }
+    public Persona getPersona() { return persona; }
+    public void setPersona(Persona persona) { this.persona = persona; }
+    public TipoRol getRol() { return rol; }
+    public void setRol(TipoRol rol) { this.rol = rol; }
 }

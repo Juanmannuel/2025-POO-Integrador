@@ -15,19 +15,27 @@ import javafx.scene.layout.StackPane;
 import javafx.util.StringConverter;
 import javafx.scene.control.SpinnerValueFactory;
 
+/**
+ * ABM Película
+ * ------------
+ * Cambios clave:
+ * - Después de alta / baja / modificación se vuelve a PEDIR la lista al Servicio
+ *   (no alcanza con TableView.refresh() si el items es una snapshot).
+ * - Se centraliza el refresco en el método refrescarDatos().
+ */
 public class ABMPeliculaController {
 
-    // Tabla
+    // --- Componentes de la tabla
     @FXML private TableView<Pelicula> tablaPeliculas;
     @FXML private TableColumn<Pelicula, String> colTitulo;
     @FXML private TableColumn<Pelicula, String> colDuracion;
     @FXML private TableColumn<Pelicula, String> colTipo;
 
-    // Filtros
+    // --- Filtros
     @FXML private TextField txtNombreFiltro;
     @FXML private TextField txtIDFiltro;
 
-    // Modal
+    // --- Modal
     @FXML private StackPane modalOverlay;
     @FXML private TextField txtTitulo;
     @FXML private Spinner<LocalTime> spinnerDuracion;
@@ -36,11 +44,13 @@ public class ABMPeliculaController {
     private final Servicio servicio = Servicio.getInstance();
     private Pelicula peliculaSeleccionada;
     private boolean modoEdicion;
+
+    // Formato HH:mm para el spinner de duración
     private static final DateTimeFormatter HHMM = DateTimeFormatter.ofPattern("HH:mm");
 
     @FXML
     public void initialize() {
-        // Ancho columnas
+        // --- Columnas responsivas
         tablaPeliculas.widthProperty().addListener((obs, oldW, newW) -> {
             double total = newW.doubleValue();
             colTitulo.setPrefWidth(total * 0.60);
@@ -48,7 +58,7 @@ public class ABMPeliculaController {
             colTipo.setPrefWidth(total * 0.20);
         });
 
-        // Columnas
+        // --- Mapeo de columnas
         colTitulo.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getTitulo()));
         colDuracion.setCellValueFactory(d -> {
             int min = d.getValue().getDuracionMinutos();
@@ -61,13 +71,9 @@ public class ABMPeliculaController {
             return new SimpleStringProperty(etiqueta);
         });
 
-        // Datos
-        tablaPeliculas.setItems(servicio.obtenerPeliculas());
-
-        // Combo TipoPelicula
+        // --- Combo Tipo de Película
         comboTipoPelicula.setItems(FXCollections.observableArrayList(TipoPelicula.values()));
         comboTipoPelicula.getSelectionModel().select(TipoPelicula.DOS_D);
-
         comboTipoPelicula.setCellFactory(listView -> new ListCell<>() {
             @Override protected void updateItem(TipoPelicula item, boolean empty) {
                 super.updateItem(item, empty);
@@ -81,14 +87,17 @@ public class ABMPeliculaController {
             }
         });
 
-        // Spinner duración HH:mm (paso 5 min, rango 00:01..09:59)
-        spinnerDuracion.setValueFactory(
-            crearFactoryDuracion(LocalTime.of(0, 1), LocalTime.of(9, 59), 5)
-        );
+        // --- Spinner duración HH:mm (paso 5 min, rango 00:01..09:59)
+        spinnerDuracion.setValueFactory(crearFactoryDuracion(LocalTime.of(0, 1), LocalTime.of(9, 59), 5));
         spinnerDuracion.setEditable(true);
-    } // <-- ¡cierra initialize!
 
-    // ===== fuera de initialize =====
+        // --- Carga inicial (pedimos al Servicio SIEMPRE)
+        refrescarDatos();
+    }
+
+    // ------ Helpers de UI ------------------------------------------------------
+
+    /** Crea la value factory para un spinner de LocalTime con paso en minutos. */
     private SpinnerValueFactory<LocalTime> crearFactoryDuracion(LocalTime min, LocalTime max, int stepMin) {
         return new SpinnerValueFactory<>() {
             private LocalTime value = LocalTime.of(1, 30);
@@ -112,9 +121,32 @@ public class ABMPeliculaController {
         };
     }
 
+    /** Devuelve minutos totales a partir del spinner HH:mm. */
+    private int getDuracionMinutosTotales() {
+        LocalTime t = spinnerDuracion.getValue();
+        return t.getHour() * 60 + t.getMinute();
+    }
+
+    /** Limpia campos del modal a valores por defecto. */
+    private void limpiarFormulario() {
+        txtTitulo.clear();
+        spinnerDuracion.getValueFactory().setValue(LocalTime.of(1, 30));
+        comboTipoPelicula.getSelectionModel().select(TipoPelicula.DOS_D);
+    }
+
+    /** Muestra un diálogo de error simple. */
+    private void error(String msg) {
+        Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);
+        a.setHeaderText(null);
+        a.showAndWait();
+    }
+
+    // ------ Acciones del modal -------------------------------------------------
+
     @FXML
     public void mostrarModal() {
         modoEdicion = false;
+        peliculaSeleccionada = null;
         limpiarFormulario();
         modalOverlay.setVisible(true);
     }
@@ -125,17 +157,13 @@ public class ABMPeliculaController {
         if (peliculaSeleccionada == null) { error("Seleccione una película."); return; }
         modoEdicion = true;
 
+        // Precarga de campos
         txtTitulo.setText(peliculaSeleccionada.getTitulo());
         int min = peliculaSeleccionada.getDuracionMinutos();
         spinnerDuracion.getValueFactory().setValue(LocalTime.of(min / 60, min % 60));
         comboTipoPelicula.getSelectionModel().select(peliculaSeleccionada.getTipo());
 
         modalOverlay.setVisible(true);
-    }
-
-    private int getDuracionMinutosTotales() {
-        LocalTime t = spinnerDuracion.getValue();
-        return t.getHour() * 60 + t.getMinute();
     }
 
     @FXML
@@ -148,41 +176,21 @@ public class ABMPeliculaController {
             Pelicula nueva = new Pelicula(titulo, duracionMin, tipo);
 
             if (modoEdicion) {
+                // Actualización (modelo rico + persistir)
                 servicio.actualizarPelicula(peliculaSeleccionada, nueva);
             } else {
+                // Alta (persistir)
                 servicio.guardarPelicula(nueva);
             }
 
-            tablaPeliculas.refresh();
+            // *** IMPORTANTE: pedir nuevamente la lista al servicio ***
+            refrescarDatos();
+
+            // Cerrar modal
             cerrarModal();
         } catch (Exception e) {
             error(e.getMessage());
         }
-    }
-
-    @FXML
-    public void cerrarModal() {
-        modalOverlay.setVisible(false);
-        limpiarFormulario();
-        peliculaSeleccionada = null;
-        modoEdicion = false;
-    }
-
-    private void limpiarFormulario() {
-        txtTitulo.clear();
-        spinnerDuracion.getValueFactory().setValue(LocalTime.of(1, 30));
-        comboTipoPelicula.getSelectionModel().select(TipoPelicula.DOS_D);
-    }
-
-    private void error(String msg) {
-        Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);
-        a.setHeaderText(null);
-        a.showAndWait();
-    }
-
-    public void refrescarDatos() {
-        tablaPeliculas.setItems(servicio.obtenerPeliculas());
-        tablaPeliculas.refresh();
     }
 
     @FXML
@@ -197,9 +205,28 @@ public class ABMPeliculaController {
         confirm.showAndWait().ifPresent(btn -> {
             if (btn == ButtonType.OK) {
                 servicio.eliminarPelicula(sel);
-                tablaPeliculas.getSelectionModel().clearSelection();
+
+                // *** IMPORTANTE: pedir nuevamente la lista al servicio ***
                 refrescarDatos();
+
+                tablaPeliculas.getSelectionModel().clearSelection();
             }
         });
+    }
+
+    @FXML
+    public void cerrarModal() {
+        modalOverlay.setVisible(false);
+        limpiarFormulario();
+        peliculaSeleccionada = null;
+        modoEdicion = false;
+    }
+
+    // ------ API de refresco ----------------------------------------------------
+
+    /** Vuelve a pedir al Servicio y setea el items de la TableView (no es un simple refresh). */
+    public void refrescarDatos() {
+        tablaPeliculas.setItems(servicio.obtenerPeliculas()); // NUEVA lista observable desde BD
+        tablaPeliculas.refresh();                             // repinta
     }
 }

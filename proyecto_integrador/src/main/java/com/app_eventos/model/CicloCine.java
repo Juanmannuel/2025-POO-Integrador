@@ -1,115 +1,68 @@
 package com.app_eventos.model;
 
+import jakarta.persistence.*;
+import com.app_eventos.model.enums.*;
+import com.app_eventos.model.interfaces.IEventoConCupo;
+import com.app_eventos.model.interfaces.IEventoConInscripcion;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.app_eventos.model.enums.TipoEvento;
-import com.app_eventos.model.enums.TipoRol;
-import com.app_eventos.model.interfaces.IEventoConCupo;
+/** Ciclo de cine con cupo, películas (solo memoria) y participantes persistidos (ManyToMany). */
+@Entity @Table(name = "cicloCine")
+public class CicloCine extends Evento implements IEventoConCupo, IEventoConInscripcion {
 
-public class CicloCine extends Evento implements IEventoConCupo {
+    // Películas: siguen en memoria; si luego querés persistir, se arma otra tabla puente.
+    @Transient private final List<Pelicula> peliculas = new ArrayList<>();
 
-    private final List<Pelicula> peliculas = new ArrayList<>();
-    private final List<Persona> participantes = new ArrayList<>();
+    /** Participantes persistidos en tabla puente evento_participante. */
+    @ManyToMany
+    @JoinTable(
+        name = "evento_participante",
+        joinColumns = @JoinColumn(name = "evento_id"),
+        inverseJoinColumns = @JoinColumn(name = "persona_id")
+    )
+    private List<Persona> participantes = new ArrayList<>();
+
+    @Column(name = "postCharla", nullable = false)
     private boolean postCharla;
+
+    @Column(name = "cupoMaximo", nullable = false)
     private int cupoMaximo;
 
-    // Constructor
-    public CicloCine(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin, boolean postCharla, int cupoMaximo) {
-        super(nombre, fechaInicio, fechaFin, TipoEvento.CICLO_CINE);
-        setPostCharla(postCharla);
-        setCupoMaximo(cupoMaximo);
+    public CicloCine() { super(); setTipoEvento(TipoEvento.CICLO_CINE); }
+    public CicloCine(String n, LocalDateTime fi, LocalDateTime ff, boolean pc, int cupo) {
+        super(n, fi, ff, TipoEvento.CICLO_CINE);
+        setPostCharla(pc);
+        setCupoMaximo(cupo);
     }
 
-    public CicloCine() {
-        super();
-        setTipoEvento(TipoEvento.CICLO_CINE);
-    }
-
-    // Métodos específicos
-    public void agregarPelicula(Pelicula pelicula) {
-        if (pelicula == null) {
-            throw new IllegalArgumentException("La película no puede ser nula.");
-        }
-        peliculas.add(pelicula);
-    }
-
-    public void sacarPelicula(Pelicula pelicula) {
-        peliculas.remove(pelicula);
-    }
-    
+    // Películas en memoria
+    public void agregarPelicula(Pelicula p) { if (p == null) throw new IllegalArgumentException("Película nula"); peliculas.add(p); }
+    public void sacarPelicula(Pelicula p) { peliculas.remove(p); }
     public void clearPeliculas() { peliculas.clear(); }
+    public List<Pelicula> getPeliculas() { return new ArrayList<>(peliculas); }
 
-    // Implementación de IEventoConInscripcion 
-    @Override
-    public void inscribirParticipante(Persona persona) {
-        // centraliza validación de estado/tiempo
-        validarPuedeInscribir(); 
-        if (participantes.size() >= cupoMaximo) {
-            throw new IllegalStateException("Cupo lleno. No se pueden inscribir más participantes.");
-        }
-        if (participantes.contains(persona)) {
-            throw new IllegalArgumentException("El participante ya está inscrito.");
-        }
+    // ===== IEventoConInscripcion =====
+    @Override public void inscribirParticipante(Persona persona) {
+        validarPuedeInscribir();
+        if (participantes.size() >= cupoMaximo) throw new IllegalStateException("Cupo completo.");
+        if (participantes.contains(persona)) throw new IllegalArgumentException("La persona ya está inscripta.");
         participantes.add(persona);
     }
+    @Override public void desinscribirParticipante(Persona persona) { participantes.remove(persona); }
+    @Override public List<Persona> getParticipantes() { return participantes; }
 
-    @Override
-    public void desinscribirParticipante(Persona persona) {
-        participantes.remove(persona);
-    }
+    // Cupo
+    @Override public boolean hayCupoDisponible() { return participantes.size() < cupoMaximo; }
+    @Override public boolean tieneCupoDisponible() { return hayCupoDisponible(); }
+    @Override public int getCupoMaximo() { return cupoMaximo; }
+    @Override public void setCupoMaximo(int v) { if (v <= 0) throw new IllegalArgumentException("Cupo > 0"); this.cupoMaximo = v; }
+    @Override public int getCupoDisponible() { return Math.max(0, cupoMaximo - participantes.size()); }
 
-    @Override
-    public List<Persona> getParticipantes() {
-        return new ArrayList<>(participantes);
-    }
+    @Override protected boolean rolPermitido(TipoRol rol) { return rol == TipoRol.ORGANIZADOR; }
 
-    // Implementación de IEventoConCupo 
-    @Override
-    public boolean hayCupoDisponible() {
-        return participantes.size() < cupoMaximo;
-    }
-
-    @Override
-    public boolean tieneCupoDisponible() {
-        return hayCupoDisponible();
-    }
-
-    @Override
-    public int getCupoMaximo() {
-        return cupoMaximo;
-    }
-
-    @Override
-    public void setCupoMaximo(int cupoMaximo) {
-        if (cupoMaximo <= 0) {
-            throw new IllegalArgumentException("El cupo máximo debe ser mayor que cero.");
-        }
-        this.cupoMaximo = cupoMaximo;
-    }
-
-    @Override
-    public int getCupoDisponible() {
-        return cupoMaximo - participantes.size();
-    }
-
-    // Lógica de roles permitidos
-    @Override
-    protected boolean rolPermitido(TipoRol rol) {
-        return rol == TipoRol.ORGANIZADOR;
-    }
-
-    // Getters y setters 
-    public List<Pelicula> getPeliculas() {
-        return new ArrayList<>(peliculas);
-    }
-
-    public boolean isPostCharla() {
-        return postCharla;
-    }
-
-    public void setPostCharla(boolean postCharla) {
-        this.postCharla = postCharla;
-    }
+    public boolean isPostCharla() { return postCharla; }
+    public void setPostCharla(boolean v) { this.postCharla = v; }
 }

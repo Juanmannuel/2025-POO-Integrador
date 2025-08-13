@@ -1,113 +1,66 @@
 package com.app_eventos.model;
 
+import jakarta.persistence.*;
+import com.app_eventos.model.enums.*;
+import com.app_eventos.model.interfaces.IEventoConCupo;
+import com.app_eventos.model.interfaces.IEventoConInscripcion;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.app_eventos.model.enums.Modalidad;
-import com.app_eventos.model.enums.TipoEvento;
-import com.app_eventos.model.enums.TipoRol;
-import com.app_eventos.model.interfaces.IEventoConCupo;
+/** Taller con cupo, modalidad y participantes persistidos. */
+@Entity @Table(name = "taller")
+public class Taller extends Evento implements IEventoConCupo, IEventoConInscripcion {
 
-public class Taller extends Evento implements IEventoConCupo {
-
+    @Column(name = "cupoMaximo", nullable = false)
     private int cupoMaximo;
-    private final List<Persona> participantes = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "modalidad", nullable = false)
     private Modalidad modalidad;
 
-    // Constructor con datos obligatorios
-    public Taller(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin,
-                  int cupoMaximo, Modalidad modalidad) {
-        super(nombre, fechaInicio, fechaFin, TipoEvento.TALLER);
-        setCupoMaximo(cupoMaximo);
-        setModalidad(modalidad);
+    @ManyToMany
+    @JoinTable(
+        name = "taller_participante",
+        joinColumns = @JoinColumn(name = "evento_id"),
+        inverseJoinColumns = @JoinColumn(name = "persona_id")
+    )
+    private List<Persona> participantes = new ArrayList<>();
+
+    public Taller() { super(); setTipoEvento(TipoEvento.TALLER); }
+    public Taller(String n, LocalDateTime fi, LocalDateTime ff, int cupo, Modalidad m) {
+        super(n, fi, ff, TipoEvento.TALLER); setCupoMaximo(cupo); setModalidad(m);
     }
 
-    public Taller() {
-        super();
-        setTipoEvento(TipoEvento.TALLER);
-    }
-
-    //  Inscripción participantes 
-    @Override
-    public void inscribirParticipante(Persona persona) {
-        validarPuedeInscribir(); // valida estado/tiempo según Evento
-        if (participantes.size() >= cupoMaximo) {
-            throw new IllegalStateException("Cupo lleno. No se pueden inscribir más participantes.");
-        }
-        if (participantes.contains(persona)) {
-            throw new IllegalArgumentException("El participante ya está inscrito.");
-        }
+    @Override public void inscribirParticipante(Persona persona) {
+        validarPuedeInscribir();
+        if (participantes.size() >= cupoMaximo) throw new IllegalStateException("Cupo lleno.");
+        if (participantes.contains(persona)) throw new IllegalArgumentException("La persona ya está inscripta.");
         participantes.add(persona);
     }
+    @Override public void desinscribirParticipante(Persona persona) { participantes.remove(persona); }
+    @Override public List<Persona> getParticipantes() { return participantes; }
 
-    @Override
-    public void desinscribirParticipante(Persona persona) {
-        participantes.remove(persona);
+    @Override public boolean hayCupoDisponible() { return participantes.size() < cupoMaximo; }
+    @Override public boolean tieneCupoDisponible() { return hayCupoDisponible(); }
+    @Override public int getCupoMaximo() { return cupoMaximo; }
+    @Override public void setCupoMaximo(int v) {
+        if (v <= 0) throw new IllegalArgumentException("Cupo > 0");
+        if (v < participantes.size()) throw new IllegalStateException("El cupo no puede ser menor a los inscriptos actuales.");
+        this.cupoMaximo = v;
     }
+    @Override public int getCupoDisponible() { return Math.max(0, cupoMaximo - participantes.size()); }
 
-    @Override
-    public List<Persona> getParticipantes() {
-        return new ArrayList<>(participantes);
-    }
+    public void setModalidad(Modalidad m) { if (m == null) throw new IllegalArgumentException("Modalidad requerida."); this.modalidad = m; }
+    public Modalidad getModalidad() { return modalidad; }
 
-    // --- Cupo ---
-    @Override
-    public boolean hayCupoDisponible() {
-        return participantes.size() < cupoMaximo;
-    }
+    @Override protected boolean rolPermitido(TipoRol rol) { return rol == TipoRol.INSTRUCTOR || rol == TipoRol.ORGANIZADOR; }
 
-    @Override
-    public boolean tieneCupoDisponible() {
-        return hayCupoDisponible();
-    }
-
-    @Override
-    public int getCupoMaximo() {
-        return cupoMaximo;
-    }
-
-    @Override
-    public void setCupoMaximo(int cupoMaximo) {
-        if (cupoMaximo <= 0) {
-            throw new IllegalArgumentException("El cupo máximo debe ser mayor que cero.");
-        }
-        // impedir dejar un cupo menor a los inscriptos actuales
-        if (cupoMaximo < participantes.size()) {
-            throw new IllegalStateException("El cupo no puede ser menor a los inscriptos actuales (" + participantes.size() + ").");
-         }
-        this.cupoMaximo = cupoMaximo;
-    }
-
-    @Override
-    public int getCupoDisponible() {
-        return cupoMaximo - participantes.size();
-    }
-
-    // Instructor (máximo 1)
     public void asignarInstructor(Persona persona) {
-        if (persona == null) throw new IllegalArgumentException("El instructor no puede ser nulo.");
-        if (contarPorRol(TipoRol.INSTRUCTOR) >= 1) {
-            throw new IllegalStateException("Ya hay un instructor asignado.");
-        }
-        super.agregarResponsable(persona, TipoRol.INSTRUCTOR);
+        if (persona == null) throw new IllegalArgumentException("Instructor nulo.");
+        if (contarPorRol(TipoRol.INSTRUCTOR) >= 1) throw new IllegalStateException("Ya hay un instructor asignado.");
+        agregarResponsable(persona, TipoRol.INSTRUCTOR);
     }
-
-    // Roles permitidos en Taller
-    @Override
-    protected boolean rolPermitido(TipoRol rol) {
-        return rol == TipoRol.INSTRUCTOR || rol == TipoRol.ORGANIZADOR;
-    }
-
-    // Getters/Setters propios 
-    public Modalidad getModalidad() {
-        return modalidad;
-    }
-
-    public void setModalidad(Modalidad modalidad) {
-        if (modalidad == null) {
-            throw new IllegalArgumentException("La modalidad no puede ser nula.");
-        }
-        this.modalidad = modalidad;
-    }
+    public Persona getInstructor() { return obtenerResponsables(TipoRol.INSTRUCTOR).stream().findFirst().orElse(null); }
 }

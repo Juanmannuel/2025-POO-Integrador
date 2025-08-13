@@ -18,6 +18,9 @@ import javafx.util.StringConverter;
 
 import java.util.function.Consumer;
 
+/**
+ * Modal de asignación de roles..
+ */
 public class AsigRolEventoController {
 
     @FXML private ComboBox<Persona> comboPersona;
@@ -29,37 +32,30 @@ public class AsigRolEventoController {
 
     private final ObservableList<RolEvento> rolesEvento = FXCollections.observableArrayList();
     private final Servicio servicio = Servicio.getInstance();
-    private Evento evento;
 
-    // Callback al controlador padre para refrescar la grilla principal
+    private Evento evento;
     private Consumer<Evento> onRolesChanged;
 
     @FXML
     public void initialize() {
-        // Personas
+        // Personas para el combo
         comboPersona.setItems(servicio.obtenerPersonas());
         comboPersona.setConverter(new StringConverter<>() {
             @Override public String toString(Persona p) {
                 if (p == null) return "";
                 String dni = p.getDni() != null ? p.getDni() : "-";
-                String nombre = p.getNombre() != null ? p.getNombre() : "";
-                String apellido = p.getApellido() != null ? p.getApellido() : "";
-                return dni + " - " + nombre + " " + apellido;
+                return dni + " - " + p.getNombre() + " " + p.getApellido();
             }
             @Override public Persona fromString(String s) { return null; }
         });
 
         // Tabla
         tablaRoles.setPlaceholder(new Label("Tabla sin contenido"));
-        colDni.setCellValueFactory(data ->
-            new SimpleStringProperty(data.getValue().getPersona().getDni()));
-        colNombre.setCellValueFactory(data ->
-            new SimpleStringProperty(
-                data.getValue().getPersona().getNombre() + " " + data.getValue().getPersona().getApellido()
-            )
-        );
+        colDni.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getPersona().getDni()));
+        colNombre.setCellValueFactory(d -> new SimpleStringProperty(
+                d.getValue().getPersona().getNombre() + " " + d.getValue().getPersona().getApellido()
+        ));
         colRol.setCellValueFactory(new PropertyValueFactory<>("rol"));
-
         tablaRoles.setItems(rolesEvento);
     }
 
@@ -71,30 +67,24 @@ public class AsigRolEventoController {
         }
         Persona persona = comboPersona.getValue();
         TipoRol rol = comboTipoRol.getValue();
-
         if (persona == null || rol == null) {
-            mostrarAdvertencia("Atención", "Debe seleccionar una persona y un rol.");
+            mostrarAdvertencia("Atención", "Debe seleccionar persona y rol.");
             return;
         }
-
         try {
-            // Derivá a métodos específicos cuando apliquen topes
-            if (evento instanceof Taller && rol == TipoRol.INSTRUCTOR) {
-                ((Taller) evento).asignarInstructor(persona);
-            } else if (evento instanceof Exposicion && rol == TipoRol.CURADOR) {
-                ((Exposicion) evento).asignarCurador(persona);
-            } else {
-                // Resto de roles por el camino genérico
-                evento.agregarResponsable(persona, rol);
+            // Persistir (evita duplicados persona+evento+rol)
+            var creado = servicio.asignarRol(evento, persona, rol);
+            if (creado == null) {
+                mostrarAdvertencia("Aviso", "Ese rol ya está asignado a esa persona.");
             }
-
-            refrescarTabla();
+            // Refrescar tabla desde BD
+            refrescarTablaDesdeBD();
             notificarCambio();
 
             comboPersona.getSelectionModel().clearSelection();
             comboTipoRol.getSelectionModel().clearSelection();
         } catch (IllegalArgumentException | IllegalStateException ex) {
-            mostrarError("No se pudo agregar el rol", ex.getMessage());
+            mostrarError("No se pudo agregar", ex.getMessage());
         }
     }
 
@@ -110,25 +100,29 @@ public class AsigRolEventoController {
             return;
         }
         try {
-            evento.borrarResponsable(seleccionado.getPersona(), seleccionado.getRol());
-            refrescarTabla();
+            servicio.eliminarRol(evento, seleccionado.getPersona(), seleccionado.getRol());
+            refrescarTablaDesdeBD();
             notificarCambio();
-        } catch (IllegalStateException ex) {
+        } catch (IllegalArgumentException | IllegalStateException ex) {
             mostrarError("No se pudo eliminar", ex.getMessage());
         }
     }
 
-    // Si tenés botón Aceptar en el modal:
+    /**
+     * Al aceptar, validamos que en la grilla haya al menos un ORGANIZADOR.
+     * No usamos evento.validarInvariantes() porque puede mirar una lista
+     * en memoria que aún no refleja lo persistido durante esta sesión del modal.
+     */
     @FXML
     public void aceptar() {
-        if (evento == null) return;
-        try {
-            evento.validarInvariantes(); // "Todo evento debe tener al menos un organizador."
-            notificarCambio();
-            cerrarVentana();
-        } catch (IllegalStateException ex) {
-            mostrarError("Validación", ex.getMessage());
+        if (evento == null) { cerrarVentana(); return; }
+        boolean tieneOrganizador = rolesEvento.stream().anyMatch(r -> r.getRol() == TipoRol.ORGANIZADOR);
+        if (!tieneOrganizador) {
+            mostrarAdvertencia("Validación", "Todo evento debe tener al menos un organizador.");
+            return;
         }
+        notificarCambio();
+        cerrarVentana();
     }
 
     private void cerrarVentana() {
@@ -137,52 +131,36 @@ public class AsigRolEventoController {
         }
     }
 
-    private void refrescarTabla() {
-        rolesEvento.setAll(evento.getRoles());
+    private void refrescarTablaDesdeBD() {
+        rolesEvento.setAll(servicio.obtenerRolesDeEvento(evento));
         tablaRoles.refresh();
     }
 
     private void notificarCambio() {
-        if (onRolesChanged != null && evento != null) {
-            onRolesChanged.accept(evento);
-        }
+        if (onRolesChanged != null && evento != null) onRolesChanged.accept(evento);
     }
 
     private void mostrarAdvertencia(String titulo, String mensaje) {
-        Alert alerta = new Alert(Alert.AlertType.WARNING);
-        alerta.setTitle(titulo);
-        alerta.setHeaderText(null);
-        alerta.setContentText(mensaje);
-        alerta.showAndWait();
+        Alert a = new Alert(Alert.AlertType.WARNING);
+        a.setTitle(titulo); a.setHeaderText(null); a.setContentText(mensaje); a.showAndWait();
     }
-
     private void mostrarError(String titulo, String mensaje) {
-        Alert alerta = new Alert(Alert.AlertType.ERROR);
-        alerta.setTitle(titulo);
-        alerta.setHeaderText(null);
-        alerta.setContentText(mensaje);
-        alerta.showAndWait();
+        Alert a = new Alert(Alert.AlertType.ERROR);
+        a.setTitle(titulo); a.setHeaderText(null); a.setContentText(mensaje); a.showAndWait();
     }
 
-    // ----- API para el padre -----
-    /** El padre debe pasar el evento seleccionado al abrir el modal. */
+    // ===== API para el padre =====
     public void setEvento(Evento evento) {
         this.evento = evento;
         if (evento != null) {
+            // Limitar roles permitidos según tipo
             comboTipoRol.getItems().setAll(evento.rolesPermitidosParaAsignacion());
-            refrescarTabla();
+            refrescarTablaDesdeBD();
         } else {
             comboTipoRol.getItems().clear();
             rolesEvento.clear();
         }
     }
-
-    /** El padre puede registrar un callback para refrescar la grilla principal. */
-    public void setOnRolesChanged(Consumer<Evento> onRolesChanged) {
-        this.onRolesChanged = onRolesChanged;
-    }
-
-    public ObservableList<RolEvento> getRolesAsignados() {
-        return rolesEvento;
-    }
+    public void setOnRolesChanged(Consumer<Evento> onRolesChanged) { this.onRolesChanged = onRolesChanged; }
+    public ObservableList<RolEvento> getRolesAsignados() { return rolesEvento; }
 }

@@ -2,466 +2,277 @@ package com.app_eventos.controllers;
 
 import com.app_eventos.model.Evento;
 import com.app_eventos.model.Persona;
-import com.app_eventos.model.RolEvento;
-import com.app_eventos.model.enums.TipoRol;
+import com.app_eventos.model.enums.EstadoEvento;
+import com.app_eventos.model.enums.TipoEvento;
 import com.app_eventos.model.interfaces.IEventoConCupo;
 import com.app_eventos.services.Servicio;
-
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
+import javafx.util.StringConverter;
 
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * Controlador que coincide con abmParticipante.fxml.
+ * - Lista participantes por evento.
+ * - Alta/Baja de inscripciones.
+ * - En el modal, el cupo se calcula contra BD: servicio.obtenerParticipantes(evento).size()
+ */
 public class ABMParticipanteController {
 
-    private final Servicio servicio = Servicio.getInstance();
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-
-    // Filtros
+    // -------- filtros superiores --------
     @FXML private ComboBox<Evento> comboEventoFiltro;
-    @FXML private TextField txtNombreFiltro;
     @FXML private TextField txtDNIFiltro;
+    @FXML private TextField txtNombreFiltro;
 
-    // Tabla
-    @FXML private TableView<RolEvento> tablaParticipantes;
-    @FXML private TableColumn<RolEvento, String> colEvento;
-    @FXML private TableColumn<RolEvento, String> colNombre;
-    // No necesitamos colRol porque siempre es PARTICIPANTE
-    @FXML private TableColumn<RolEvento, String> colDNI;
-    @FXML private TableColumn<RolEvento, String> colTelefono;
-    @FXML private TableColumn<RolEvento, String> colEmail;
-    @FXML private TableColumn<RolEvento, String> colEstadoEvento;
-    @FXML private TableColumn<RolEvento, String> colFechaAsignacion;
+    // -------- tabla principal --------
+    @FXML private TableView<Fila> tablaParticipantes;
+    @FXML private TableColumn<Fila, String> colEvento;
+    @FXML private TableColumn<Fila, String> colNombre;
+    @FXML private TableColumn<Fila, String> colDNI;
+    @FXML private TableColumn<Fila, String> colTelefono;
+    @FXML private TableColumn<Fila, String> colEmail;
+    @FXML private TableColumn<Fila, EstadoEvento> colEstadoEvento;
+    @FXML private TableColumn<Fila, String> colFechaAsignacion; // sin timestamp de alta: se deja "-"
 
-    // Modal inscripción
+    // -------- modal alta --------
     @FXML private StackPane modalOverlay;
     @FXML private ComboBox<Evento> comboEvento;
     @FXML private ComboBox<Persona> comboParticipante;
-    // Rol fijo para participantes - no necesita ComboBox
-    private final TipoRol rolFijo = TipoRol.PARTICIPANTE;
 
+    // Info evento en modal
     @FXML private Label lblEstadoEvento;
     @FXML private Label lblTipoEvento;
     @FXML private Label lblCupoDisponible;
     @FXML private Label lblFechaEvento;
 
+    // Info participante en modal
     @FXML private Label lblNombreParticipante;
     @FXML private Label lblDniParticipante;
     @FXML private Label lblTelefonoParticipante;
     @FXML private Label lblEmailParticipante;
-    
-    // Estado interno del controlador
-    private RolEvento participacionSeleccionada = null;
-    private boolean modoEdicion = false;
 
+    private final Servicio servicio = Servicio.getInstance();
+    private final ObservableList<Fila> modeloTabla = FXCollections.observableArrayList();
+
+    private static final DateTimeFormatter FECHAS =
+            DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
+
+    // -------- init --------
     @FXML
     public void initialize() {
-        // Verificar estados de eventos automáticamente al inicializar
-        servicio.verificarEstadosEventos();
-        
-        // Configuración de la tabla responsive
-        configurarTabla();
-        
-        // Cargar datos iniciales
-        cargarDatosIniciales();
-        
-        // Configurar filtros reactivos
-        configurarFiltros();
-        
-        // Configurar selección de tabla
-        configurarSeleccionTabla();
-        
-        // Configurar modal
-        modalOverlay.setVisible(false);
-    }
+        // combos
+        comboEventoFiltro.setConverter(eventoConverter());
+        comboEvento.setConverter(eventoConverter());
+        comboParticipante.setConverter(personaConverter());
 
-    /**
-     * Configura la tabla con columnas responsive y cell factories
-     */
-    private void configurarTabla() {
-        // Configuración responsive de columnas
-        tablaParticipantes.widthProperty().addListener((obs, oldWidth, newWidth) -> {
-            double total = newWidth.doubleValue();
-            colEvento.setPrefWidth(total * 0.25);           // 25%
-            colNombre.setPrefWidth(total * 0.20);           // 20%
-            colDNI.setPrefWidth(total * 0.12);              // 12%
-            colTelefono.setPrefWidth(total * 0.12);         // 12%
-            colEmail.setPrefWidth(total * 0.15);            // 15%
-            colEstadoEvento.setPrefWidth(total * 0.08);     // 8%
-            colFechaAsignacion.setPrefWidth(total * 0.08);  // 8%
-        });
-
-        // Cell value factories
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        
-        colEvento.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().getEvento().getNombre()));
-        
-        colNombre.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().getPersona().getNombre() + " " + 
-                                   data.getValue().getPersona().getApellido()));
-        
-        colDNI.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().getPersona().getDni()));
-        
-        colTelefono.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().getPersona().getTelefono()));
-        
-        colEmail.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().getPersona().getEmail()));
-        
-        colEstadoEvento.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().getEvento().getEstado().toString()));
-    }
-
-    /**
-     * Carga datos iniciales en la tabla y combos
-     */
-    private void cargarDatosIniciales() {
-        // Cargar SOLO participantes (rol PARTICIPANTE) en la tabla
-        tablaParticipantes.setItems(servicio.obtenerSoloParticipantes());
-        
-        // Cargar eventos en filtro
-        comboEventoFiltro.setItems(servicio.obtenerEventosDisponibles());
-        comboEventoFiltro.setPromptText("Todos los eventos");
-        
-        // Cargar datos del modal
-        comboEvento.setItems(servicio.obtenerEventosDisponibles());
+        // cargar datos iniciales en combos
+        recargarEventosEnCombos();
         comboParticipante.setItems(servicio.obtenerPersonas());
-        // No necesitamos cargar roles - siempre es PARTICIPANTE
-        
-        // Configurar StringConverters para mejor visualización
-        configurarStringConverters();
+
+        // listeners de filtros
+        comboEventoFiltro.valueProperty().addListener((o,a,b)->refrescarTabla());
+        txtDNIFiltro.textProperty().addListener((o,a,b)->refrescarTabla());
+        txtNombreFiltro.textProperty().addListener((o,a,b)->refrescarTabla());
+
+        // listeners del modal para pintar info
+        comboEvento.valueProperty().addListener((o,a,b)->pintarInfoEvento(b));
+        comboParticipante.valueProperty().addListener((o,a,b)->pintarInfoPersona(b));
+
+        // columnas
+        colEvento.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().evento().getNombre()));
+        colNombre.setCellValueFactory(d -> new SimpleStringProperty(
+                d.getValue().persona().getApellido()+", "+d.getValue().persona().getNombre()));
+        colDNI.setCellValueFactory(d -> new SimpleStringProperty(nullSafe(d.getValue().persona().getDni())));
+        colTelefono.setCellValueFactory(d -> new SimpleStringProperty(nullSafe(d.getValue().persona().getTelefono())));
+        colEmail.setCellValueFactory(d -> new SimpleStringProperty(nullSafe(d.getValue().persona().getEmail())));
+        colEstadoEvento.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().evento().getEstado()));
+        colFechaAsignacion.setCellValueFactory(d -> new SimpleStringProperty("-")); // no se guarda timestamp
+
+        tablaParticipantes.setItems(modeloTabla);
+
+        modalOverlay.setVisible(false);
+
+        // primera carga
+        refrescarTabla();
     }
 
-    /**
-     * Configura los StringConverters para los ComboBox
-     */
-    private void configurarStringConverters() {
-        // StringConverter para el ComboBox de eventos del modal
-        comboEvento.setConverter(new javafx.util.StringConverter<Evento>() {
-            @Override
-            public String toString(Evento evento) {
-                return evento != null ? evento.getNombre() : "";
+    // ========= acciones de toolbar =========
+
+    @FXML
+    public void mostrarModalAlta() {
+        limpiarModal();
+        // por defecto selecciono el evento elegido en filtro
+        comboEvento.getSelectionModel().select(comboEventoFiltro.getValue());
+        pintarInfoEvento(comboEvento.getValue());
+        modalOverlay.setVisible(true);
+    }
+
+    @FXML
+    public void cerrarModal() {
+        modalOverlay.setVisible(false); 
+        limpiarModal();
+    }
+
+    @FXML
+    public void altaParticipante() {
+        Evento e = comboEvento.getValue();
+        Persona p = comboParticipante.getValue();
+        if (e == null || p == null) { alertWarn("Debe seleccionar evento y participante."); return; }
+        try {
+            // inscribe y persiste en tabla puente ManyToMany
+            servicio.inscribirParticipante(e, p);
+            cerrarModal();
+            refrescarTabla();
+        } catch (Exception ex) {
+            alertErr(ex.getMessage());
+        }
+    }
+
+    @FXML
+    public void modificarParticipante() {
+        // en este ABM no hay edición de inscripción, solo alta/baja
+        alertWarn("No hay campos para modificar. Use Baja y vuelva a dar el alta si corresponde.");
+    }
+
+    @FXML
+    public void bajaParticipante() {
+        Fila sel = tablaParticipantes.getSelectionModel().getSelectedItem();
+        if (sel == null) { alertWarn("Seleccione una fila."); return; }
+        try {
+            servicio.desinscribirParticipante(sel.evento(), sel.persona());
+            refrescarTabla();
+        } catch (Exception ex) {
+            alertErr(ex.getMessage());
+        }
+    }
+
+    // ========= lógica de tabla =========
+
+    private void refrescarTabla() {
+        modeloTabla.clear();
+
+        Evento filtroEvento = comboEventoFiltro.getValue();
+        String filtroDni = txtDNIFiltro.getText() == null ? "" : txtDNIFiltro.getText().trim();
+        String filtroNombre = txtNombreFiltro.getText() == null ? "" : txtNombreFiltro.getText().trim().toLowerCase();
+
+        List<Evento> baseEventos = (filtroEvento != null)
+                ? List.of(filtroEvento)
+                : servicio.listarEventos();
+
+        List<Fila> filas = new ArrayList<>();
+        for (Evento e : baseEventos) {
+            // Traer participantes DESDE BD para evitar lazy sobre entidad detach
+            var participantes = servicio.obtenerParticipantes(e);
+            for (Persona p : participantes) {
+                boolean pasa = true;
+                if (!filtroDni.isBlank())    pasa &= p.getDni()!=null && p.getDni().contains(filtroDni);
+                if (!filtroNombre.isBlank()) pasa &= (p.getNombre()+" "+p.getApellido()).toLowerCase().contains(filtroNombre);
+                if (pasa) filas.add(new Fila(e,p));
             }
-            @Override
-            public Evento fromString(String string) { return null; }
-        });
-
-        // StringConverter para el ComboBox de filtro de eventos
-        comboEventoFiltro.setConverter(new javafx.util.StringConverter<Evento>() {
-            @Override
-            public String toString(Evento evento) {
-                return evento != null ? evento.getNombre() : "";
-            }
-            @Override
-            public Evento fromString(String string) { return null; }
-        });
-
-        comboParticipante.setConverter(new javafx.util.StringConverter<Persona>() {
-            @Override
-            public String toString(Persona persona) {
-                return persona != null ? persona.toString() : "";
-            }
-            @Override
-            public Persona fromString(String string) { return null; }
-        });
+        }
+        modeloTabla.setAll(filas);
+        tablaParticipantes.refresh();
     }
 
-    /**
-     * Configura filtros reactivos siguiendo el patrón de ABMPersona
-     */
-    private void configurarFiltros() {
-        txtNombreFiltro.setOnKeyReleased(this::aplicarFiltros);
-        txtDNIFiltro.setOnKeyReleased(this::aplicarFiltros);
-        
-        comboEventoFiltro.setOnAction(e -> aplicarFiltros(null));
-    }
+    // ========= helpers modal =========
 
-    /**
-     * Configura la selección de filas en la tabla
-     */
-    private void configurarSeleccionTabla() {
-        tablaParticipantes.setOnMouseClicked(this::onSeleccionarFila);
-        
-        // Deseleccionar si se hace clic fuera de la tabla
-        tablaParticipantes.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (newScene != null) {
-                newScene.setOnMousePressed(event -> {
-                    if (!tablaParticipantes.isHover()) {
-                        tablaParticipantes.getSelectionModel().clearSelection();
-                        participacionSeleccionada = null;
-                    }
-                });
-            }
-        });
-    }
-
-    // MÉTODOS PRINCIPALES DEL ABM
-
-    /**
-     * Aplica filtros a la tabla de participaciones
-     */
-    private void aplicarFiltros(KeyEvent event) {
-        String nombreEvento = comboEventoFiltro.getValue() != null ? 
-                            comboEventoFiltro.getValue().getNombre() : "";
-        String nombrePersona = txtNombreFiltro.getText();
-        String dni = txtDNIFiltro.getText();
-
-        ObservableList<RolEvento> filtradas = servicio.filtrarSoloParticipantes(
-            nombreEvento, nombrePersona, dni);
-        tablaParticipantes.setItems(filtradas);
-    }
-
-    /**
-     * Maneja la selección de filas en la tabla
-     */
-    private void onSeleccionarFila(MouseEvent event) {
-        participacionSeleccionada = tablaParticipantes.getSelectionModel().getSelectedItem();
-    }
-
-    /**
-     * Limpia el formulario del modal
-     */
-    private void limpiarModal() {
-        comboEvento.getSelectionModel().clearSelection();
-        comboParticipante.getSelectionModel().clearSelection();
-        // No hay comboRol - siempre es PARTICIPANTE
-
-        lblEstadoEvento.setText("Estado: -");
-        lblTipoEvento.setText("Tipo: -");
-        lblCupoDisponible.setText("Cupo: -");
-        lblFechaEvento.setText("Fecha: -");
-
-        lblNombreParticipante.setText("Nombre: -");
-        lblDniParticipante.setText("DNI: -");
-        lblTelefonoParticipante.setText("Teléfono: -");
-        lblEmailParticipante.setText("Email: -");
-    }
-
-    /**
-     * Actualiza las etiquetas informativas cuando se selecciona un evento
-     */
-    private void actualizarInfoEvento(Evento evento) {
-        if (evento == null) {
+    private void pintarInfoEvento(Evento e) {
+        if (e == null) {
             lblEstadoEvento.setText("Estado: -");
             lblTipoEvento.setText("Tipo: -");
             lblCupoDisponible.setText("Cupo: -");
             lblFechaEvento.setText("Fecha: -");
             return;
         }
+        lblEstadoEvento.setText("Estado: " + e.getEstado());
+        lblTipoEvento.setText("Tipo: " + tipoToLabel(e.getTipoEvento()));
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
-        
-        lblEstadoEvento.setText("Estado: " + evento.getEstado());
-        lblTipoEvento.setText("Tipo: " + evento.getTipoEvento());
-        lblFechaEvento.setText("Fecha: " + evento.getFechaInicio().format(formatter));
-        
-        // Mostrar cupo si aplica
-        if (evento instanceof IEventoConCupo) {
-            IEventoConCupo eventoConCupo = (IEventoConCupo) evento;
-            long participantesActuales = evento.contarParticipantes();
-            lblCupoDisponible.setText("Cupo: " + participantesActuales + "/" + eventoConCupo.getCupoMaximo());
+        // >>> CLAVE: calcular inscriptos consultando a BD, NO haciendo e.getParticipantes()
+        int inscriptos = servicio.obtenerParticipantes(e).size();
+        if (e instanceof IEventoConCupo c) {
+            lblCupoDisponible.setText("Cupo: " + inscriptos + " / " + c.getCupoMaximo());
         } else {
-            lblCupoDisponible.setText("Cupo: Sin límite");
+            lblCupoDisponible.setText("Cupo: -");
         }
+
+        lblFechaEvento.setText("Fecha: " +
+                e.getFechaInicio().format(FECHAS) + " a " + e.getFechaFin().format(FECHAS));
     }
 
-    /**
-     * Actualiza las etiquetas informativas cuando se selecciona una persona
-     */
-    private void actualizarInfoPersona(Persona persona) {
-        if (persona == null) {
+    private void pintarInfoPersona(Persona p) {
+        if (p == null) {
             lblNombreParticipante.setText("Nombre: -");
             lblDniParticipante.setText("DNI: -");
             lblTelefonoParticipante.setText("Teléfono: -");
             lblEmailParticipante.setText("Email: -");
             return;
         }
-
-        lblNombreParticipante.setText("Nombre: " + persona.getNombre() + " " + persona.getApellido());
-        lblDniParticipante.setText("DNI: " + persona.getDni());
-        lblTelefonoParticipante.setText("Teléfono: " + persona.getTelefono());
-        lblEmailParticipante.setText("Email: " + persona.getEmail());
+        lblNombreParticipante.setText("Nombre: " + p.getApellido() + ", " + p.getNombre());
+        lblDniParticipante.setText("DNI: " + nullSafe(p.getDni()));
+        lblTelefonoParticipante.setText("Teléfono: " + nullSafe(p.getTelefono()));
+        lblEmailParticipante.setText("Email: " + nullSafe(p.getEmail()));
     }
 
-    //MÉTODOS FXML DEL ABM
-
-    /**
-     * Abre el modal para crear nueva participación
-     */
-    @FXML
-    private void mostrarModalAlta() {
-        modoEdicion = false;
-        limpiarModal();
-        
-        // Configurar listeners para actualización dinámica
-        comboEvento.setOnAction(e -> actualizarInfoEvento(comboEvento.getValue()));
-        comboParticipante.setOnAction(e -> actualizarInfoPersona(comboParticipante.getValue()));
-        
-        modalOverlay.setVisible(true);
+    private void limpiarModal() {
+        comboEvento.getSelectionModel().clearSelection();
+        comboParticipante.getSelectionModel().clearSelection();
+        pintarInfoEvento(null);
+        pintarInfoPersona(null);
     }
 
-    /**
-     * Cierra el modal sin guardar cambios
-     */
-    @FXML
-    private void cerrarModal() {
-        modalOverlay.setVisible(false);
-        limpiarModal();
-        participacionSeleccionada = null;
+    private void recargarEventosEnCombos() {
+        var eventos = FXCollections.observableArrayList(servicio.listarEventos());
+        comboEventoFiltro.setItems(eventos);
+        comboEvento.setItems(eventos);
     }
 
-    /**
-     * Asigna un rol a una persona en un evento (siguiendo modelo rico)
-     */
-    @FXML
-    private void altaParticipante() {
-        try {
-            if (!validarCamposUI()) {
-                return;
+    // ========= util =========
+
+    private StringConverter<Evento> eventoConverter() {
+        return new StringConverter<>() {
+            @Override public String toString(Evento e) { return e==null? "" : e.getNombre(); }
+            @Override public Evento fromString(String s) { return null; }
+        };
+    }
+
+    private StringConverter<Persona> personaConverter() {
+        return new StringConverter<>() {
+            @Override public String toString(Persona p) {
+                if (p == null) return "";
+                String dni = p.getDni() == null ? "-" : p.getDni();
+                return dni + " - " + p.getApellido() + ", " + p.getNombre();
             }
-
-            // 2. CREAR PARTICIPACIÓN (modelo rico valida reglas de negocio)
-            RolEvento nuevaParticipacion = servicio.crearParticipacion(
-                comboEvento.getValue(),
-                comboParticipante.getValue(), 
-                rolFijo // Siempre PARTICIPANTE
-            );
-
-            // 3. GUARDAR (service como intermediario)
-            servicio.guardarParticipacion(nuevaParticipacion);
-
-            // 4. ACTUALIZAR VISTA
-            tablaParticipantes.setItems(servicio.obtenerSoloParticipantes());
-            cerrarModal();
-            
-            mostrarAlerta("Éxito", "Participación asignada correctamente", Alert.AlertType.INFORMATION);
-
-        } catch (IllegalStateException | IllegalArgumentException e) {
-            mostrarAlerta("Error", "Error inesperado: " + e.getMessage(), Alert.AlertType.ERROR);
-        }
+            @Override public Persona fromString(String s) { return null; }
+        };
     }
 
-    /**
-     * Modifica una participación existente
-     */
-    @FXML
-    private void modificarParticipante() {
-        if (participacionSeleccionada == null) {
-            mostrarAlerta("Selección requerida", 
-                         "Debe seleccionar una participación de la tabla para modificar.", 
-                         Alert.AlertType.WARNING);
-            return;
-        }
+    private static String nullSafe(String s){ return s==null? "-" : s; }
 
-        if (!participacionSeleccionada.puedeModificar()) {
-            mostrarAlerta("No se puede modificar", 
-                         "Esta participación no se puede modificar (evento finalizado o participación inactiva).", 
-                         Alert.AlertType.WARNING);
-            return;
-        }
-
-        // Cargar datos en el modal para edición
-        modoEdicion = true; // Indica que estamos editando una participación existente
-        comboEvento.setValue(participacionSeleccionada.getEvento());
-        comboParticipante.setValue(participacionSeleccionada.getPersona());
-        // No hay comboRol - siempre es PARTICIPANTE
-        
-        actualizarInfoEvento(participacionSeleccionada.getEvento());
-        actualizarInfoPersona(participacionSeleccionada.getPersona());
-        
-        modalOverlay.setVisible(true);
+    private static String tipoToLabel(TipoEvento t){
+        if (t == null) return "-";
+        return switch (t) {
+            case FERIA -> "FERIA";
+            case CONCIERTO -> "CONCIERTO";
+            case EXPOSICION -> "EXPOSICIÓN";
+            case TALLER -> "TALLER";
+            case CICLO_CINE -> "CICLO_CINE";
+        };
     }
 
-    /**
-     * Elimina una participación (borrado lógico)
-     */
-    @FXML
-    private void bajaParticipante() {
-        if (participacionSeleccionada == null) {
-            mostrarAlerta("Selección requerida", 
-                         "Debe seleccionar una participación de la tabla para eliminar.", 
-                         Alert.AlertType.WARNING);
-            return;
-        }
-
-        // Confirmación de eliminación
-        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmacion.setTitle("Confirmación");
-        confirmacion.setHeaderText("¿Está seguro que desea eliminar esta participación?");
-        confirmacion.setContentText(participacionSeleccionada.toString());
-
-        Optional<ButtonType> resultado = confirmacion.showAndWait();
-        if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-            try {
-                // El modelo rico maneja la lógica de borrado
-                servicio.eliminarParticipacion(participacionSeleccionada);
-                
-                // Actualizar vista
-                tablaParticipantes.setItems(servicio.obtenerSoloParticipantes());
-                participacionSeleccionada = null;
-                
-                mostrarAlerta("Éxito", "Participación eliminada correctamente", Alert.AlertType.INFORMATION);
-                
-            } catch (Exception e) {
-                mostrarAlerta("Error", "Error al eliminar participación: " + e.getMessage(), Alert.AlertType.ERROR);
-            }
-        }
+    private void alertErr(String m){ show(Alert.AlertType.ERROR, "Error", m); }
+    private void alertWarn(String m){ show(Alert.AlertType.WARNING, "Aviso", m); }
+    private void show(Alert.AlertType t, String h, String m){
+        Alert a = new Alert(t); a.setHeaderText(h); a.setContentText(m); a.showAndWait();
     }
 
-    // MÉTODOS AUXILIARES
-
-    /**
-     * Valida los campos de la UI antes de guardar [[memory:5343529]]
-     */
-    private boolean validarCamposUI() {
-        if (comboEvento.getValue() == null) {
-            mostrarAlerta("Campo requerido", "Debe seleccionar un evento", Alert.AlertType.WARNING);
-            return false;
-        }
-        
-        if (comboParticipante.getValue() == null) {
-            mostrarAlerta("Campo requerido", "Debe seleccionar una persona", Alert.AlertType.WARNING);
-            return false;
-        }
-        
-        // No necesitamos validar rol - siempre es PARTICIPANTE
-        
-        return true;
-    }
-
-    /**
-     * Muestra alertas al usuario
-     */
-    private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
-        Alert alerta = new Alert(tipo);
-        alerta.setTitle(titulo);
-        alerta.setHeaderText(null);
-        alerta.setContentText(mensaje);
-        alerta.showAndWait();
-    }
-    
-    /**
-     * Método para refrescar datos cuando se navega a esta ventana
-     */
-    public void refrescarDatos() {
-        // Verificar estados de eventos automáticamente antes de cargar datos
-        servicio.verificarEstadosEventos();
-        
-        // Recargar datos en la tabla
-        tablaParticipantes.setItems(servicio.obtenerSoloParticipantes());
-        
-        // Recargar combos
-        comboEventoFiltro.setItems(servicio.obtenerEventosDisponibles());
-        comboEvento.setItems(servicio.obtenerEventosDisponibles());
-        comboParticipante.setItems(servicio.obtenerPersonas());
-    }
+    // ========= fila de la tabla =========
+    public record Fila(Evento evento, Persona persona) {}
 }
-
