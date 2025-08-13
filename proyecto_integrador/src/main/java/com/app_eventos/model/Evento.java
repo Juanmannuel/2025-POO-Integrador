@@ -77,10 +77,19 @@ public abstract class Evento {
         if (!Inscripcion()) throw new IllegalStateException("No se permite inscribir.");
     }
 
+    // --------- Gancho para validaciones de subtipos ----------
+    protected void validarRestriccionesRol(TipoRol rol, Persona persona) {
+        // Por defecto, sin restricciones adicionales
+    }
+
     // --------- Roles ----------
     public void agregarResponsable(Persona persona, TipoRol rol) {
         if (persona == null || rol == null) throw new IllegalArgumentException("Persona y rol requeridos.");
         if (!rolPermitido(rol)) throw new IllegalArgumentException("Rol no permitido para " + tipoEvento);
+
+        // Validaciones específicas del subtipo
+        validarRestriccionesRol(rol, persona);
+
         boolean existe = roles.stream().anyMatch(r -> r.getPersona().equals(persona) && r.getRol() == rol);
         if (existe) throw new IllegalArgumentException("La persona ya tiene ese rol.");
         this.roles.add(new RolEvento(this, persona, rol));
@@ -88,10 +97,7 @@ public abstract class Evento {
 
     public void borrarResponsable(Persona persona, TipoRol rol) {
         if (persona == null || rol == null) return;
-        roles.stream()
-             .filter(r -> r.getPersona().equals(persona) && r.getRol() == rol)
-             .findFirst()
-             .ifPresent(roles::remove);
+        roles.removeIf(r -> r.getPersona().equals(persona) && r.getRol() == rol);
     }
 
     public List<Persona> obtenerResponsables(TipoRol rol) {
@@ -109,7 +115,6 @@ public abstract class Evento {
         return roles.stream().filter(r -> r.getRol() == rol).count();
     }
 
-    /** Usado por controladores para checks generales. */
     public void validarInvariantes() {
         if (contarPorRol(TipoRol.ORGANIZADOR) == 0)
             throw new IllegalStateException("Todo evento debe tener al menos un organizador.");
@@ -161,6 +166,5 @@ public abstract class Evento {
         this.tipoEvento = tipoEvento;
     }
 
-    /** Devuelto para lectura en la UI. */
     public List<RolEvento> getRoles() { return new ArrayList<>(roles); }
 }

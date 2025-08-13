@@ -8,6 +8,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.time.*;
+import java.util.Comparator;
 
 public class Servicio {
 
@@ -226,5 +227,47 @@ public class Servicio {
             e.verificarEstadoAutomatico();
             if (antes != e.getEstado()) repositorio.actualizarEvento(e);
         }
+    }
+
+        public java.util.List<Evento> listarEventosPorRango(LocalDateTime desde, LocalDateTime hasta) {
+        // Reuso buscarEventos(desde/hasta) por fecha y filtro hora exacta
+        java.util.List<Evento> base = repositorio.buscarEventos(
+                null, null, 
+                desde.toLocalDate(), 
+                hasta.toLocalDate()
+        );
+
+        return base.stream()
+                .filter(e -> {
+                    LocalDateTime ini = e.getFechaInicio();
+                    return (ini.isEqual(desde) || ini.isAfter(desde))
+                        && (ini.isBefore(hasta) || ini.isEqual(hasta));
+                })
+                .sorted(Comparator.comparing(Evento::getFechaInicio))
+                .toList();
+    }
+
+    public long contarEventos() {
+        return repositorio.listarEventos().size();
+    }
+
+    public long contarEventosActivos() {
+        LocalDateTime ahora = LocalDateTime.now();
+        return repositorio.listarEventos().stream()
+                .filter(e -> e.getEstado() == EstadoEvento.CONFIRMADO)
+                .filter(e -> e.getFechaFin() != null && e.getFechaFin().isAfter(ahora))
+                .count();
+    }
+
+    public long contarPersonas() {
+        return repositorio.listarPersonas().size();
+    }
+
+    public long contarInscripciones() {
+        long total = 0L;
+        for (Evento e : repositorio.listarEventos()) {
+            total += repositorio.obtenerParticipantes(e).size();
+        }
+        return total;
     }
 }

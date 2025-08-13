@@ -3,7 +3,6 @@ package com.app_eventos.model;
 import jakarta.persistence.*;
 import com.app_eventos.model.enums.*;
 import com.app_eventos.model.interfaces.IEventoConCupo;
-import com.app_eventos.model.interfaces.IEventoConInscripcion;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -11,7 +10,7 @@ import java.util.List;
 
 /** Concierto con cupo y participantes persistidos. */
 @Entity @Table(name = "concierto")
-public class Concierto extends Evento implements IEventoConCupo, IEventoConInscripcion {
+public class Concierto extends Evento implements IEventoConCupo{
 
     @Enumerated(EnumType.STRING) @Column(name = "tipoEntrada", nullable = false)
     private TipoEntrada tipoEntrada;
@@ -38,13 +37,23 @@ public class Concierto extends Evento implements IEventoConCupo, IEventoConInscr
         setCupoMaximo(cupoMaximo);
     }
 
-    // Inscripción
-    @Override public void inscribirParticipante(Persona persona) {
+    // Inscripción de participantes
+    @Override
+    public void inscribirParticipante(Persona persona) {
         validarPuedeInscribir();
+        if (personaTieneRol(persona)) // <- clave
+            throw new IllegalStateException("No puede ser participante y responsable a la vez.");
         if (participantes.size() >= cupoMaximo) throw new IllegalStateException("Cupo completo.");
         if (participantes.contains(persona)) throw new IllegalArgumentException("La persona ya está inscripta.");
         participantes.add(persona);
     }
+
+    @Override
+    protected void validarRestriccionesRol(TipoRol rol, Persona persona) {
+        if (participantes.contains(persona)) // <- NUEVO
+            throw new IllegalStateException("Ya es participante; no puede ser responsable.");
+    }
+
     @Override public void desinscribirParticipante(Persona persona) { participantes.remove(persona); }
     @Override public List<Persona> getParticipantes() { return participantes; }
 

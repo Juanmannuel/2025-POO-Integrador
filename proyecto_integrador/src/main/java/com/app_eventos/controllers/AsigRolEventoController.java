@@ -1,10 +1,8 @@
 package com.app_eventos.controllers;
 
 import com.app_eventos.model.Evento;
-import com.app_eventos.model.Exposicion;
 import com.app_eventos.model.Persona;
 import com.app_eventos.model.RolEvento;
-import com.app_eventos.model.Taller;
 import com.app_eventos.model.enums.TipoRol;
 import com.app_eventos.services.Servicio;
 
@@ -108,11 +106,6 @@ public class AsigRolEventoController {
         }
     }
 
-    /**
-     * Al aceptar, validamos que en la grilla haya al menos un ORGANIZADOR.
-     * No usamos evento.validarInvariantes() porque puede mirar una lista
-     * en memoria que aún no refleja lo persistido durante esta sesión del modal.
-     */
     @FXML
     public void aceptar() {
         if (evento == null) { cerrarVentana(); return; }

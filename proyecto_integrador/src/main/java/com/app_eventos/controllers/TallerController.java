@@ -1,8 +1,6 @@
 package com.app_eventos.controllers;
 
-import com.app_eventos.model.Persona;
 import com.app_eventos.model.enums.Modalidad;
-import com.app_eventos.model.enums.TipoRol;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;

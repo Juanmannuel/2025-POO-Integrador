@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -12,15 +13,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.app_eventos.model.Evento;
-import com.app_eventos.model.Persona;
-import com.app_eventos.model.enums.EstadoEvento;
 import com.app_eventos.model.enums.TipoEvento;
 import com.app_eventos.services.Servicio;
 
-// Controles JavaFX
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -32,7 +31,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
-
 public class InicioController {
 
     // --- Widgets del dashboard/calendario ---
@@ -41,11 +39,11 @@ public class InicioController {
     @FXML private Label lblTotalPersonas;
     @FXML private Label lblInscripciones;
 
-    @FXML private Label lblMesAnio;         // Encabezado del calendario (texto mes/año)
-    @FXML private VBox panelCalendario;     // Contenedor en el que se dibuja la cuadrícula
+    @FXML private Label lblMesAnio;         // Encabezado del calendario (mes/año)
+    @FXML private VBox panelCalendario;     // Contenedor del calendario
 
-    @FXML private Label lblDiaSeleccionado; // Texto “Eventos del X de Mes de Año”
-    @FXML private VBox vboxEventosDia;      // Lista de eventos del día seleccionado
+    @FXML private Label lblDiaSeleccionado; // “Eventos del X de Mes de Año”
+    @FXML private VBox vboxEventosDia;      // Lista de eventos del día
     @FXML private ScrollPane scrollEventosDia;
 
     // --- Filtros por tipo de evento ---
@@ -55,55 +53,65 @@ public class InicioController {
     @FXML private CheckBox chkTalleres;
     @FXML private CheckBox chkCiclosCine;
 
-    // Lista maestra (TODOS los eventos) y la lista que realmente se pinta (filtrada)
-    // IMPORTANTE: hoy están vacías y se rellenan desde otra pantalla (ABMEvento) con una lista EN MEMORIA.
-    // Cuando quieras que esto lea directamente de BD, tenés que:
-    // 1) pedirle al Servicio una lista (que a su vez consulte al Repositorio)
-    // 2) setear aquí "todosLosEventos" desde esa consulta.
-    private List<Evento> todosLosEventos;
-    private List<Evento> eventosFiltrados;
+    // Datos
+    private List<Evento> todosLosEventos;   // Traídos de BD para el mes visible
+    private List<Evento> eventosFiltrados;  // Lista pintada (aplicando filtros)
 
     // Mes/Año que se está mostrando
     private LocalDate fechaActual;
-    private final Servicio servicio = Servicio.getInstance(); // <-- AÑADE ESTA LÍNEA
+
+    // Servicio de negocio (consulta BD)
+    private final Servicio servicio = Servicio.getInstance();
 
     @FXML
     public void initialize() {
-        // Inicialmente, sin cargar desde BD (esto es UI pura).
         this.todosLosEventos = new ArrayList<>();
         this.eventosFiltrados = new ArrayList<>();
+        this.fechaActual = LocalDate.now();
 
-        // Mes que se ve de entrada
-        fechaActual = LocalDate.now();
-
-        // Dibuja el calendario con la lista actual (vacía al inicio)
+        cargarEventosDelMes();  // <-- lee de BD
         dibujarCalendario();
-
-        // (Opcional) Aquí podrías inicializar métricas de dashboard con datos reales del Servicio/Repositorio
-        // lblTotalEventos.setText(...); lblTotalPersonas.setText(...); etc.
     }
 
-    // Handler de botón “Aplicar filtros”
-    // Lee los checkboxes, filtra "todosLosEventos" y redibuja el calendario.
+    // ----- Carga desde BD según el mes visible -----
+    private void cargarEventosDelMes() {
+        LocalDate inicioMes = fechaActual.withDayOfMonth(1);
+        LocalDate finMes = fechaActual.with(TemporalAdjusters.lastDayOfMonth());
+
+        // Trae eventos del rango (incluye todo lo necesario para la UI)
+        this.todosLosEventos = servicio.listarEventosPorRango(
+                inicioMes.atStartOfDay(),
+                finMes.atTime(23, 59, 59)
+        );
+
+        // Por defecto, mostrar todos (sin filtros aplicados aún)
+        this.eventosFiltrados = new ArrayList<>(this.todosLosEventos);
+
+        // (Opcional) Métricas del dashboard
+        if (lblTotalEventos != null)    lblTotalEventos.setText(String.valueOf(servicio.contarEventos()));
+        if (lblEventosActivos != null)  lblEventosActivos.setText(String.valueOf(servicio.contarEventosActivos()));
+        if (lblTotalPersonas != null)   lblTotalPersonas.setText(String.valueOf(servicio.contarPersonas()));
+        if (lblInscripciones != null)   lblInscripciones.setText(String.valueOf(servicio.contarInscripciones()));
+    }
+
+    // ----- Filtros -----
     @FXML
     private void aplicarFiltros() {
         Set<TipoEvento> tiposSeleccionados = new HashSet<>();
-        if (chkFerias.isSelected()) tiposSeleccionados.add(TipoEvento.FERIA);
-        if (chkConciertos.isSelected()) tiposSeleccionados.add(TipoEvento.CONCIERTO);
-        if (chkExposiciones.isSelected()) tiposSeleccionados.add(TipoEvento.EXPOSICION);
-        if (chkTalleres.isSelected()) tiposSeleccionados.add(TipoEvento.TALLER);
-        if (chkCiclosCine.isSelected()) tiposSeleccionados.add(TipoEvento.CICLO_CINE);
+        if (chkFerias.isSelected())      tiposSeleccionados.add(TipoEvento.FERIA);
+        if (chkConciertos.isSelected())  tiposSeleccionados.add(TipoEvento.CONCIERTO);
+        if (chkExposiciones.isSelected())tiposSeleccionados.add(TipoEvento.EXPOSICION);
+        if (chkTalleres.isSelected())    tiposSeleccionados.add(TipoEvento.TALLER);
+        if (chkCiclosCine.isSelected())  tiposSeleccionados.add(TipoEvento.CICLO_CINE);
 
-        // Filtra la lista maestra
         this.eventosFiltrados = this.todosLosEventos.stream()
-                .filter(evento -> tiposSeleccionados.contains(evento.getTipoEvento()))
+                .filter(e -> tiposSeleccionados.isEmpty() || tiposSeleccionados.contains(e.getTipoEvento()))
                 .collect(Collectors.toList());
 
-        // Redibuja
         dibujarCalendario();
     }
 
-    // Dibuja la cuadrícula del calendario para el mes actual (fechaActual)
+    // ----- Dibujo del calendario -----
     private void dibujarCalendario() {
         String mes = fechaActual.getMonth().getDisplayName(TextStyle.FULL, new Locale("es", "ES"));
         String anio = String.valueOf(fechaActual.getYear());
@@ -112,14 +120,14 @@ public class InicioController {
         GridPane calendarioGrid = new GridPane();
         calendarioGrid.getStyleClass().add("calendario-grid-contenido");
 
-        // 7 columnas (Dom-Sáb), con HGrow para que se expandan
+        // 7 columnas (Dom-Sáb)
         for (int i = 0; i < 7; i++) {
             ColumnConstraints colConst = new ColumnConstraints();
             colConst.setHgrow(Priority.ALWAYS);
             calendarioGrid.getColumnConstraints().add(colConst);
         }
 
-        // Encabezado con días de semana
+        // Encabezado días
         String[] diasSemana = {"Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"};
         for (int i = 0; i < 7; i++) {
             Label lblDia = new Label(diasSemana[i]);
@@ -132,28 +140,22 @@ public class InicioController {
         // Celdas del mes
         YearMonth anioMes = YearMonth.from(fechaActual);
         int diasEnMes = anioMes.lengthOfMonth();
-        // Primer día del mes (0=Domingo)
-        int primerDiaDelMes = fechaActual.withDayOfMonth(1).getDayOfWeek().getValue() % 7;
+        int primerDiaDelMes = fechaActual.withDayOfMonth(1).getDayOfWeek().getValue() % 7; // 0=Domingo
 
         for (int i = 0; i < 6; i++) {          // filas
             for (int j = 0; j < 7; j++) {      // columnas
                 int diaCalculado = (i * 7) + j - primerDiaDelMes + 1;
-                Node celda;
-                if (diaCalculado > 0 && diaCalculado <= diasEnMes) {
-                    celda = crearCeldaDia(diaCalculado);
-                } else {
-                    celda = crearCeldaVacia();
-                }
+                Node celda = (diaCalculado > 0 && diaCalculado <= diasEnMes)
+                        ? crearCeldaDia(diaCalculado)
+                        : crearCeldaVacia();
                 calendarioGrid.add(celda, j, i + 1);
             }
         }
 
-        // Reemplaza el contenido del panel con el calendario recién armado
-        panelCalendario.getChildren().clear();
-        panelCalendario.getChildren().add(calendarioGrid);
+        panelCalendario.getChildren().setAll(calendarioGrid);
     }
 
-    // Crea una celda clicable para un día. Toma los eventos desde "eventosFiltrados".
+    // Celda clicable de un día
     private Node crearCeldaDia(int dia) {
         Button celdaBoton = new Button();
         celdaBoton.setMaxWidth(Double.MAX_VALUE);
@@ -166,14 +168,15 @@ public class InicioController {
         // Número de día
         Label lblNumeroDia = new Label(String.valueOf(dia));
         lblNumeroDia.getStyleClass().add("calendario-numero-dia");
-        celda.getChildren().add(lblNumeroDia);
+        contenidoCelda.getChildren().add(lblNumeroDia);
 
-        // Buscar eventos del día (en la lista filtrada, NO en BD)
+        // Eventos del día (lista filtrada)
+        LocalDate fechaDelDia = fechaActual.withDayOfMonth(dia);
         List<Evento> eventosDelDia = eventosFiltrados.stream()
-            .filter(e -> e.getFechaInicio().toLocalDate().equals(fechaActual.withDayOfMonth(dia)))
-            .collect(Collectors.toList());
+                .filter(e -> e.getFechaInicio().toLocalDate().equals(fechaDelDia))
+                .collect(Collectors.toList());
 
-        // Si hay eventos, dibuja puntitos de color por tipo
+        // Puntitos por tipo
         if (!eventosDelDia.isEmpty()) {
             HBox contenedorIconos = new HBox(3);
             contenedorIconos.setAlignment(Pos.CENTER);
@@ -186,13 +189,13 @@ public class InicioController {
 
         celdaBoton.setGraphic(contenidoCelda);
 
-        // Al hacer click, muestra la lista del lateral
+        // Click: muestra lista lateral
         celdaBoton.setOnAction(e -> mostrarEventosDelDia(dia, eventosDelDia));
 
         return celdaBoton;
     }
 
-    // Muestra la lista lateral “Eventos del <día>”
+    // Lista lateral “Eventos del <día>”
     private void mostrarEventosDelDia(int dia, List<Evento> eventos) {
         DateTimeFormatter formato = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
         lblDiaSeleccionado.setText("Eventos del " + fechaActual.withDayOfMonth(dia).format(formato));
@@ -201,49 +204,63 @@ public class InicioController {
 
         if (eventos.isEmpty()) {
             vboxEventosDia.getChildren().add(new Label("No hay eventos para este día."));
-        } else {
-            DateTimeFormatter formatoHora = DateTimeFormatter.ofPattern("HH:mm"); 
-            for (Evento evento : eventos) {
-                Label lblEvento = new Label("• " + evento.getNombre());
-                lblEvento.setStyle("-fx-font-weight: bold;"); 
-            Label lblHorario = new Label("  De " + evento.getFechaInicio().format(formatoHora) + 
-                            " a " + evento.getFechaFin().format(formatoHora) + " hs");
-            
+            return;
+        }
 
-                vboxEventosDia.getChildren().addAll(lblEvento, lblHorario); // <-- MODIFICA ESTA LÍNEA
-            }
+        DateTimeFormatter formatoHora = DateTimeFormatter.ofPattern("HH:mm");
+        for (Evento evento : eventos) {
+            Label lblEvento = new Label("• " + evento.getNombre());
+            lblEvento.setStyle("-fx-font-weight: bold;");
+
+            Label lblHorario = new Label(
+                "  De " + evento.getFechaInicio().format(formatoHora) +
+                " a " + evento.getFechaFin().format(formatoHora) + " hs"
+            );
+
+            vboxEventosDia.getChildren().addAll(lblEvento, lblHorario);
         }
     }
 
-    // Mapea tipo de evento -> color para puntitos del calendario
+    // Mapea tipo de evento -> color
     private Color getColorPorTipo(TipoEvento tipo) {
         if (tipo == null) return Color.LIGHTGRAY;
         return switch (tipo) {
-            case TALLER      -> Color.DODGERBLUE;
-            case CONCIERTO   -> Color.ORANGERED;
-            case FERIA       -> Color.FORESTGREEN;
-            case EXPOSICION  -> Color.GOLD;
-            case CICLO_CINE  -> Color.MEDIUMPURPLE;
-            default          -> Color.LIGHTGRAY;
+            case TALLER     -> Color.DODGERBLUE;
+            case CONCIERTO  -> Color.ORANGERED;
+            case FERIA      -> Color.FORESTGREEN;
+            case EXPOSICION -> Color.GOLD;
+            case CICLO_CINE -> Color.MEDIUMPURPLE;
         };
     }
 
-    // Crea celdas vacías (fuera del rango del mes)
+    // Celdas vacías (fuera del rango)
     private Node crearCeldaVacia() {
         VBox celdaVacia = new VBox();
         celdaVacia.getStyleClass().add("calendario-celda-vacia");
         return celdaVacia;
     }
 
-    // Navegación en el calendario
-    @FXML private void mesAnterior()     { fechaActual = fechaActual.minusMonths(1); dibujarCalendario(); }
-    @FXML private void mesSiguiente()    { fechaActual = fechaActual.plusMonths(1);  dibujarCalendario(); }
-    @FXML private void irHoy()           { fechaActual = LocalDate.now();            dibujarCalendario(); }
-    @FXML private void actualizarCalendario() { dibujarCalendario(); }
+    // Navegación (recarga desde BD)
+    @FXML private void mesAnterior() {
+        fechaActual = fechaActual.minusMonths(1);
+        cargarEventosDelMes();
+        dibujarCalendario();
+    }
 
-    // ====== NOTA IMPORTANTE SOBRE PERSISTENCIA EN ESTA VISTA ======
-    // Si querés que el calendario se alimente con eventos de la BD:
-    // - Agregá un Servicio.getInstance().listarEventos() que traiga desde el Repositorio (select a BD)
-    // - Setealo aquí: this.todosLosEventos = servicio.listarEventos();
-    // - Luego llamá aplicarFiltros() o dibujarCalendario().
+    @FXML private void mesSiguiente() {
+        fechaActual = fechaActual.plusMonths(1);
+        cargarEventosDelMes();
+        dibujarCalendario();
+    }
+
+    @FXML private void irHoy() {
+        fechaActual = LocalDate.now();
+        cargarEventosDelMes();
+        dibujarCalendario();
+    }
+
+    @FXML private void actualizarCalendario() {
+        cargarEventosDelMes();
+        dibujarCalendario();
+    }
 }
