@@ -1,51 +1,25 @@
 package com.app_eventos.model;
 
+import jakarta.persistence.*;
+import com.app_eventos.model.enums.*;
 import java.time.LocalDateTime;
 
-import com.app_eventos.model.enums.TipoAmbiente;
-import com.app_eventos.model.enums.TipoEvento;
-import com.app_eventos.model.enums.TipoRol;
-
+/** Feria con cantidad de stands y ambiente. */
+@Entity @Table(name = "feria")
 public class Feria extends Evento {
 
-    private int cantidadStands;
-    private TipoAmbiente ambiente;
-    
+    @Column(name = "cantidadStands") private int cantidadStands;
+    @Enumerated(EnumType.STRING) @Column(name = "ambiente") private TipoAmbiente ambiente;
 
-    public Feria(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin, int cantidadStands, TipoAmbiente tipoAmbiente) {
-        super(nombre, fechaInicio, fechaFin, TipoEvento.FERIA);
-        setCantidadStands(cantidadStands);
-        setTipoAmbiente(tipoAmbiente);
+    public Feria() { super(); setTipoEvento(TipoEvento.FERIA); }
+    public Feria(String n, LocalDateTime fi, LocalDateTime ff, int stands, TipoAmbiente amb) {
+        super(n, fi, ff, TipoEvento.FERIA); setCantidadStands(stands); setAmbiente(amb);
     }
 
-    public Feria() {
-        super();
-        setTipoEvento(TipoEvento.FERIA);
-    }
-
-    @Override
-    protected boolean rolPermitido(TipoRol rol) {
-        return rol == TipoRol.ORGANIZADOR;
-    }
-
+    @Override protected boolean rolPermitido(TipoRol rol) { return rol == TipoRol.ORGANIZADOR; }
 
     public int getCantidadStands() { return cantidadStands; }
-    public void setCantidadStands(int cantStand) {
-        if (cantStand <= 0) 
-        throw new IllegalArgumentException("La cantidad de stands debe ser mayor a cero.");
-        this.cantidadStands = cantStand;
-    }
-
+    public void setCantidadStands(int v) { if (v <= 0) throw new IllegalArgumentException("Stands > 0"); this.cantidadStands = v; }
     public TipoAmbiente getAmbiente() { return ambiente; }
-    public void setAmbiente(TipoAmbiente amb) {
-        if (amb == null) throw new IllegalArgumentException("Ambiente obligatorio");
-        this.ambiente = amb;
-    }
-
-    public void setTipoAmbiente(TipoAmbiente tipoAmbiente) {
-        if (tipoAmbiente == null) {
-            throw new IllegalArgumentException("El tipo de ambiente no puede ser nulo.");
-        }
-        this.ambiente = tipoAmbiente;
-    }
+    public void setAmbiente(TipoAmbiente a) { if (a == null) throw new IllegalArgumentException("Ambiente nulo"); this.ambiente = a; }
 }

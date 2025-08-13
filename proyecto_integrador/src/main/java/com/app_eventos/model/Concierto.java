@@ -1,104 +1,86 @@
 package com.app_eventos.model;
 
+import jakarta.persistence.*;
+import com.app_eventos.model.enums.*;
+import com.app_eventos.model.interfaces.IEventoConCupo;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.app_eventos.model.enums.TipoEntrada;
-import com.app_eventos.model.enums.TipoEvento;
-import com.app_eventos.model.enums.TipoRol;
-import com.app_eventos.model.interfaces.IEventoConCupo;
-
+/** Concierto con cupo. Lista de participantes solo para pruebas en memoria. */
+@Entity @Table(name = "concierto")
 public class Concierto extends Evento implements IEventoConCupo {
 
+    @Enumerated(EnumType.STRING) @Column(name = "tipoEntrada")
     private TipoEntrada tipoEntrada;
+
+    @Column(name = "cupoMaximo")
     private int cupoMaximo;
+
+    @Transient
     private final List<Persona> participantes = new ArrayList<>();
 
-    public Concierto(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin,
-                     TipoEntrada tipoEntrada, int cupoMaximo) {
-        super(nombre, fechaInicio, fechaFin, TipoEvento.CONCIERTO);
-        setTipoEntrada(tipoEntrada);
-        setCupoMaximo(cupoMaximo);
+    public Concierto() { 
+        super(); setTipoEvento(TipoEvento.CONCIERTO); 
     }
 
-    public Concierto() {
-        super();
-        setTipoEvento(TipoEvento.CONCIERTO);
+    public Concierto(String nombre, LocalDateTime fi, LocalDateTime ff, TipoEntrada tipoEntrada, int cupoMaximo) {
+        super(nombre, fi, ff, TipoEvento.CONCIERTO);
+        setTipoEntrada(tipoEntrada); setCupoMaximo(cupoMaximo);
     }
 
-    // Participantes (inscripción) 
-    @Override
-    public void inscribirParticipante(Persona persona) {
-        validarPuedeInscribir(); // valida estado/tiempo según Evento
-        if (participantes.size() >= cupoMaximo) {
-            throw new IllegalStateException("No se pueden inscribir más participantes, cupo completo.");
-        }
-        if (participantes.contains(persona)) {
-            throw new IllegalArgumentException("El participante ya está inscrito.");
-        }
+    // ===== inscripción en memoria (persistencia real la hace Servicio+Repositorio) =====
+    @Override public void inscribirParticipante(Persona persona) {
+        validarPuedeInscribir();
+        if (participantes.size() >= cupoMaximo) throw new IllegalStateException("Cupo completo.");
+        if (participantes.contains(persona)) throw new IllegalArgumentException("Ya inscrito.");
         participantes.add(persona);
     }
+    @Override public void desinscribirParticipante(Persona persona) { participantes.remove(persona); }
+    @Override public List<Persona> getParticipantes() { return new ArrayList<>(participantes); }
 
-    @Override
-    public void desinscribirParticipante(Persona persona) {
-        participantes.remove(persona);
+    // ===== cupo =====
+    @Override 
+    public boolean hayCupoDisponible() { 
+        return participantes.size() < cupoMaximo; 
     }
 
-    @Override
-    public List<Persona> getParticipantes() {
-        return new ArrayList<>(participantes);
+    @Override 
+    public boolean tieneCupoDisponible() { 
+        return hayCupoDisponible(); 
     }
 
-    // Cupo 
-    @Override
-    public boolean hayCupoDisponible() {
-        return participantes.size() < cupoMaximo;
+    @Override 
+    public int getCupoMaximo() { 
+        return cupoMaximo; 
     }
 
-    @Override
-    public boolean tieneCupoDisponible() {
-        return hayCupoDisponible();
+    @Override 
+    public void setCupoMaximo(int v) {
+        if (v <= 0) throw new IllegalArgumentException("Cupo > 0");
+        this.cupoMaximo = v;
     }
 
-    @Override
-    public int getCupoMaximo() {
-        return cupoMaximo;
+    @Override 
+    public int getCupoDisponible() { 
+        return cupoMaximo - participantes.size(); 
     }
 
-    @Override
-    public void setCupoMaximo(int cupoMaximo) {
-        if (cupoMaximo <= 0) {
-            throw new IllegalArgumentException("El cupo máximo debe ser mayor a cero.");
-        }
-        this.cupoMaximo = cupoMaximo;
+    @Override 
+    protected boolean rolPermitido(TipoRol rol) { 
+        return rol == TipoRol.ORGANIZADOR || rol == TipoRol.ARTISTA; 
     }
 
-    @Override
-    public int getCupoDisponible() {
-        return cupoMaximo - participantes.size();
+    public TipoEntrada getTipoEntrada() { 
+        return tipoEntrada; 
     }
-
-    // Roles permitidos 
-    @Override
-    protected boolean rolPermitido(TipoRol rol) {
-        return rol == TipoRol.ORGANIZADOR || rol == TipoRol.ARTISTA;
+    public void setTipoEntrada(TipoEntrada t) { 
+        if (t == null) throw new IllegalArgumentException("Tipo entrada"); 
+        this.tipoEntrada = t; 
     }
-
-    // Helpers específicos para artistas
-    public List<Persona> getArtistas() {
+    // nuevo helper que suelen usar para poblar listas
+    public java.util.List<Persona> getArtistas() {
         return obtenerResponsables(TipoRol.ARTISTA);
-    }
-
-    // Getters/Setters propios 
-    public TipoEntrada getTipoEntrada() {
-        return tipoEntrada;
-    }
-
-    public void setTipoEntrada(TipoEntrada tipoEntrada) {
-        if (tipoEntrada == null) {
-            throw new IllegalArgumentException("El tipo de entrada no puede ser nulo.");
-        }
-        this.tipoEntrada = tipoEntrada;
     }
 }
