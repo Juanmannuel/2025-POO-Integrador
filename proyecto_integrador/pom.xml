@@ -36,14 +36,14 @@
       <version>21.0.1</version>
     </dependency>
 
-    <!-- Implementación ORM -->
+    <!-- Hibernate ORM -->
     <dependency>
       <groupId>org.hibernate.orm</groupId>
       <artifactId>hibernate-core</artifactId>
       <version>6.5.2.Final</version>
     </dependency>
 
-    <!-- API de JPA Jakarta -->
+    <!-- API JPA Jakarta -->
     <dependency>
       <groupId>jakarta.persistence</groupId>
       <artifactId>jakarta.persistence-api</artifactId>
@@ -57,7 +57,7 @@
       <version>42.7.3</version>
     </dependency>
 
-    <!-- Logs sencillos a consola -->
+    <!-- Logs -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
@@ -83,6 +83,16 @@
         <version>0.0.8</version>
         <configuration>
           <mainClass>com.app_eventos.App</mainClass>
+        </configuration>
+      </plugin>
+
+      <!-- Plugin para ejecutar clases desde Maven -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.3.0</version>
+        <configuration>
+          <mainClass>com.app_eventos.TestConexion</mainClass>
         </configuration>
       </plugin>
     </plugins>
