@@ -31,7 +31,7 @@ import com.app_eventos.controllers.*;
 
 public class ABMEventoController {
 
-    private final Servicio servicio = Servicio.getInstance();
+    private Servicio servicio = Servicio.getInstance();
 
     // ----------- UI (modal) -----------
     @FXML private TextField txtNombre;
@@ -299,12 +299,19 @@ public class ABMEventoController {
     @FXML
     private void guardarEvento() {
         String nombre = txtNombre.getText();
-        TipoEvento tipo = modoEdicion ? eventoEnEdicion.getTipoEvento(): comboTipoEvento.getValue();
+        TipoEvento tipo = modoEdicion ? eventoEnEdicion.getTipoEvento() : comboTipoEvento.getValue();
         LocalDate fIni = dateInicio.getValue();
         LocalDate fFin = dateFin.getValue();
         LocalTime hIni = spinnerHoraInicio.getValue();
         LocalTime hFin = spinnerHoraFin.getValue();
         EstadoEvento estado = comboEstado.getValue();
+
+        // 🔹 Validación básica antes de continuar
+        if (nombre == null || nombre.isBlank()
+            || fIni == null || fFin == null || hIni == null || hFin == null || estado == null || (!modoEdicion && tipo == null)) {
+            mostrarAlerta("Campos requeridos", "Complete todos los campos antes de continuar.");
+            return;
+        }
 
         try {
             if (!modoEdicion) crearSegunTipo(nombre, tipo, fIni, fFin, hIni, hFin, estado);
