@@ -1,47 +1,52 @@
 package com.app_eventos.model;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+
 import jakarta.persistence.*;
 import com.app_eventos.model.enums.*;
 
-/**
- * Clase base del modelo rico. Se anotó para herencia JOINED.
- * Se mantuvieron nombres de métodos y reglas de negocio.
- */
 @Entity
 @Table(name = "evento")
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Evento {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "idEvento")
     private Long idEvento;
 
-    @Column(nullable = false) private String nombre;
+    @Column(nullable = false)
+    private String nombre;
+
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaFin;
 
-    @Enumerated(EnumType.STRING) @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private EstadoEvento estado = EstadoEvento.PLANIFICACIÓN;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tipoEvento", nullable = false)
     private TipoEvento tipoEvento;
 
-    /** En memoria + persistible: tu Servicio persiste RolEvento. */
+    /** Relación con roles (sin borrado lógico). */
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<RolEvento> roles = new ArrayList<>();
 
-    // ===== constructores =====
     protected Evento() { this.estado = EstadoEvento.PLANIFICACIÓN; }
 
     public Evento(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin, TipoEvento tipoEvento) {
-        setNombre(nombre); setFechaInicio(fechaInicio); setFechaFin(fechaFin); setTipoEvento(tipoEvento);
+        setNombre(nombre);
+        setFechaInicio(fechaInicio);
+        setFechaFin(fechaFin);
+        setTipoEvento(tipoEvento);
         this.estado = EstadoEvento.PLANIFICACIÓN;
     }
 
-    // ===== negocio existente =====
+    // --------- Reglas de estado ----------
     public void cambiarEstado(EstadoEvento nuevoEstado) {
         LocalDateTime now = LocalDateTime.now();
         if (nuevoEstado == EstadoEvento.CONFIRMADO && this.fechaInicio.isBefore(now))
@@ -53,36 +58,13 @@ public abstract class Evento {
         this.estado = nuevoEstado;
     }
 
-    public void agregarResponsable(Persona persona, TipoRol rol) {
-        if (persona == null || rol == null) throw new IllegalArgumentException("Persona y rol requeridos.");
-        if (!rolPermitido(rol)) throw new IllegalArgumentException("Rol no permitido para " + tipoEvento);
-        boolean existe = roles.stream()
-                .anyMatch(r -> r.getPersona().equals(persona) && r.getRol() == rol && r.estaActivo());
-        if (existe) throw new IllegalArgumentException("La persona ya tiene ese rol.");
-        this.roles.add(new RolEvento(this, persona, rol));
-    }
-
-    public void borrarResponsable(Persona persona, TipoRol rol) {
-        if (persona == null || rol == null) return;
-        this.roles.stream()
-            .filter(r -> r.getPersona().equals(persona) && r.getRol() == rol && r.estaActivo())
-            .findFirst().ifPresent(RolEvento::darDeBaja);
-    }
-
-    public List<Persona> obtenerResponsables(TipoRol rol) {
-        return this.roles.stream()
-                .filter(r -> r.getRol() == rol && r.estaActivo())
-                .map(RolEvento::getPersona)
-                .toList();
-    }
-
-    /** Ventana de inscripción. Firma y lógica originales. */
+    /** Ventana de inscripción usada por subtipos. */
     public boolean Inscripcion() {
         LocalDateTime now = LocalDateTime.now();
         return this.estado == EstadoEvento.CONFIRMADO && now.isBefore(getFechaFin());
     }
 
-    /** Llamado por Servicio antes de listar/filtrar. */
+    /** Auto–actualiza a FINALIZADO si corresponde. */
     public void verificarEstadoAutomatico() {
         LocalDateTime now = LocalDateTime.now();
         if ((this.estado == EstadoEvento.EJECUCIÓN || this.estado == EstadoEvento.CONFIRMADO)
@@ -91,30 +73,43 @@ public abstract class Evento {
         }
     }
 
-    /** Usado por subclases. */
     protected void validarPuedeInscribir() {
         if (!Inscripcion()) throw new IllegalStateException("No se permite inscribir.");
     }
 
+    // --------- Roles ----------
+    public void agregarResponsable(Persona persona, TipoRol rol) {
+        if (persona == null || rol == null) throw new IllegalArgumentException("Persona y rol requeridos.");
+        if (!rolPermitido(rol)) throw new IllegalArgumentException("Rol no permitido para " + tipoEvento);
+        boolean existe = roles.stream().anyMatch(r -> r.getPersona().equals(persona) && r.getRol() == rol);
+        if (existe) throw new IllegalArgumentException("La persona ya tiene ese rol.");
+        this.roles.add(new RolEvento(this, persona, rol));
+    }
+
+    public void borrarResponsable(Persona persona, TipoRol rol) {
+        if (persona == null || rol == null) return;
+        roles.stream()
+             .filter(r -> r.getPersona().equals(persona) && r.getRol() == rol)
+             .findFirst()
+             .ifPresent(roles::remove);
+    }
+
+    public List<Persona> obtenerResponsables(TipoRol rol) {
+        return roles.stream()
+                .filter(r -> r.getRol() == rol)
+                .map(RolEvento::getPersona)
+                .toList();
+    }
+
     public boolean personaTieneRol(Persona persona) {
-        return this.roles.stream()
-                .anyMatch(rol -> rol.getPersona().equals(persona) && rol.estaActivo());
+        return roles.stream().anyMatch(r -> r.getPersona().equals(persona));
     }
 
-    public long contarParticipantes() {
-        return this.roles.stream()
-                .filter(rol -> rol.esParticipante() && rol.estaActivo())
-                .count();
-    }
-
-    public void agregarRol(RolEvento rol) { this.roles.add(rol); }
-
-    /** requerido por Exposición. */
     public long contarPorRol(TipoRol rol) {
-        return this.roles.stream().filter(r -> r.getRol() == rol && r.estaActivo()).count();
+        return roles.stream().filter(r -> r.getRol() == rol).count();
     }
 
-    /** requerido por ABMEventoController. */
+    /** Usado por controladores para checks generales. */
     public void validarInvariantes() {
         if (contarPorRol(TipoRol.ORGANIZADOR) == 0)
             throw new IllegalStateException("Todo evento debe tener al menos un organizador.");
@@ -128,19 +123,13 @@ public abstract class Evento {
         return set;
     }
 
-    // ===== getters/setters usados por Servicio/Controllers/Repo =====
-    public Long getIdEvento() { 
-        return idEvento; 
-    }
+    public void agregarRol(RolEvento rol) { if (rol != null) roles.add(rol); }
 
-    public void setIdEvento(Long idEvento) { 
-        this.idEvento = idEvento; 
-    }
+    // --------- Getters / Setters ----------
+    public Long getIdEvento() { return idEvento; }
+    public void setIdEvento(Long idEvento) { this.idEvento = idEvento; }
 
-    public String getNombre() { 
-        return nombre; 
-    }
-
+    public String getNombre() { return nombre; }
     public void setNombre(String nombre) {
         if (nombre == null || nombre.isBlank()) throw new IllegalArgumentException("Nombre vacío.");
         this.nombre = nombre;
@@ -160,25 +149,18 @@ public abstract class Evento {
         this.fechaFin = fechaFin;
     }
 
-    public EstadoEvento getEstado() { 
-        return estado; 
-    }
-    public void setEstado(EstadoEvento estado) { 
-        if (estado == null) throw new IllegalArgumentException(); 
-        this.estado = estado; 
+    public EstadoEvento getEstado() { return estado; }
+    public void setEstado(EstadoEvento estado) {
+        if (estado == null) throw new IllegalArgumentException("Estado nulo.");
+        this.estado = estado;
     }
 
-    public TipoEvento getTipoEvento() { 
-        return tipoEvento; 
+    public TipoEvento getTipoEvento() { return tipoEvento; }
+    public void setTipoEvento(TipoEvento tipoEvento) {
+        if (tipoEvento == null) throw new IllegalArgumentException("Tipo de evento nulo.");
+        this.tipoEvento = tipoEvento;
     }
 
-    public void setTipoEvento(TipoEvento tipoEvento) { 
-        if (tipoEvento == null) throw new IllegalArgumentException(); 
-        this.tipoEvento = tipoEvento; 
-    }
-
-    /** requerido por ABMEventoController */
-    public List<RolEvento> getRoles() { 
-        return new ArrayList<>(roles); 
-    }
+    /** Devuelto para lectura en la UI. */
+    public List<RolEvento> getRoles() { return new ArrayList<>(roles); }
 }
