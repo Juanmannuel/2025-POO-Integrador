@@ -73,7 +73,7 @@ public class AsigRolEventoController {
         TipoRol rol = comboTipoRol.getValue();
 
         if (persona == null || rol == null) {
-            mostrarAdvertencia("Atención", "Debe seleccionar persona y rol.");
+            mostrarAdvertencia("Atención", "Debe seleccionar una persona y un rol.");
             return;
         }
 

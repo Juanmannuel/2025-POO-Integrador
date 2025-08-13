@@ -341,6 +341,8 @@ public class Servicio {
 
     // Obtiene SOLO participantes (rol PARTICIPANTE) activos
     public ObservableList<RolEvento> obtenerSoloParticipantes() {
+        // Verificar estados de eventos automáticamente antes de obtener participantes
+        verificarEstadosEventos();
         return repositorio.obtenerSoloParticipantes();
     }
 
@@ -351,11 +353,15 @@ public class Servicio {
 
     // Filtra SOLO participantes (rol PARTICIPANTE) por criterios
     public ObservableList<RolEvento> filtrarSoloParticipantes(String nombreEvento, String nombrePersona, String dni) {
+        // Verificar estados de eventos automáticamente antes de filtrar
+        verificarEstadosEventos();
         return repositorio.filtrarSoloParticipantes(nombreEvento, nombrePersona, dni);
     }
 
     // Obtiene eventos disponibles para inscripción
     public ObservableList<Evento> obtenerEventosDisponibles() {
+        // Verificar estados automáticamente antes de filtrar
+        verificarEstadosEventos();
         return eventos.stream()
                 .filter(Evento::Inscripcion)
                 .collect(Collectors.toCollection(FXCollections::observableArrayList));
@@ -420,5 +426,26 @@ public class Servicio {
         return stream.collect(java.util.stream.Collectors.toCollection(
                 javafx.collections.FXCollections::observableArrayList
         ));
+    }
+
+    // ====== VERIFICACIÓN AUTOMÁTICA DE ESTADOS ======
+
+    /**
+     * Verifica y actualiza automáticamente el estado de todos los eventos
+     * Los eventos que hayan pasado su fecha de fin pasarán a FINALIZADO
+     */
+    public void verificarEstadosEventos() {
+        for (Evento evento : eventos) {
+            evento.verificarEstadoAutomatico();
+        }
+    }
+
+    /**
+     * Obtiene todos los eventos con estados actualizados automáticamente
+     * Útil para asegurar que los estados estén al día antes de mostrar datos
+     */
+    public ObservableList<Evento> obtenerEventosConEstadosActualizados() {
+        verificarEstadosEventos();
+        return FXCollections.observableArrayList(eventos);
     }
 }

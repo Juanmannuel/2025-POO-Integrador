@@ -38,7 +38,7 @@ import java.io.IOException;
 
 public class ABMEventoController {
 
-    private final Servicio servicio = Servicio.getInstance();
+    private Servicio servicio = Servicio.getInstance();
 
     // Campos de búsqueda y modal
     @FXML private TextField txtNombre;
@@ -55,7 +55,7 @@ public class ABMEventoController {
     @FXML private TableColumn<Evento, Void> colAcciones;
     private Evento eventoEnEdicion = null;
     private boolean modoEdicion = false;
-    private final ObservableList<Evento> modeloTabla = FXCollections.observableArrayList();
+    private ObservableList<Evento> modeloTabla = FXCollections.observableArrayList();
 
     @FXML private TableView<Evento> tablaEventos;
     @FXML private TableColumn<Evento, String> colNombre;
@@ -129,9 +129,6 @@ public class ABMEventoController {
         // Botón "Asignar Rol" en la tabla
         agregarBotonAsignarRol();
 
-        // Cargar eventos en la tabla (lista completa inicial)
-        tablaEventos.setItems(FXCollections.observableArrayList(servicio.listarEventos()));
-
         // Inicializar filtros del listado
         initFiltrosListado();
         // Primera búsqueda con filtros actuales
@@ -164,17 +161,15 @@ public class ABMEventoController {
             dialog.getDialogPane().getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
             dialog.setResizable(true);
 
-            // Interceptar el botón OK para validar la invariante antes de cerrar
             Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
             okButton.addEventFilter(javafx.event.ActionEvent.ACTION, evt -> {
                 try {
-                    // "Todo evento debe tener al menos un organizador."
+                    // Todo evento debe tener al menos un organizador.
                     evento.validarInvariantes();
-                    // Si quisieras además forzar un refresh final:
                     if (tablaEventos != null) tablaEventos.refresh();
                 } catch (IllegalStateException ex) {
-                    evt.consume(); // NO cerrar el diálogo
-                    mostrarAlerta("Validación", ex.getMessage()); // usa tu helper existente
+                    evt.consume(); 
+                    mostrarAlerta("Validación", ex.getMessage()); 
                 }
             });
 
@@ -195,14 +190,14 @@ public class ABMEventoController {
     private SpinnerValueFactory<LocalTime> crearFactoryHora() {
         LocalTime horaInicial = LocalTime.of(6, 0);
         LocalTime horaFinal = LocalTime.of(23, 59);
-        int intervaloMinutos = 5;
+        int intervaloMin = 5;
 
         return new SpinnerValueFactory<>() {
             private LocalTime value = horaInicial;
 
             {
                 setConverter(new StringConverter<>() {
-                    final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
                     @Override public String toString(LocalTime time) { return time != null ? time.format(formatter) : ""; }
                     @Override public LocalTime fromString(String s) { return LocalTime.parse(s, formatter); }
                 });
@@ -211,21 +206,21 @@ public class ABMEventoController {
 
             @Override
             public void decrement(int steps) {
-                LocalTime next = value.minusMinutes(steps * intervaloMinutos);
+                LocalTime next = value.minusMinutes(steps * intervaloMin);
                 if (!next.isBefore(horaInicial)) { value = next; setValue(value); }
             }
 
             @Override
             public void increment(int steps) {
-                LocalTime next = value.plusMinutes(steps * intervaloMinutos);
+                LocalTime next = value.plusMinutes(steps * intervaloMin);
                 if (!next.isAfter(horaFinal)) { value = next; setValue(value); }
             }
         };
     }
 
-    // Estados válidos para ALTA (no permite FINALIZADO)
-    private static final EnumSet<EstadoEvento> ESTADOS_ALTA =
-        EnumSet.of(EstadoEvento.PLANIFICACIÓN, EstadoEvento.CONFIRMADO, EstadoEvento.EJECUCIÓN);
+    // Estados válidos para ALTA
+    private static EnumSet<EstadoEvento> ESTADOS_ALTA =
+        EnumSet.of(EstadoEvento.PLANIFICACIÓN, EstadoEvento.CONFIRMADO);
 
     private void setEstadosParaAlta() {
         comboEstado.setItems(FXCollections.observableArrayList(ESTADOS_ALTA));
@@ -238,7 +233,7 @@ public class ABMEventoController {
 
     private void agregarBotonAsignarRol() {
         colAcciones.setCellFactory(col -> new TableCell<>() {
-            private final Button btn = new Button("Asignar Rol");
+            private Button btn = new Button("Asignar Rol");
             {
                 btn.setOnAction(e -> {
                     Evento eventoSeleccionado = getTableView().getItems().get(getIndex());
@@ -321,23 +316,28 @@ public class ABMEventoController {
     @FXML
     private void guardarEvento() {
         String nombre = txtNombre.getText();
-        TipoEvento tipo = modoEdicion ? eventoEnEdicion.getTipoEvento(): comboTipoEvento.getValue();
+        TipoEvento tipo = modoEdicion ? eventoEnEdicion.getTipoEvento() : comboTipoEvento.getValue();
         LocalDate fIni = dateInicio.getValue();
         LocalDate fFin = dateFin.getValue();
         LocalTime hIni = spinnerHoraInicio.getValue();
         LocalTime hFin = spinnerHoraFin.getValue();
         EstadoEvento estado = comboEstado.getValue();
 
+        // 🔹 Validación básica antes de continuar
+        if (nombre == null || nombre.isBlank()
+            || fIni == null || fFin == null || hIni == null || hFin == null || estado == null || (!modoEdicion && tipo == null)) {
+            mostrarAlerta("Campos requeridos", "Complete todos los campos antes de continuar.");
+            return;
+        }
+
         try {
             if (!modoEdicion) {
-                // Alta
+                // Alta normal
                 crearSegunTipo(nombre, tipo, fIni, fFin, hIni, hFin, estado);
             } else {
                 // Edición
                 actualizarSegunTipo(eventoEnEdicion, nombre, tipo, fIni, fFin, hIni, hFin, estado);
             }
-
-            // Refresco del listado respetando filtros
             buscarYRefrescarTabla();
             cerrarModal();
 
@@ -493,7 +493,6 @@ public class ABMEventoController {
     }
 
     // BÚSQUEDA EN LA GRILLA 
-
     // Inicializa referencias a los filtros del HBox sin cambiar fx:id
     @SuppressWarnings("unchecked")
     private void initFiltrosListado() {
