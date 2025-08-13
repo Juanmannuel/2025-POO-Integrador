@@ -52,11 +52,11 @@ public class ABMEventoController {
     @FXML private TableColumn<Evento, EstadoEvento> colEstado;
     @FXML private TableColumn<Evento, String> colResponsables;
 
-    // ----------- Filtros (solo uno tiene fx:id en tu FXML) -----------
+    // ----------- Filtros -----------
     @FXML private ComboBox<TipoEvento> comboTipoEventoFiltro; // OK en FXML
-    private ComboBox<EstadoEvento> comboEstadoFiltro;          // lo detectamos por tipo
-    private DatePicker dateDesdeFiltro;                        // lo detectamos por tipo
-    private DatePicker dateHastaFiltro;                        // lo detectamos por tipo
+    private ComboBox<EstadoEvento> comboEstadoFiltro;          // detectado por tipo
+    private DatePicker dateDesdeFiltro;                        // detectado por tipo
+    private DatePicker dateHastaFiltro;                        // detectado por tipo
 
     // ----------- Estado interno -----------
     private final ObservableList<Evento> modeloTabla = FXCollections.observableArrayList();
@@ -66,23 +66,20 @@ public class ABMEventoController {
 
     @FXML
     public void initialize() {
-        // 1) La tabla SIEMPRE usa el mismo modelo
         tablaEventos.setItems(modeloTabla);
         tablaEventos.setPlaceholder(new Label("Sin eventos"));
 
-        // --- Tabla responsiva
         tablaEventos.widthProperty().addListener((obs, oldWidth, newWidth) -> {
             double total = newWidth.doubleValue();
-            colNombre.setPrefWidth(total * 0.20);        // 20%
-            colTipo.setPrefWidth(total * 0.10);          // 10%
-            colFechaInicio.setPrefWidth(total * 0.15);   // 15%
-            colEstado.setPrefWidth(total * 0.10);        // 10%
-            colFechaFin.setPrefWidth(total * 0.15);      // 15%
-            colResponsables.setPrefWidth(total * 0.20);  // 20%
-            colAcciones.setPrefWidth(total * 0.10);      // 10%
+            colNombre.setPrefWidth(total * 0.20);
+            colTipo.setPrefWidth(total * 0.10);
+            colFechaInicio.setPrefWidth(total * 0.15);
+            colEstado.setPrefWidth(total * 0.10);
+            colFechaFin.setPrefWidth(total * 0.15);
+            colResponsables.setPrefWidth(total * 0.20);
+            colAcciones.setPrefWidth(total * 0.10);
         });
 
-        // 2) Columnas
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
         colNombre.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNombre()));
         colTipo.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getTipoEvento()));
@@ -90,7 +87,7 @@ public class ABMEventoController {
         colFechaFin.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getFechaFin().format(fmt)));
         colEstado.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getEstado()));
 
-        // >>> Blindado contra lazy (aunque ya traemos con JOIN FETCH)
+        // Evita problemas si roles es lazy; ya viene con fetch en Servicio.listarEventos()
         colResponsables.setCellValueFactory(d -> {
             try {
                 var roles = d.getValue().getRoles();
@@ -106,38 +103,29 @@ public class ABMEventoController {
             }
         });
 
-        // 3) Spinners + combos del modal
         spinnerHoraInicio.setValueFactory(factoryHora());
         spinnerHoraFin.setValueFactory(factoryHora());
         ComboBoxInicializador.cargarTipoEvento(comboTipoEvento);
         ComboBoxInicializador.cargarEstadoEvento(comboEstado);
         comboTipoEvento.valueProperty().addListener((o, a, b) -> cargarFragmentoEspecifico(b));
 
-        // 4) Botón "Asignar rol" por fila
         agregarBotonAsignarRol();
-
-        // 5) Filtros seguros (NO asumo índices; si falta alguno, no rompo)
         detectarFiltrosDeFormaSegura();
 
-        // 6) Primer carga desde BD
         buscarYRefrescarTabla();
     }
 
-    // ----------------- filtros seguros -----------------
     @SuppressWarnings("unchecked")
     private void detectarFiltrosDeFormaSegura() {
         try {
-            // Contenedor padre: VBox(panel) -> [0]=HBox filtros, [1]=TableView
             if (!(tablaEventos.getParent() instanceof VBox panel)) return;
             if (panel.getChildren().isEmpty()) return;
             if (!(panel.getChildren().get(0) instanceof HBox hbox)) return;
 
-            // Recorro hijos y agarro el primer ComboBox<EstadoEvento> y los 2 DatePicker
             DatePicker d1 = null, d2 = null;
             ComboBox<EstadoEvento> estadoCb = null;
             for (Node n : hbox.getChildren()) {
                 if (estadoCb == null && n instanceof ComboBox<?> cb) {
-                    // saltar el combo de tipo (ya lo tenemos por fx:id)
                     if (cb != comboTipoEventoFiltro && (cb.getItems().isEmpty() || cb.getItems().get(0) instanceof EstadoEvento)) {
                         estadoCb = (ComboBox<EstadoEvento>) cb;
                     }
@@ -150,7 +138,6 @@ public class ABMEventoController {
             dateDesdeFiltro = d1;
             dateHastaFiltro = d2;
 
-            // Configuración de opciones
             if (comboTipoEventoFiltro != null) {
                 comboTipoEventoFiltro.setItems(FXCollections.observableArrayList(TipoEvento.values()));
                 comboTipoEventoFiltro.getSelectionModel().clearSelection();
@@ -164,14 +151,11 @@ public class ABMEventoController {
             if (dateDesdeFiltro != null)  dateDesdeFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
             if (dateHastaFiltro != null)  dateHastaFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
         } catch (Exception e) {
-            // Si algo falla, no frenamos la vista: simplemente se listará sin filtros.
             System.err.println("[ABMEvento] Advertencia: no se pudieron inicializar los filtros: " + e.getMessage());
         }
     }
 
-    // ----------------- carga/refresh -----------------
     private void buscarYRefrescarTabla() {
-        // Actualiza estados automáticos y persiste si cambian
         servicio.verificarEstadosEventos();
 
         LocalDate desde = (dateDesdeFiltro != null) ? dateDesdeFiltro.getValue() : null;
@@ -184,11 +168,10 @@ public class ABMEventoController {
         EstadoEvento estado = (comboEstadoFiltro != null) ? comboEstadoFiltro.getValue() : null;
 
         var resultados = servicio.buscarEventos(tipo, estado, desde, hasta);
-        modeloTabla.setAll(resultados);   // importante mantener el mismo ObservableList
+        modeloTabla.setAll(resultados);
         tablaEventos.refresh();
     }
 
-    // ----------------- helpers UI/modal -----------------
     private SpinnerValueFactory<LocalTime> factoryHora() {
         LocalTime min = LocalTime.of(6,0), max = LocalTime.of(23,59);
         int paso = 5;
@@ -221,7 +204,9 @@ public class ABMEventoController {
             VBox vista = loader.load();
             AsigRolEventoController ctrl = loader.getController();
             ctrl.setEvento(evento);
-            ctrl.setOnRolesChanged(ev -> tablaEventos.refresh());
+
+            // 👇 Al cambiar roles, recargo desde BD (no solo refresh visual)
+            ctrl.setOnRolesChanged(ev -> buscarYRefrescarTabla());
 
             Dialog<ButtonType> dlg = new Dialog<>();
             dlg.setTitle("Asignar Roles");
@@ -233,7 +218,9 @@ public class ABMEventoController {
                         try { evento.validarInvariantes(); }
                         catch (IllegalStateException ex){ a.consume(); mostrarAlerta("Validación", ex.getMessage()); }
                     });
-            dlg.setOnHidden(e -> tablaEventos.refresh());
+
+            // 👇 Si cierran la ventana igual recargo la tabla
+            dlg.setOnHidden(e -> buscarYRefrescarTabla());
             dlg.showAndWait();
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -304,7 +291,6 @@ public class ABMEventoController {
         LocalTime hFin = spinnerHoraFin.getValue();
         EstadoEvento estado = comboEstado.getValue();
 
-        // 🔹 Validación básica antes de continuar
         if (nombre == null || nombre.isBlank()
             || fIni == null || fFin == null || hIni == null || hFin == null || estado == null || (!modoEdicion && tipo == null)) {
             mostrarAlerta("Campos requeridos", "Complete todos los campos antes de continuar.");
@@ -315,7 +301,7 @@ public class ABMEventoController {
             if (!modoEdicion) crearSegunTipo(nombre, tipo, fIni, fFin, hIni, hFin, estado);
             else              actualizarSegunTipo(eventoEnEdicion, nombre, tipo, fIni, fFin, hIni, hFin, estado);
 
-            buscarYRefrescarTabla(); // RELEER BD
+            buscarYRefrescarTabla();
             cerrarModal();
         } catch (IllegalArgumentException | IllegalStateException ex) {
             mostrarAlerta("Error de validación", ex.getMessage());
@@ -404,6 +390,7 @@ public class ABMEventoController {
     }
 
     private void mostrarAlerta(String t, String m) {
-        Alert a = new Alert(Alert.AlertType.WARNING); a.setTitle(t); a.setHeaderText(null); a.setContentText(m); a.showAndWait();
+        Alert a = new Alert(Alert.AlertType.WARNING);
+        a.setTitle(t); a.setHeaderText(null); a.setContentText(m); a.showAndWait();
     }
 }

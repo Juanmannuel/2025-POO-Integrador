@@ -2,7 +2,7 @@ package com.app_eventos.model;
 
 import jakarta.persistence.*;
 
-/** Entidad Persona. Solo anotaciones JPA. */
+/** Entidad Persona. */
 @Entity @Table(name = "persona")
 public class Persona {
 
@@ -12,21 +12,20 @@ public class Persona {
 
     @Column(nullable = false) private String nombre;
     @Column(nullable = false) private String apellido;
-    @Column(nullable = false) private String dni;
+
+    @Column(nullable = false, unique = true) // DNI único en BD
+    private String dni;
+
     private String telefono;
     private String email;
 
-    public Persona() { 
-        // JPA requiere un constructor sin parámetros
-    }
+    public Persona() {}
     public Persona(String nombre, String apellido, String dni, String telefono, String email) {
         setNombre(nombre); setApellido(apellido); setDni(dni); setTelefono(telefono); setEmail(email);
     }
 
-    // ===== validaciones ya existentes =====
     public void setDni(String dni){
-        if (dni == null || !dni.matches("\\d{7,10}"))
-            throw new IllegalArgumentException("DNI inválido");
+        if (dni == null || !dni.matches("\\d{7,10}")) throw new IllegalArgumentException("DNI inválido");
         this.dni = dni;
     }
     public void setEmail(String email){
@@ -47,42 +46,19 @@ public class Persona {
             throw new IllegalArgumentException("Teléfono inválido");
         this.telefono = telefono;
     }
-
-    private String cap(String t){ 
-        return t.substring(0,1).toUpperCase()+t.substring(1).toLowerCase(); 
-    }
+    private String cap(String t){ return t.substring(0,1).toUpperCase()+t.substring(1).toLowerCase(); }
 
     public void actualizarCon(Persona o){
         setNombre(o.getNombre()); setApellido(o.getApellido());
         setDni(o.getDni()); setTelefono(o.getTelefono()); setEmail(o.getEmail());
     }
 
-    // ===== getters =====
-    public Long getIdPersona(){ 
-        return idPersona; 
-    }
+    public Long getIdPersona(){ return idPersona; }
+    public String getNombre(){ return nombre; }
+    public String getApellido(){ return apellido; }
+    public String getDni(){ return dni; }
+    public String getTelefono(){ return telefono; }
+    public String getEmail(){ return email; }
 
-    public String getNombre(){ 
-        return nombre; 
-    }
-    public String getApellido(){ 
-        return apellido; 
-    }
-    
-    public String getDni(){ 
-        return dni; 
-    }
-
-    public String getTelefono(){ 
-        return telefono; 
-    }
-
-    public String getEmail(){ 
-        return email; 
-    }
-
-    @Override 
-    public String toString(){ 
-        return apellido + ", " + nombre; 
-    }
+    @Override public String toString(){ return apellido + ", " + nombre; }
 }

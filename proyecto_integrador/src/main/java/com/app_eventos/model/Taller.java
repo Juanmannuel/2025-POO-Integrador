@@ -19,6 +19,7 @@ public class Taller extends Evento implements IEventoConCupo {
     @Column(name = "modalidad", nullable = false)
     private Modalidad modalidad;
 
+    /** Tabla propia para participantes del taller. */
     @ManyToMany
     @JoinTable(
         name = "taller_participante",
@@ -42,7 +43,7 @@ public class Taller extends Evento implements IEventoConCupo {
     @Override
     public void inscribirParticipante(Persona persona) {
         validarPuedeInscribir();
-        if (personaTieneRol(persona)) // <- clave: NO puede tener rol
+        if (personaTieneRol(persona))
             throw new IllegalStateException("No puede ser participante y responsable a la vez.");
         if (participantes.size() >= cupoMaximo) throw new IllegalStateException("Cupo lleno.");
         if (participantes.contains(persona)) throw new IllegalArgumentException("La persona ya está inscripta.");
@@ -69,9 +70,9 @@ public class Taller extends Evento implements IEventoConCupo {
         if (m == null) throw new IllegalArgumentException("Modalidad requerida.");
         this.modalidad = m;
     }
-
     public Modalidad getModalidad() { return modalidad; }
 
+    // --- Roles permitidos / restricciones ---
     @Override
     protected boolean rolPermitido(TipoRol rol) {
         return rol == TipoRol.INSTRUCTOR || rol == TipoRol.ORGANIZADOR;

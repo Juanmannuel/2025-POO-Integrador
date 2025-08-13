@@ -8,16 +8,16 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Ciclo de cine con cupo, películas (solo memoria) y participantes persistidos (ManyToMany). */
+/** Ciclo de cine con cupo, películas en memoria y participantes persistidos (tabla genérica). */
 @Entity
 @Table(name = "cicloCine")
 public class CicloCine extends Evento implements IEventoConCupo {
 
-    // Películas: siguen en memoria; si luego querés persistir, se arma otra tabla puente.
+    // Películas: en memoria (si luego querés persistir, usar entidad puente).
     @Transient
     private final List<Pelicula> peliculas = new ArrayList<>();
 
-    /** Participantes persistidos en tabla puente evento_participante. */
+    /** Participantes persistidos en tabla puente genérica. */
     @ManyToMany
     @JoinTable(
         name = "evento_participante",
@@ -50,7 +50,6 @@ public class CicloCine extends Evento implements IEventoConCupo {
     @Override
     public void inscribirParticipante(Persona persona) {
         validarPuedeInscribir();
-        // NO permitir participante si ya es responsable en este evento
         if (personaTieneRol(persona))
             throw new IllegalStateException("No puede ser participante y responsable a la vez.");
         if (participantes.size() >= cupoMaximo) throw new IllegalStateException("Cupo completo.");
@@ -69,8 +68,7 @@ public class CicloCine extends Evento implements IEventoConCupo {
     @Override public int getCupoDisponible() { return Math.max(0, cupoMaximo - participantes.size()); }
 
     // Roles
-    @Override
-    protected boolean rolPermitido(TipoRol rol) { return rol == TipoRol.ORGANIZADOR; }
+    @Override protected boolean rolPermitido(TipoRol rol) { return rol == TipoRol.ORGANIZADOR; }
 
     /** Bloquear asignar rol si ya es participante. */
     @Override
@@ -79,7 +77,6 @@ public class CicloCine extends Evento implements IEventoConCupo {
             throw new IllegalStateException("Ya es participante; no puede ser responsable.");
     }
 
-    // Props
     public boolean isPostCharla() { return postCharla; }
     public void setPostCharla(boolean v) { this.postCharla = v; }
 }

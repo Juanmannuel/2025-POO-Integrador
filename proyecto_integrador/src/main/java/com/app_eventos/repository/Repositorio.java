@@ -23,6 +23,7 @@ public class Repositorio {
     @FunctionalInterface
     private interface Fn<T> { T apply(EntityManager em); }
 
+    /** Helper de transacciones: abre EM, begin/commit/rollback y cierra. */
     private <T> T tx(Fn<T> work) {
         EntityManager em = em();
         EntityTransaction tx = em.getTransaction();
@@ -62,12 +63,29 @@ public class Repositorio {
     public void eliminarPelicula(Pelicula p){ tx(em->{ em.remove(em.contains(p)?p:em.merge(p)); return null; }); }
 
     // ---------- Roles ----------
-    /** Asigna y persiste un rol. Evita duplicados por persona+evento+rol y devuelve el rol (nuevo o existente). */
+    /**
+     * Asigna y persiste un rol.
+     * Reglas:
+     *  - Una persona NO puede tener más de un rol en el mismo evento.
+     *  - Si ya tiene ese mismo rol, simplemente devuelve el existente (idempotente).
+     */
     public RolEvento asignarRol(Evento evento, Persona persona, TipoRol rol) {
         return tx(em -> {
             Evento ev = em.getReference(Evento.class, evento.getIdEvento());
             Persona pe = em.getReference(Persona.class, persona.getIdPersona());
 
+            // 1) ¿ya tiene ALGÚN rol en este evento?
+            boolean yaTieneAlguno = !em.createQuery(
+                "select r.id from RolEvento r where r.evento=:e and r.persona=:p", Long.class)
+                .setParameter("e", ev)
+                .setParameter("p", pe)
+                .setMaxResults(1)
+                .getResultList()
+                .isEmpty();
+            if (yaTieneAlguno)
+                throw new IllegalStateException("La persona ya tiene un rol asignado en este evento.");
+
+            // 2) ¿ya existe exactamente el mismo?
             RolEvento existente = em.createQuery(
                 "select r from RolEvento r where r.evento=:e and r.persona=:p and r.rol=:r",
                 RolEvento.class
@@ -77,15 +95,16 @@ public class Repositorio {
              .getResultStream()
              .findFirst()
              .orElse(null);
-
             if (existente != null) return existente;
 
+            // 3) persistir nuevo (fechaAsignacion se setea en el constructor)
             RolEvento nuevo = new RolEvento(ev, pe, rol);
             em.persist(nuevo);
             return nuevo;
         });
     }
 
+    /** Elimina el rol de una persona en un evento. */
     public void eliminarRol(Evento evento, Persona persona, TipoRol rol) {
         tx(em -> {
             Evento ev = em.getReference(Evento.class, evento.getIdEvento());
@@ -99,11 +118,14 @@ public class Repositorio {
         });
     }
 
-    /** Roles de un evento con persona precargada. */
+    /** Roles de un evento (con persona precargada) ordenados por fecha asignación DESC. */
     public ObservableList<RolEvento> obtenerRolesDeEvento(Evento evento) {
         return tx(em -> FXCollections.observableArrayList(
             em.createQuery(
-                "select r from RolEvento r join fetch r.persona p where r.evento.idEvento=:id order by r.id desc",
+                "select r from RolEvento r " +
+                "join fetch r.persona p " +
+                "where r.evento.idEvento=:id " +
+                "order by r.fechaAsignacion desc, r.id desc",
                 RolEvento.class
             ).setParameter("id", evento.getIdEvento())
              .getResultList()
@@ -113,12 +135,13 @@ public class Repositorio {
     public ObservableList<RolEvento> obtenerRolesActivos() {
         return tx(em -> FXCollections.observableArrayList(
             em.createQuery(
-                "select r from RolEvento r join fetch r.evento e join fetch r.persona p order by r.id desc",
+                "select r from RolEvento r join fetch r.evento e join fetch r.persona p order by r.fechaAsignacion desc, r.id desc",
                 RolEvento.class
             ).getResultList()
         ));
     }
 
+    /** Filtro general de roles por evento/persona/dni. */
     public ObservableList<RolEvento> filtrarRoles(String ne, String np, String dni) {
         return tx(em -> {
             StringBuilder jpql = new StringBuilder(
@@ -127,7 +150,7 @@ public class Repositorio {
             if (ne != null && !ne.isBlank()) { jpql.append(" and lower(e.nombre) like :ne"); params.put("ne","%"+ne.toLowerCase()+"%"); }
             if (np != null && !np.isBlank()) { jpql.append(" and (lower(p.nombre) like :np or lower(p.apellido) like :np)"); params.put("np","%"+np.toLowerCase()+"%"); }
             if (dni!= null && !dni.isBlank()){ jpql.append(" and p.dni like :dni"); params.put("dni","%"+dni+"%"); }
-            jpql.append(" order by r.id desc");
+            jpql.append(" order by r.fechaAsignacion desc, r.id desc");
             TypedQuery<RolEvento> q = em.createQuery(jpql.toString(), RolEvento.class);
             params.forEach(q::setParameter);
             return FXCollections.observableArrayList(q.getResultList());

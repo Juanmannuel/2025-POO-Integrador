@@ -2,22 +2,24 @@ package com.app_eventos.controllers;
 
 import com.app_eventos.model.Persona;
 import com.app_eventos.services.Servicio;
+import jakarta.persistence.PersistenceException;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
+import org.hibernate.exception.ConstraintViolationException;
 
 import java.util.Optional;
 
 public class ABMPersonaController {
 
-    // Filtros de búsqueda por nombre y DNI
+    // Filtros
     @FXML private TextField txtNombreFiltro;
     @FXML private TextField txtDNIFiltro;
 
-    // Tabla y columnas
+    // Tabla
     @FXML private TableView<Persona> tablaPersonas;
     @FXML private TableColumn<Persona, String> colNombre;
     @FXML private TableColumn<Persona, String> colApellido;
@@ -25,7 +27,7 @@ public class ABMPersonaController {
     @FXML private TableColumn<Persona, String> colTelefono;
     @FXML private TableColumn<Persona, String> colEmail;
 
-    // Modal emergente con campos del formulario
+    // Modal
     @FXML private StackPane modalOverlay;
     @FXML private TextField txtDNI;
     @FXML private TextField txtNombre;
@@ -35,43 +37,39 @@ public class ABMPersonaController {
 
     private final Servicio servicio = Servicio.getInstance();
 
-    // Persona actualmente seleccionada en la tabla 
     private Persona personaSeleccionada = null;
-
-    // Para saber si estamos modificando (true) o creando (false)
     private boolean modoEdicion = false;
 
     @FXML
     public void initialize() {
-        // Configuración de las columnas
-        tablaPersonas.widthProperty().addListener((obs, oldWidth, newWidth) -> { 
+        // Responsivo
+        tablaPersonas.widthProperty().addListener((obs, oldWidth, newWidth) -> {
             double total = newWidth.doubleValue();
-
-            colDNI.setPrefWidth(total * 0.15);        // 15%
-            colNombre.setPrefWidth(total * 0.20);     // 20%
-            colApellido.setPrefWidth(total * 0.20);   // 20%
-            colTelefono.setPrefWidth(total * 0.15);   // 15%
-            colEmail.setPrefWidth(total * 0.30);      // 30%
+            colDNI.setPrefWidth(total * 0.15);
+            colNombre.setPrefWidth(total * 0.20);
+            colApellido.setPrefWidth(total * 0.20);
+            colTelefono.setPrefWidth(total * 0.15);
+            colEmail.setPrefWidth(total * 0.30);
         });
 
-        // Configuración de las columnas para que se muestren datos del modelo Persona
-        colNombre.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getNombre()));
-        colApellido.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getApellido()));
-        colDNI.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getDni()));
-        colTelefono.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getTelefono()));
-        colEmail.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getEmail()));
+        // Mapeo columnas
+        colNombre.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(d.getValue().getNombre()));
+        colApellido.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(d.getValue().getApellido()));
+        colDNI.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(d.getValue().getDni()));
+        colTelefono.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(d.getValue().getTelefono()));
+        colEmail.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(d.getValue().getEmail()));
 
-        // Cargar la tabla con la lista completa de personas
+        // Carga inicial
         tablaPersonas.setItems(servicio.obtenerPersonas());
 
-        // Filtros reactivos: cuando el usuario escribe, se filtran los resultados
+        // Filtros reactivos
         txtNombreFiltro.setOnKeyReleased(this::filtrar);
         txtDNIFiltro.setOnKeyReleased(this::filtrar);
 
-        // Escuchar clics en la tabla para seleccionar personas
+        // Selección
         tablaPersonas.setOnMouseClicked(this::onSeleccionarFila);
 
-        // Deseleccionar persona si se hace clic fuera de la tabla
+        // Deseleccionar al click afuera
         tablaPersonas.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
                 newScene.setOnMousePressed(event -> {
@@ -83,11 +81,11 @@ public class ABMPersonaController {
             }
         });
 
-        // Ocultar el modal al principio
         modalOverlay.setVisible(false);
     }
 
-    // Abre el modal para crear una nueva persona.
+    // ================= Acciones Toolbar / Modal =================
+
     @FXML
     public void mostrarModal() {
         modoEdicion = false;
@@ -95,17 +93,14 @@ public class ABMPersonaController {
         modalOverlay.setVisible(true);
     }
 
-    // Abre el modal para modificar una persona seleccionada.
     @FXML
     public void modificarPersona() {
         if (personaSeleccionada == null) {
-            mostrarAlerta("Debe seleccionar una persona para modificar.");
+            mostrarAlertaError("Debe seleccionar una persona para modificar.");
             return;
         }
-
         modoEdicion = true;
 
-        // Precargar datos en los campos del modal
         txtNombre.setText(personaSeleccionada.getNombre());
         txtApellido.setText(personaSeleccionada.getApellido());
         txtDNI.setText(personaSeleccionada.getDni());
@@ -115,31 +110,32 @@ public class ABMPersonaController {
         modalOverlay.setVisible(true);
     }
 
-    // Elimina una persona seleccionada con confirmación.
     @FXML
     public void eliminarPersona() {
         if (personaSeleccionada == null) {
-            mostrarAlerta("Debe seleccionar una persona para eliminar.");
+            mostrarAlertaError("Debe seleccionar una persona para eliminar.");
             return;
         }
-
-        // Mostrar alerta de confirmación
-        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmacion.setTitle("Confirmación");
-        confirmacion.setHeaderText("¿Está seguro que desea eliminar a " + personaSeleccionada + "?");
-
-        Optional<ButtonType> resultado = confirmacion.showAndWait();
-        if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-            servicio.eliminarPersona(personaSeleccionada);
-            personaSeleccionada = null;
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirmación");
+        confirm.setHeaderText("¿Eliminar a " + personaSeleccionada + "?");
+        confirm.setContentText("Esta acción no se puede deshacer.");
+        Optional<ButtonType> res = confirm.showAndWait();
+        if (res.isPresent() && res.get() == ButtonType.OK) {
+            try {
+                servicio.eliminarPersona(personaSeleccionada);
+                personaSeleccionada = null;
+                // Releer desde BD
+                refrescarDatos();
+            } catch (RuntimeException ex) {
+                mostrarAlertaError(mensajeAmigable(ex));
+            }
         }
     }
 
-    // Guarda una nueva persona o actualiza una existente, según el modo actual.
     @FXML
     public void altaPersona() {
         try {
-            // Crear persona con validaciones incluidas en su constructor
             Persona nueva = new Persona(
                 txtNombre.getText(),
                 txtApellido.getText(),
@@ -149,35 +145,35 @@ public class ABMPersonaController {
             );
 
             if (modoEdicion) {
-                // Actualizar persona seleccionada
                 servicio.actualizarPersona(personaSeleccionada, nueva);
-                tablaPersonas.refresh();
             } else {
-                // Guardar nueva persona
                 servicio.guardarPersona(nueva);
             }
 
-            // Refrescar tabla con lista actualizada
-            tablaPersonas.setItems(servicio.obtenerPersonas());
+            // Releer lista desde BD (no solo refresh visual)
+            refrescarDatos();
 
-            // Cerrar y limpiar el modal
-            modalOverlay.setVisible(false);
-            limpiarFormulario();
-            personaSeleccionada = null;
+            // Cerrar modal
+            cerrarModal();
 
-        } catch (Exception e) {
-            mostrarAlerta(e.getMessage());  // Mostrar error si alguna validación falla
+        } catch (RuntimeException ex) {
+            // Valida y traduce errores de unicidad/datos
+            mostrarAlertaError(mensajeAmigable(ex));
+        } catch (Exception ex) {
+            mostrarAlertaError(ex.getMessage());
         }
     }
 
-    // Cierra el formulario emergente sin guardar cambios.
     @FXML
     public void cerrarModal() {
         modalOverlay.setVisible(false);
         limpiarFormulario();
+        personaSeleccionada = null;
+        modoEdicion = false;
     }
 
-    // Aplica el filtro a la tabla según nombre y/o DNI ingresados.
+    // ================= Filtros / Tabla =================
+
     private void filtrar(KeyEvent e) {
         ObservableList<Persona> filtradas = servicio.filtrarPersonas(
             txtNombreFiltro.getText(),
@@ -186,12 +182,17 @@ public class ABMPersonaController {
         tablaPersonas.setItems(filtradas);
     }
 
-    // Guarda en memoria la persona seleccionada en la tabla.
     private void onSeleccionarFila(MouseEvent e) {
         personaSeleccionada = tablaPersonas.getSelectionModel().getSelectedItem();
     }
 
-    // Limpia todos los campos del formulario (modal).
+    public void refrescarDatos() {
+        tablaPersonas.setItems(servicio.obtenerPersonas());
+        tablaPersonas.refresh();
+    }
+
+    // ================= Helpers =================
+
     private void limpiarFormulario() {
         txtNombre.clear();
         txtApellido.clear();
@@ -200,17 +201,49 @@ public class ABMPersonaController {
         txtEmail.clear();
     }
 
-    // Muestra un mensaje de error en pantalla.
-    private void mostrarAlerta(String msg) {
+    private void mostrarAlertaError(String msg) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
         alert.setHeaderText(null);
         alert.setContentText(msg);
         alert.showAndWait();
     }
-    
-    // Método para refrescar datos cuando se navega a esta ventana
-    public void refrescarDatos() {
-        tablaPersonas.setItems(servicio.obtenerPersonas());
+
+    /**
+     * Devuelve un mensaje amigable para errores frecuentes:
+     * - Violación de unicidad de DNI (útil cuando hay UNIQUE en persona.dni).
+     * - Otras ConstraintViolationException.
+     */
+    private String mensajeAmigable(Throwable ex) {
+        // Desenrollar causa
+        Throwable cause = ex;
+        while (cause.getCause() != null) cause = cause.getCause();
+
+        // 1) Hibernate constraint
+        if (cause instanceof ConstraintViolationException cve) {
+            String constraint = cve.getConstraintName() == null ? "" : cve.getConstraintName().toLowerCase();
+            if (constraint.contains("dni") || constraint.contains("uk") || constraint.contains("unique")) {
+                return "Ya existe una persona con ese DNI.";
+            }
+            return "No se pudo guardar por una restricción de base de datos.";
+        }
+
+        // 2) JPA wrapper
+        if (cause instanceof PersistenceException pe) {
+            String msg = pe.getMessage() == null ? "" : pe.getMessage().toLowerCase();
+            if (msg.contains("unique") || msg.contains("dni")) {
+                return "Ya existe una persona con ese DNI.";
+            }
+            return "No se pudo completar la operación en la base de datos.";
+        }
+
+        // 3) Validaciones propias (IllegalArgumentException del modelo)
+        if (ex instanceof IllegalArgumentException || ex.getCause() instanceof IllegalArgumentException) {
+            return ex.getMessage();
+        }
+
+        // 4) Fallback
+        String m = ex.getMessage();
+        return (m == null || m.isBlank()) ? "Ocurrió un error inesperado." : m;
     }
 }

@@ -183,16 +183,20 @@ public class Servicio {
     }
 
     // ===== Roles =====
+    /**
+     * Asigna rol persistiendo en BD y sincroniza la lista del evento EN MEMORIA
+     * para que la UI lo vea al instante sin recargar toda la pantalla.
+     */
     public RolEvento asignarRol(Evento evento, Persona persona, TipoRol rol) {
-        // 1) Persisto (o recupero si ya existe)
+        // 1) Persisto (valida un solo rol por evento)
         RolEvento rolPersistido = repositorio.asignarRol(evento, persona, rol);
 
-        // 2) Sincronizo el objeto en memoria para la UI SIN usar setRoles(...)
+        // 2) Sincronizo el objeto en memoria (NO crear otro RolEvento nuevo)
         boolean yaEsta = evento.getRoles() != null &&
-                evento.getRoles().stream().anyMatch(r -> r.getPersona().equals(persona) && r.getRol() == rol);
+                evento.getRoles().stream().anyMatch(r -> r.getPersona().equals(persona));
         if (!yaEsta) {
-            // usar la lógica del dominio que ya agrega a la lista interna
-            evento.agregarResponsable(persona, rol);
+            // agregar el MISMO objeto persistido
+            evento.agregarRol(rolPersistido);
         }
         return rolPersistido;
     }
@@ -229,14 +233,9 @@ public class Servicio {
         }
     }
 
-        public java.util.List<Evento> listarEventosPorRango(LocalDateTime desde, LocalDateTime hasta) {
-        // Reuso buscarEventos(desde/hasta) por fecha y filtro hora exacta
-        java.util.List<Evento> base = repositorio.buscarEventos(
-                null, null, 
-                desde.toLocalDate(), 
-                hasta.toLocalDate()
-        );
-
+    // ===== Métricas / utilitarios =====
+    public java.util.List<Evento> listarEventosPorRango(LocalDateTime desde, LocalDateTime hasta) {
+        var base = repositorio.buscarEventos(null, null, desde.toLocalDate(), hasta.toLocalDate());
         return base.stream()
                 .filter(e -> {
                     LocalDateTime ini = e.getFechaInicio();
@@ -247,10 +246,7 @@ public class Servicio {
                 .toList();
     }
 
-    public long contarEventos() {
-        return repositorio.listarEventos().size();
-    }
-
+    public long contarEventos() { return repositorio.listarEventos().size(); }
     public long contarEventosActivos() {
         LocalDateTime ahora = LocalDateTime.now();
         return repositorio.listarEventos().stream()
@@ -258,11 +254,7 @@ public class Servicio {
                 .filter(e -> e.getFechaFin() != null && e.getFechaFin().isAfter(ahora))
                 .count();
     }
-
-    public long contarPersonas() {
-        return repositorio.listarPersonas().size();
-    }
-
+    public long contarPersonas() { return repositorio.listarPersonas().size(); }
     public long contarInscripciones() {
         long total = 0L;
         for (Evento e : repositorio.listarEventos()) {

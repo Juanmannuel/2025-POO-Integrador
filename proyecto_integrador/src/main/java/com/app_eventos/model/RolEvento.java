@@ -3,7 +3,7 @@ package com.app_eventos.model;
 import com.app_eventos.model.enums.TipoRol;
 import jakarta.persistence.*;
 
-/** Rol asignado a una persona dentro de un evento. Mapea a columnas reales. */
+/** Rol asignado a una persona dentro de un evento. */
 @Entity
 @Table(name = "rol_evento")
 public class RolEvento {
@@ -21,19 +21,14 @@ public class RolEvento {
     @JoinColumn(name = "persona_idpersona", nullable = false)
     private Persona persona;
 
-    /**
-     * IMPORTANTE: en tu BD la columna válida es "tipo".
-     * Si sigue existiendo una columna "rol" con NOT NULL, debes quitarla o volverla NULL.
-     */
+    /** Columna válida en tu BD: "tipo". */
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo", nullable = false, length = 32)
     private TipoRol rol;
 
     public RolEvento() {}
     public RolEvento(Evento evento, Persona persona, TipoRol rol) {
-        this.evento = evento;
-        this.persona = persona;
-        this.rol = rol;
+        this.evento = evento; this.persona = persona; this.rol = rol;
     }
 
     public Long getId() { return id; }

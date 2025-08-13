@@ -8,6 +8,11 @@ import java.util.List;
 import jakarta.persistence.*;
 import com.app_eventos.model.enums.*;
 
+/**
+ * Entidad base de todos los eventos.
+ * - NO maneja participantes (eso lo hacen los subtipos que permiten inscripción).
+ * - Maneja la relación con roles (RolEvento).
+ */
 @Entity
 @Table(name = "evento")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -21,7 +26,10 @@ public abstract class Evento {
     @Column(nullable = false)
     private String nombre;
 
+    @Column
     private LocalDateTime fechaInicio;
+
+    @Column
     private LocalDateTime fechaFin;
 
     @Enumerated(EnumType.STRING)
@@ -32,11 +40,13 @@ public abstract class Evento {
     @Column(name = "tipoEvento", nullable = false)
     private TipoEvento tipoEvento;
 
-    /** Relación con roles (sin borrado lógico). */
+    /** Relación con roles. OrphanRemoval para borrar el rol si se saca del evento. */
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<RolEvento> roles = new ArrayList<>();
 
-    protected Evento() { this.estado = EstadoEvento.PLANIFICACIÓN; }
+    protected Evento() {
+        this.estado = EstadoEvento.PLANIFICACIÓN;
+    }
 
     public Evento(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin, TipoEvento tipoEvento) {
         setNombre(nombre);
@@ -58,7 +68,7 @@ public abstract class Evento {
         this.estado = nuevoEstado;
     }
 
-    /** Ventana de inscripción usada por subtipos. */
+    /** Ventana de inscripción por defecto: evento confirmado y no finalizado. */
     public boolean Inscripcion() {
         LocalDateTime now = LocalDateTime.now();
         return this.estado == EstadoEvento.CONFIRMADO && now.isBefore(getFechaFin());
@@ -77,21 +87,27 @@ public abstract class Evento {
         if (!Inscripcion()) throw new IllegalStateException("No se permite inscribir.");
     }
 
-    // --------- Gancho para validaciones de subtipos ----------
+    /** Gancho para validaciones específicas de subtipos cuando asignan roles. */
     protected void validarRestriccionesRol(TipoRol rol, Persona persona) {
-        // Por defecto, sin restricciones adicionales
+        // Por defecto, sin restricciones extra
     }
 
     // --------- Roles ----------
+    /**
+     * Asigna un rol a una persona.
+     * Regla: una persona no puede tener más de UN rol en el mismo evento.
+     */
     public void agregarResponsable(Persona persona, TipoRol rol) {
         if (persona == null || rol == null) throw new IllegalArgumentException("Persona y rol requeridos.");
         if (!rolPermitido(rol)) throw new IllegalArgumentException("Rol no permitido para " + tipoEvento);
 
-        // Validaciones específicas del subtipo
+        // Regla global: una persona no puede tener más de un rol en el evento
+        boolean yaTieneAlguno = roles.stream().anyMatch(r -> r.getPersona().equals(persona));
+        if (yaTieneAlguno) throw new IllegalArgumentException("La persona ya tiene un rol asignado en este evento.");
+
+        // Validaciones específicas del subtipo (instructor único, participante/rol, etc.)
         validarRestriccionesRol(rol, persona);
 
-        boolean existe = roles.stream().anyMatch(r -> r.getPersona().equals(persona) && r.getRol() == rol);
-        if (existe) throw new IllegalArgumentException("La persona ya tiene ese rol.");
         this.roles.add(new RolEvento(this, persona, rol));
     }
 
@@ -115,11 +131,13 @@ public abstract class Evento {
         return roles.stream().filter(r -> r.getRol() == rol).count();
     }
 
+    /** Ejemplo de invariante: al menos un organizador. */
     public void validarInvariantes() {
         if (contarPorRol(TipoRol.ORGANIZADOR) == 0)
             throw new IllegalStateException("Todo evento debe tener al menos un organizador.");
     }
 
+    /** Cada subtipo define qué roles permite. */
     protected abstract boolean rolPermitido(TipoRol rol);
 
     public EnumSet<TipoRol> rolesPermitidosParaAsignacion() {
@@ -128,7 +146,10 @@ public abstract class Evento {
         return set;
     }
 
-    public void agregarRol(RolEvento rol) { if (rol != null) roles.add(rol); }
+    /** Útil si se quiere inyectar un rol ya creado (merge/attach). */
+    public void agregarRol(RolEvento rol) {
+        if (rol != null) roles.add(rol);
+    }
 
     // --------- Getters / Setters ----------
     public Long getIdEvento() { return idEvento; }
@@ -166,5 +187,6 @@ public abstract class Evento {
         this.tipoEvento = tipoEvento;
     }
 
+    /** Devuelve copia para no exponer la lista interna. */
     public List<RolEvento> getRoles() { return new ArrayList<>(roles); }
 }
