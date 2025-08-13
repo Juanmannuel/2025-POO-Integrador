@@ -16,9 +16,7 @@ public abstract class Evento {
     private LocalDateTime fechaFin;
     private EstadoEvento estado;
     private TipoEvento tipoEvento;
-
-    // Lista de relaciones Evento–Persona–Rol
-    private final List<RolEvento> roles = new ArrayList<>();
+    private List<RolEvento> roles = new ArrayList<>();
 
     // Constructor con datos obligatorios
     public Evento(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin, TipoEvento tipoEvento) {
