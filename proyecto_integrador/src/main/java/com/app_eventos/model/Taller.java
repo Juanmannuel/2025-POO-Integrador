@@ -43,17 +43,24 @@ public class Taller extends Evento implements IEventoConCupo {
     @Override
     public void inscribirParticipante(Persona persona) {
         validarPuedeInscribir();
+
         if (personaTieneRol(persona))
             throw new IllegalStateException("No puede ser participante y responsable a la vez.");
-        if (participantes.size() >= cupoMaximo) throw new IllegalStateException("Cupo lleno.");
-        if (participantes.contains(persona)) throw new IllegalArgumentException("La persona ya está inscripta.");
+
+        // ✅ Validación de cupo sin métodos booleanos
+        if (getCupoDisponible() <= 0)
+            throw new IllegalStateException("Cupo lleno.");
+
+        if (participantes.contains(persona))
+            throw new IllegalArgumentException("La persona ya está inscripta.");
+
         participantes.add(persona);
     }
 
     @Override public void desinscribirParticipante(Persona persona) { participantes.remove(persona); }
     @Override public List<Persona> getParticipantes() { return participantes; }
-    @Override public boolean hayCupoDisponible() { return participantes.size() < cupoMaximo; }
-    @Override public boolean tieneCupoDisponible() { return hayCupoDisponible(); }
+
+    // --- Cupo (sin booleanos) ---
     @Override public int getCupoMaximo() { return cupoMaximo; }
 
     @Override
@@ -63,7 +70,11 @@ public class Taller extends Evento implements IEventoConCupo {
         this.cupoMaximo = v;
     }
 
-    @Override public int getCupoDisponible() { return Math.max(0, cupoMaximo - participantes.size()); }
+    @Override
+    public int getCupoDisponible() {
+        int disp = cupoMaximo - participantes.size();
+        return Math.max(0, disp);
+    }
 
     // --- Propios de Taller ---
     public void setModalidad(Modalidad m) {

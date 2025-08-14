@@ -13,7 +13,7 @@ public class Persona {
     @Column(nullable = false) private String nombre;
     @Column(nullable = false) private String apellido;
 
-    @Column(nullable = false, unique = true) // DNI único en BD
+    @Column(nullable = false, unique = true)
     private String dni;
 
     private String telefono;

@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Concierto con cupo y participantes persistidos. */
 @Entity
 @Table(name = "concierto")
 public class Concierto extends Evento implements IEventoConCupo {
@@ -20,7 +19,6 @@ public class Concierto extends Evento implements IEventoConCupo {
     @Column(name = "cupoMaximo", nullable = false)
     private int cupoMaximo;
 
-    /** Tabla propia para participantes del concierto. */
     @ManyToMany
     @JoinTable(
         name = "concierto_participante",
@@ -40,40 +38,55 @@ public class Concierto extends Evento implements IEventoConCupo {
         setCupoMaximo(cupoMaximo);
     }
 
-    // ---- Participantes ----
+    // Participantes
     @Override
     public void inscribirParticipante(Persona persona) {
         validarPuedeInscribir();
+
         if (personaTieneRol(persona))
             throw new IllegalStateException("No puede ser participante y responsable a la vez.");
-        if (participantes.size() >= cupoMaximo) throw new IllegalStateException("Cupo completo.");
-        if (participantes.contains(persona)) throw new IllegalArgumentException("La persona ya está inscripta.");
+
+        if (getCupoDisponible() <= 0)
+            throw new IllegalStateException("Cupo completo.");
+
+        if (participantes.contains(persona))
+            throw new IllegalArgumentException("La persona ya está inscripta.");
+
         participantes.add(persona);
     }
 
     @Override public void desinscribirParticipante(Persona persona) { participantes.remove(persona); }
     @Override public List<Persona> getParticipantes() { return participantes; }
 
-    // ---- Cupo ----
-    @Override public boolean hayCupoDisponible() { return participantes.size() < cupoMaximo; }
-    @Override public boolean tieneCupoDisponible() { return hayCupoDisponible(); }
+    // Cupo 
     @Override public int getCupoMaximo() { return cupoMaximo; }
-    @Override public void setCupoMaximo(int v) { if (v <= 0) throw new IllegalArgumentException("Cupo > 0"); this.cupoMaximo = v; }
-    @Override public int getCupoDisponible() { return Math.max(0, cupoMaximo - participantes.size()); }
 
-    // ---- Roles permitidos ----
-    @Override protected boolean rolPermitido(TipoRol rol) {
+    @Override
+    public void setCupoMaximo(int v) {
+        if (v <= 0) throw new IllegalArgumentException("El cupo debe ser mayor a cero.");
+        this.cupoMaximo = v;
+    }
+
+    @Override
+    public int getCupoDisponible() {
+        int disp = cupoMaximo - participantes.size();
+        return Math.max(0, disp);
+    }
+
+    // Roles permitidos 
+    @Override
+    protected boolean rolPermitido(TipoRol rol) {
         return rol == TipoRol.ORGANIZADOR || rol == TipoRol.ARTISTA;
     }
 
-    /** Si ya es participante, no puede ser responsable. */
+    // Validación de restricciones de rol
     @Override
     protected void validarRestriccionesRol(TipoRol rol, Persona persona) {
         if (participantes.contains(persona))
             throw new IllegalStateException("Ya es participante; no puede ser responsable.");
     }
 
-    // ---- Props ----
+    // Props
     public TipoEntrada getTipoEntrada() { return tipoEntrada; }
     public void setTipoEntrada(TipoEntrada t) {
         if (t == null) throw new IllegalArgumentException("Tipo de entrada requerido.");

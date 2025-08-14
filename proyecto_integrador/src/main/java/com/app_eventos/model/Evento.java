@@ -8,11 +8,6 @@ import java.util.List;
 import jakarta.persistence.*;
 import com.app_eventos.model.enums.*;
 
-/**
- * Entidad base de todos los eventos.
- * - NO maneja participantes (eso lo hacen los subtipos que permiten inscripción).
- * - Maneja la relación con roles (RolEvento).
- */
 @Entity
 @Table(name = "evento")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -40,9 +35,8 @@ public abstract class Evento {
     @Column(name = "tipoEvento", nullable = false)
     private TipoEvento tipoEvento;
 
-    /** Relación con roles. OrphanRemoval para borrar el rol si se saca del evento. */
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<RolEvento> roles = new ArrayList<>();
+    private List<RolEvento> roles = new ArrayList<>();
 
     protected Evento() {
         this.estado = EstadoEvento.PLANIFICACIÓN;
@@ -56,7 +50,7 @@ public abstract class Evento {
         this.estado = EstadoEvento.PLANIFICACIÓN;
     }
 
-    // --------- Reglas de estado ----------
+    // Reglas de estado
     public void cambiarEstado(EstadoEvento nuevoEstado) {
         LocalDateTime now = LocalDateTime.now();
         if (nuevoEstado == EstadoEvento.CONFIRMADO && this.fechaInicio.isBefore(now))
@@ -68,13 +62,11 @@ public abstract class Evento {
         this.estado = nuevoEstado;
     }
 
-    /** Ventana de inscripción por defecto: evento confirmado y no finalizado. */
     public boolean Inscripcion() {
         LocalDateTime now = LocalDateTime.now();
         return this.estado == EstadoEvento.CONFIRMADO && now.isBefore(getFechaFin());
     }
 
-    /** Auto–actualiza a FINALIZADO si corresponde. */
     public void verificarEstadoAutomatico() {
         LocalDateTime now = LocalDateTime.now();
         if ((this.estado == EstadoEvento.EJECUCIÓN || this.estado == EstadoEvento.CONFIRMADO)
@@ -92,20 +84,14 @@ public abstract class Evento {
         // Por defecto, sin restricciones extra
     }
 
-    // --------- Roles ----------
-    /**
-     * Asigna un rol a una persona.
-     * Regla: una persona no puede tener más de UN rol en el mismo evento.
-     */
+    // Roles - asigna un rol a una persona
     public void agregarResponsable(Persona persona, TipoRol rol) {
         if (persona == null || rol == null) throw new IllegalArgumentException("Persona y rol requeridos.");
         if (!rolPermitido(rol)) throw new IllegalArgumentException("Rol no permitido para " + tipoEvento);
-
-        // Regla global: una persona no puede tener más de un rol en el evento
+        // Verifica si ya tiene un rol asignado
         boolean yaTieneAlguno = roles.stream().anyMatch(r -> r.getPersona().equals(persona));
         if (yaTieneAlguno) throw new IllegalArgumentException("La persona ya tiene un rol asignado en este evento.");
 
-        // Validaciones específicas del subtipo (instructor único, participante/rol, etc.)
         validarRestriccionesRol(rol, persona);
 
         this.roles.add(new RolEvento(this, persona, rol));
@@ -131,13 +117,11 @@ public abstract class Evento {
         return roles.stream().filter(r -> r.getRol() == rol).count();
     }
 
-    /** Ejemplo de invariante: al menos un organizador. */
     public void validarInvariantes() {
         if (contarPorRol(TipoRol.ORGANIZADOR) == 0)
             throw new IllegalStateException("Todo evento debe tener al menos un organizador.");
     }
 
-    /** Cada subtipo define qué roles permite. */
     protected abstract boolean rolPermitido(TipoRol rol);
 
     public EnumSet<TipoRol> rolesPermitidosParaAsignacion() {
@@ -146,12 +130,10 @@ public abstract class Evento {
         return set;
     }
 
-    /** Útil si se quiere inyectar un rol ya creado (merge/attach). */
     public void agregarRol(RolEvento rol) {
         if (rol != null) roles.add(rol);
     }
 
-    // --------- Getters / Setters ----------
     public Long getIdEvento() { return idEvento; }
     public void setIdEvento(Long idEvento) { this.idEvento = idEvento; }
 
@@ -187,6 +169,5 @@ public abstract class Evento {
         this.tipoEvento = tipoEvento;
     }
 
-    /** Devuelve copia para no exponer la lista interna. */
     public List<RolEvento> getRoles() { return new ArrayList<>(roles); }
 }

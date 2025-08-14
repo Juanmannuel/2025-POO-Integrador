@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import com.app_eventos.model.enums.*;
 import java.time.LocalDateTime;
 
-/** Feria con cantidad de stands y ambiente. */
 @Entity @Table(name = "feria")
 public class Feria extends Evento {
 

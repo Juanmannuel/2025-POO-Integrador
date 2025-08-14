@@ -3,7 +3,6 @@ package com.app_eventos.model;
 import jakarta.persistence.*;
 import com.app_eventos.model.enums.TipoPelicula;
 
-/** Película simple. */
 @Entity @Table(name = "pelicula")
 public class Pelicula {
 

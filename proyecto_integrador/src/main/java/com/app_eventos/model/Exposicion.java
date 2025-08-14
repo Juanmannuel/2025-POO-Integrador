@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import com.app_eventos.model.enums.*;
 import java.time.LocalDateTime;
 
-/** Exposición con un curador como máximo. */
 @Entity
 @Table(name = "exposicion")
 public class Exposicion extends Evento {
@@ -23,7 +22,7 @@ public class Exposicion extends Evento {
         setTipoArte(t);
     }
 
-    // Propio de Exposición 
+    // Getters y Setters
     public TipoArte getTipoArte() { return tipoArte; }
 
     public void setTipoArte(TipoArte t) {
@@ -31,13 +30,13 @@ public class Exposicion extends Evento {
         this.tipoArte = t;
     }
 
-    /** Solo Organizador o Curador tienen sentido en Exposición. */
+    // Participantes
     @Override
     protected boolean rolPermitido(TipoRol rol) {
         return rol == TipoRol.ORGANIZADOR || rol == TipoRol.CURADOR;
     }
 
-    /** máximo 1 curador */
+    // Validaciones de rol
     @Override
     protected void validarRestriccionesRol(TipoRol rol, Persona persona) {
         if (rol == TipoRol.CURADOR && contarPorRol(TipoRol.CURADOR) >= 1) {
@@ -45,7 +44,7 @@ public class Exposicion extends Evento {
         }
     }
 
-    /** Asigna un curador. */
+    // Asignación de curador
     public void asignarCurador(Persona persona) {
         if (persona == null) throw new IllegalArgumentException("Curador nulo.");
         agregarResponsable(persona, TipoRol.CURADOR); // pasa por validarRestriccionesRol(...)
