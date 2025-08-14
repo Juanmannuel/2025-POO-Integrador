@@ -9,6 +9,7 @@ import javafx.collections.ObservableList;
 
 import java.time.*;
 import java.util.Comparator;
+import java.util.List;
 
 public class Servicio {
 
@@ -262,4 +263,36 @@ public class Servicio {
         }
         return total;
     }
+
+    // ===== NUEVO: eventos que admiten inscripción =====
+    /** 
+     * MOD: lista SOLO los eventos que requieren inscripción (CONFIRMADOS, con fechaFin futura)
+     * y cuyo tipo admite inscripciones (Concierto, Taller, CicloCine).
+     */
+    public List<Evento> listarEventosQueAdmitenInscripcion() {
+        LocalDateTime ahora = LocalDateTime.now();
+        return repositorio.listarEventos().stream()
+                .filter(e -> e.getEstado() == EstadoEvento.CONFIRMADO)
+                .filter(e -> e.getFechaFin() != null && e.getFechaFin().isAfter(ahora))
+                .filter(e -> (e instanceof Concierto) || (e instanceof Taller) || (e instanceof CicloCine))
+                .toList();
+    }
+    
+     /** Eventos inscribibles AHORA (CONFIRMADOS y no vencidos) */
+    public ObservableList<Evento> obtenerEventosParaInscripcion() {
+        return FXCollections.observableArrayList(
+            repositorio.listarEventos().stream()
+                .filter(e -> e instanceof com.app_eventos.model.interfaces.IEventoConCupo)
+                .filter(e -> e.getEstado() == EstadoEvento.CONFIRMADO)
+                .filter(e -> e.getFechaFin() != null && e.getFechaFin().isAfter(java.time.LocalDateTime.now()))
+                .toList()
+        );
+    }
+
+    /** Personas elegibles para inscribirse en el evento (sin rol y no inscriptas) – consultado en BD */
+    public ObservableList<Persona> obtenerPersonasElegiblesParaEvento(Evento e) {
+        return FXCollections.observableArrayList(repositorio.personasElegiblesParaInscripcion(e));
+    }
+
+
 }
