@@ -13,15 +13,15 @@
         <!-- Tarjetas de estadísticas -->
         <HBox spacing="20" alignment="CENTER">
             <VBox styleClass="card-estadistica" alignment="CENTER" HBox.hgrow="ALWAYS">
-                <Label text="Total Eventos" />
+                <Label text="Eventos totales" />
                 <Label fx:id="lblTotalEventos" text="0" styleClass="dato-estadistica" />
             </VBox>
             <VBox styleClass="card-estadistica" alignment="CENTER" HBox.hgrow="ALWAYS">
-                <Label text="Eventos Activos" />
+                <Label text="Eventos Confirmados" />
                 <Label fx:id="lblEventosActivos" text="0" styleClass="dato-estadistica" />
             </VBox>
             <VBox styleClass="card-estadistica" alignment="CENTER" HBox.hgrow="ALWAYS">
-                <Label text="Total Personas" />
+                <Label text="Personas" />
                 <Label fx:id="lblTotalPersonas" text="0" styleClass="dato-estadistica" />
             </VBox>
             <VBox styleClass="card-estadistica" alignment="CENTER" HBox.hgrow="ALWAYS">

@@ -117,42 +117,38 @@ public class ABMEventoController {
 
     @SuppressWarnings("unchecked")
     private void detectarFiltrosDeFormaSegura() {
-        try {
-            if (!(tablaEventos.getParent() instanceof VBox panel)) return;
-            if (panel.getChildren().isEmpty()) return;
-            if (!(panel.getChildren().get(0) instanceof HBox hbox)) return;
+        if (!(tablaEventos.getParent() instanceof VBox panel)) return;
+        if (panel.getChildren().isEmpty()) return;
+        if (!(panel.getChildren().get(0) instanceof HBox hbox)) return;
 
-            DatePicker d1 = null, d2 = null;
-            ComboBox<EstadoEvento> estadoCb = null;
-            for (Node n : hbox.getChildren()) {
-                if (estadoCb == null && n instanceof ComboBox<?> cb) {
-                    if (cb != comboTipoEventoFiltro && (cb.getItems().isEmpty() || cb.getItems().get(0) instanceof EstadoEvento)) {
-                        estadoCb = (ComboBox<EstadoEvento>) cb;
-                    }
-                }
-                if (n instanceof DatePicker dp) {
-                    if (d1 == null) d1 = dp; else if (d2 == null) d2 = dp;
+        DatePicker d1 = null, d2 = null;
+        ComboBox<EstadoEvento> estadoCb = null;
+        for (Node n : hbox.getChildren()) {
+            if (estadoCb == null && n instanceof ComboBox<?> cb) {
+                if (cb != comboTipoEventoFiltro && (cb.getItems().isEmpty() || cb.getItems().get(0) instanceof EstadoEvento)) {
+                    estadoCb = (ComboBox<EstadoEvento>) cb;
                 }
             }
-            comboEstadoFiltro = estadoCb;
-            dateDesdeFiltro = d1;
-            dateHastaFiltro = d2;
-
-            if (comboTipoEventoFiltro != null) {
-                comboTipoEventoFiltro.setItems(FXCollections.observableArrayList(TipoEvento.values()));
-                comboTipoEventoFiltro.getSelectionModel().clearSelection();
-                comboTipoEventoFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
+            if (n instanceof DatePicker dp) {
+                if (d1 == null) d1 = dp; else if (d2 == null) d2 = dp;
             }
-            if (comboEstadoFiltro != null) {
-                comboEstadoFiltro.setItems(FXCollections.observableArrayList(EstadoEvento.values()));
-                comboEstadoFiltro.getSelectionModel().clearSelection();
-                comboEstadoFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
-            }
-            if (dateDesdeFiltro != null)  dateDesdeFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
-            if (dateHastaFiltro != null)  dateHastaFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
-        } catch (Exception e) {
-            System.err.println("[ABMEvento] Advertencia: no se pudieron inicializar los filtros: " + e.getMessage());
         }
+        comboEstadoFiltro = estadoCb;
+        dateDesdeFiltro = d1;
+        dateHastaFiltro = d2;
+
+        if (comboTipoEventoFiltro != null) {
+            comboTipoEventoFiltro.setItems(FXCollections.observableArrayList(TipoEvento.values()));
+            comboTipoEventoFiltro.getSelectionModel().clearSelection();
+            comboTipoEventoFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
+        }
+        if (comboEstadoFiltro != null) {
+            comboEstadoFiltro.setItems(FXCollections.observableArrayList(EstadoEvento.values()));
+            comboEstadoFiltro.getSelectionModel().clearSelection();
+            comboEstadoFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
+        }
+        if (dateDesdeFiltro != null)  dateDesdeFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
+        if (dateHastaFiltro != null)  dateHastaFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
     }
 
     private void buscarYRefrescarTabla() {
@@ -173,17 +169,54 @@ public class ABMEventoController {
     }
 
     private SpinnerValueFactory<LocalTime> factoryHora() {
-        LocalTime min = LocalTime.of(6,0), max = LocalTime.of(23,59);
-        int paso = 5;
+        final LocalTime min  = LocalTime.of(6, 0);
+        final LocalTime max  = LocalTime.of(23, 59);
+        final int paso = 5;
+
         return new SpinnerValueFactory<>() {
-            private LocalTime value = min;
-            { setConverter(new StringConverter<>() {
-                DateTimeFormatter f = DateTimeFormatter.ofPattern("HH:mm");
-                public String toString(LocalTime t){ return t==null?"":t.format(f); }
-                public LocalTime fromString(String s){ return LocalTime.parse(s,f); }
-            }); setValue(value); }
-            public void decrement(int steps){ LocalTime n=value.minusMinutes(steps*paso); if(!n.isBefore(min)){ value=n; setValue(value);} }
-            public void increment(int steps){ LocalTime n=value.plusMinutes(steps*paso); if(!n.isAfter(max)){ value=n; setValue(value);} }
+            private final DateTimeFormatter f = DateTimeFormatter.ofPattern("HH:mm");
+            {
+                setConverter(new StringConverter<>() {
+                    @Override public String toString(LocalTime t) { return t == null ? "" : f.format(t); }
+                    @Override public LocalTime fromString(String s) {
+                        if (s == null) return null;
+                        s = s.trim();
+                        if (s.isEmpty()) return null;
+                        try {
+                            LocalTime t = LocalTime.parse(s, f);
+                            if (t.isBefore(min)) t = min;
+                            if (t.isAfter(max))  t = max;
+                            return t;
+                        } catch (Exception e) {
+                            // Entrada inválida: no cambiar el valor actual
+                            return getValue();
+                        }
+                    }
+                });
+                setValue(null); // empieza vacío
+            }
+
+            @Override public void decrement(int steps) {
+                LocalTime v = getValue();
+                if (v == null) {
+                    setValue(max); // primer decremento -> max
+                } else {
+                    LocalTime n = v.minusMinutes(steps * paso);
+                    if (n.isBefore(min)) n = min;
+                    setValue(n);
+                }
+            }
+
+            @Override public void increment(int steps) {
+                LocalTime v = getValue();
+                if (v == null) {
+                    setValue(min); // primer incremento -> min
+                } else {
+                    LocalTime n = v.plusMinutes(steps * paso);
+                    if (n.isAfter(max)) n = max;
+                    setValue(n);
+                }
+            }
         };
     }
 
@@ -204,8 +237,6 @@ public class ABMEventoController {
             VBox vista = loader.load();
             AsigRolEventoController ctrl = loader.getController();
             ctrl.setEvento(evento);
-
-            // 👇 Al cambiar roles, recargo desde BD (no solo refresh visual)
             ctrl.setOnRolesChanged(ev -> buscarYRefrescarTabla());
 
             Dialog<ButtonType> dlg = new Dialog<>();
@@ -219,7 +250,6 @@ public class ABMEventoController {
                         catch (IllegalStateException ex){ a.consume(); mostrarAlerta("Validación", ex.getMessage()); }
                     });
 
-            // 👇 Si cierran la ventana igual recargo la tabla
             dlg.setOnHidden(e -> buscarYRefrescarTabla());
             dlg.showAndWait();
         } catch (IOException ex) {
@@ -265,12 +295,12 @@ public class ABMEventoController {
         comboTipoEvento.getSelectionModel().clearSelection();
         comboEstado.getSelectionModel().clearSelection();
         seccionDinamica.getChildren().clear();
-        if (spinnerHoraInicio.getValueFactory()!=null) spinnerHoraInicio.getValueFactory().setValue(LocalTime.of(0,0));
-        if (spinnerHoraFin.getValueFactory()!=null)    spinnerHoraFin.getValueFactory().setValue(LocalTime.of(0,0));
+        if (spinnerHoraInicio.getValueFactory()!=null) spinnerHoraInicio.getValueFactory().setValue(null);
+        if (spinnerHoraFin.getValueFactory()!=null)    spinnerHoraFin.getValueFactory().setValue(null);
     }
 
-    private static final EnumSet<EstadoEvento> ESTADOS_ALTA =
-            EnumSet.of(EstadoEvento.PLANIFICACIÓN, EstadoEvento.CONFIRMADO, EstadoEvento.EJECUCIÓN);
+    private static EnumSet<EstadoEvento> ESTADOS_ALTA =
+            EnumSet.of(EstadoEvento.PLANIFICACIÓN, EstadoEvento.CONFIRMADO);
 
     private void setEstadosParaAlta() {
         comboEstado.setItems(FXCollections.observableArrayList(ESTADOS_ALTA));
@@ -278,48 +308,84 @@ public class ABMEventoController {
     }
 
     private void setEstadosParaEdicion() {
-        comboEstado.setItems(FXCollections.observableArrayList(EstadoEvento.values()));
+        EstadoEvento actual = (eventoEnEdicion != null) ? eventoEnEdicion.getEstado() : EstadoEvento.PLANIFICACIÓN;
+        if (actual == EstadoEvento.PLANIFICACIÓN) {
+            comboEstado.setItems(FXCollections.observableArrayList(EstadoEvento.PLANIFICACIÓN, EstadoEvento.CONFIRMADO));
+            comboEstado.setDisable(false);
+        } else {
+            comboEstado.setItems(FXCollections.observableArrayList(actual)); // solo el actual
+            comboEstado.getSelectionModel().select(actual);
+            comboEstado.setDisable(true); // bloquea cambio manual
+        }
     }
 
     @FXML
     private void guardarEvento() {
-        String nombre = txtNombre.getText();
-        TipoEvento tipo = modoEdicion ? eventoEnEdicion.getTipoEvento() : comboTipoEvento.getValue();
-        LocalDate fIni = dateInicio.getValue();
-        LocalDate fFin = dateFin.getValue();
-        LocalTime hIni = spinnerHoraInicio.getValue();
-        LocalTime hFin = spinnerHoraFin.getValue();
-        EstadoEvento estado = comboEstado.getValue();
-
-        if (nombre == null || nombre.isBlank()
-            || fIni == null || fFin == null || hIni == null || hFin == null || estado == null || (!modoEdicion && tipo == null)) {
-            mostrarAlerta("Campos requeridos", "Complete todos los campos antes de continuar.");
-            return;
-        }
-
         try {
-            if (!modoEdicion) crearSegunTipo(nombre, tipo, fIni, fFin, hIni, hFin, estado);
-            else              actualizarSegunTipo(eventoEnEdicion, nombre, tipo, fIni, fFin, hIni, hFin, estado);
+            TipoEvento tipo = modoEdicion ? eventoEnEdicion.getTipoEvento() : comboTipoEvento.getValue();
+
+            if (!modoEdicion && tipo == null) {
+                throw new IllegalArgumentException("Seleccione un tipo de evento.");
+            }
+
+            if (!modoEdicion) {
+                crearSegunTipo(
+                    txtNombre.getText(), tipo,
+                    dateInicio.getValue(), dateFin.getValue(),
+                    spinnerHoraInicio.getValue(), spinnerHoraFin.getValue(),
+                    comboEstado.getValue()
+                );
+            } else {
+                actualizarSegunTipo(
+                    eventoEnEdicion, txtNombre.getText(), tipo,
+                    dateInicio.getValue(), dateFin.getValue(),
+                    spinnerHoraInicio.getValue(), spinnerHoraFin.getValue(),
+                    comboEstado.getValue()
+                );
+            }
 
             buscarYRefrescarTabla();
             cerrarModal();
+
         } catch (IllegalArgumentException | IllegalStateException ex) {
             mostrarAlerta("Error de validación", ex.getMessage());
         }
     }
 
+
     private void crearSegunTipo(String nombre, TipoEvento tipo,
-                                LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
-        if (tipo == TipoEvento.FERIA && controladorFragmento instanceof FeriaController c)
-            servicio.crearFeria(nombre, fIni, fFin, hIni, hFin, estado, c.getCantidadStands(), c.getAmbienteSeleccionado());
-        else if (tipo == TipoEvento.CONCIERTO && controladorFragmento instanceof ConciertoController c)
-            servicio.crearConcierto(nombre, fIni, fFin, hIni, hFin, estado, c.getTipoEntradaSeleccionada(), c.getCupoMaximo());
-        else if (tipo == TipoEvento.EXPOSICION && controladorFragmento instanceof ExposicionController c)
-            servicio.crearExposicion(nombre, fIni, fFin, hIni, hFin, estado, c.getTipoArteSeleccionado());
-        else if (tipo == TipoEvento.TALLER && controladorFragmento instanceof TallerController c)
-            servicio.crearTaller(nombre, fIni, fFin, hIni, hFin, estado, c.getCupoMaximo(), c.getModalidadSeleccionada());
-        else if (tipo == TipoEvento.CICLO_CINE && controladorFragmento instanceof CicloCineController c)
-            servicio.crearCicloCine(nombre, fIni, fFin, hIni, hFin, estado, c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas());
+                LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
+        if (tipo == null) throw new IllegalArgumentException("Seleccione un tipo de evento.");
+        if (controladorFragmento == null)
+            throw new IllegalStateException("Complete los datos específicos del tipo seleccionado.");
+
+        switch (tipo) {
+            case FERIA -> {
+                if (!(controladorFragmento instanceof FeriaController c))
+                    throw new IllegalStateException("Formulario de Feria no cargado.");
+                servicio.crearFeria(nombre, fIni, fFin, hIni, hFin, estado, c.getCantidadStands(), c.getAmbienteSeleccionado());
+            }
+            case CONCIERTO -> {
+                if (!(controladorFragmento instanceof ConciertoController c))
+                    throw new IllegalStateException("Formulario de Concierto no cargado.");
+                servicio.crearConcierto(nombre, fIni, fFin, hIni, hFin, estado, c.getTipoEntradaSeleccionada(), c.getCupoMaximo());
+            }
+            case EXPOSICION -> {
+                if (!(controladorFragmento instanceof ExposicionController c))
+                    throw new IllegalStateException("Formulario de Exposición no cargado.");
+                servicio.crearExposicion(nombre, fIni, fFin, hIni, hFin, estado, c.getTipoArteSeleccionado());
+            }
+            case TALLER -> {
+                if (!(controladorFragmento instanceof TallerController c))
+                    throw new IllegalStateException("Formulario de Taller no cargado.");
+                servicio.crearTaller(nombre, fIni, fFin, hIni, hFin, estado, c.getCupoMaximo(), c.getModalidadSeleccionada());
+            }
+            case CICLO_CINE -> {
+                if (!(controladorFragmento instanceof CicloCineController c))
+                    throw new IllegalStateException("Formulario de Ciclo de Cine no cargado.");
+                servicio.crearCicloCine(nombre, fIni, fFin, hIni, hFin, estado, c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas());
+            }
+        }
     }
 
     private void actualizarSegunTipo(Evento original, String nombre, TipoEvento tipo,

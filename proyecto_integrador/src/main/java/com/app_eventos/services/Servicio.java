@@ -18,83 +18,95 @@ public class Servicio {
     private Servicio() {}
 
     private final Repositorio repositorio = new Repositorio();
-    private static final int MAX_YEARS_ADELANTE = 2;
 
-    private LocalDateTime crearDateTime(LocalDate fecha, LocalTime hora) {
-        return LocalDateTime.of(fecha, hora);
-    }
-
+    // Guards de nulidad
     private void validarAlta(LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin, EstadoEvento estado) {
-        LocalDateTime ahora = LocalDateTime.now();
-        LocalDate hoy = LocalDate.now();
-        LocalDateTime inicio = LocalDateTime.of(fIni, hIni);
-        LocalDateTime fin    = LocalDateTime.of(fFin, hFin);
-        LocalDateTime limite = hoy.plusYears(MAX_YEARS_ADELANTE).atTime(23,59,59);
-        if (!inicio.isAfter(ahora)) throw new IllegalArgumentException("La fecha/hora de inicio debe ser posterior al momento actual.");
-        if (!fin.isAfter(inicio))   throw new IllegalArgumentException("La fecha/hora de fin debe ser posterior al inicio.");
-        if (inicio.isAfter(limite) || fin.isAfter(limite))
-            throw new IllegalArgumentException("Las fechas no pueden superar 2 años desde hoy.");
+        if (fIni == null)  throw new IllegalArgumentException("La Fecha de inicio es obligatoria.");
+        if (hIni == null)  throw new IllegalArgumentException("La Hora de inicio es obligatoria.");
+        if (fFin == null)  throw new IllegalArgumentException("La Fecha de fin es obligatoria.");
+        if (hFin == null)  throw new IllegalArgumentException("La Hora de fin es obligatoria.");
+        if (estado == null) throw new IllegalArgumentException("El Estado es obligatorio.");
     }
 
     private void validarUpdate(LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin) {
-        LocalDate hoy = LocalDate.now();
-        LocalDateTime inicio = LocalDateTime.of(fIni, hIni);
-        LocalDateTime fin    = LocalDateTime.of(fFin, hFin);
-        LocalDateTime limite = hoy.plusYears(MAX_YEARS_ADELANTE).atTime(23,59,59);
-        if (!fin.isAfter(inicio))   throw new IllegalArgumentException("La fecha/hora de fin debe ser posterior al inicio.");
-        if (inicio.isAfter(limite) || fin.isAfter(limite))
-            throw new IllegalArgumentException("Las fechas no pueden superar 2 años desde hoy.");
+        if (fIni == null)  throw new IllegalArgumentException("La Fecha de inicio es obligatoria.");
+        if (hIni == null)  throw new IllegalArgumentException("La Hora de inicio es obligatoria.");
+        if (fFin == null)  throw new IllegalArgumentException("La Fecha de fin es obligatoria.");
+        if (hFin == null)  throw new IllegalArgumentException("La Hora de fin es obligatoria.");
     }
 
-    // ===== ALTAS =====
+    // ALTAS
     public void crearFeria(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
                            EstadoEvento estado, int cantidadStands, TipoAmbiente ambiente) {
         validarAlta(fIni, hIni, fFin, hFin, estado);
-        var f = new Feria(nombre, crearDateTime(fIni, hIni), crearDateTime(fFin, hFin), cantidadStands, ambiente);
-        f.setEstado(estado);
+        var f = new Feria();
+        f.setNombre(nombre);
+        f.setFechas(fIni, hIni, fFin, hFin); // valida negocio en dominio
+        f.setCantidadStands(cantidadStands);
+        f.setAmbiente(ambiente);
+        // Estado inicial
+        if (estado == EstadoEvento.PLANIFICACIÓN) f.setEstado(estado); else f.cambiarEstado(estado);
         repositorio.guardarEvento(f);
     }
 
     public void crearConcierto(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
                                EstadoEvento estado, TipoEntrada tipoEntrada, int cupoMaximo) {
         validarAlta(fIni, hIni, fFin, hFin, estado);
-        var c = new Concierto(nombre, crearDateTime(fIni, hIni), crearDateTime(fFin, hFin), tipoEntrada, cupoMaximo);
-        c.setEstado(estado);
+        var c = new Concierto();
+        c.setNombre(nombre);
+        c.setFechas(fIni, hIni, fFin, hFin);
+        c.setTipoEntrada(tipoEntrada);
+        c.setCupoMaximo(cupoMaximo);
+        if (estado == EstadoEvento.PLANIFICACIÓN) c.setEstado(estado); else c.cambiarEstado(estado);
         repositorio.guardarEvento(c);
     }
 
     public void crearExposicion(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
                                 EstadoEvento estado, TipoArte tipoArte) {
         validarAlta(fIni, hIni, fFin, hFin, estado);
-        var x = new Exposicion(nombre, crearDateTime(fIni, hIni), crearDateTime(fFin, hFin), tipoArte);
-        x.setEstado(estado);
+        var x = new Exposicion();
+        x.setNombre(nombre);
+        x.setFechas(fIni, hIni, fFin, hFin);
+        x.setTipoArte(tipoArte);
+        if (estado == EstadoEvento.PLANIFICACIÓN) x.setEstado(estado); else x.cambiarEstado(estado);
         repositorio.guardarEvento(x);
     }
 
     public void crearTaller(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
                             EstadoEvento estado, int cupoMaximo, Modalidad modalidad) {
         validarAlta(fIni, hIni, fFin, hFin, estado);
-        var t = new Taller(nombre, crearDateTime(fIni, hIni), crearDateTime(fFin, hFin), cupoMaximo, modalidad);
-        t.setEstado(estado);
+        var t = new Taller();
+        t.setNombre(nombre);
+        t.setFechas(fIni, hIni, fFin, hFin);
+        t.setCupoMaximo(cupoMaximo);
+        t.setModalidad(modalidad);
+        if (estado == EstadoEvento.PLANIFICACIÓN) t.setEstado(estado); else t.cambiarEstado(estado);
         repositorio.guardarEvento(t);
     }
 
     public void crearCicloCine(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
-                               EstadoEvento estado, boolean postCharla, int cupoMaximo, java.util.List<Pelicula> pelis) {
+                               EstadoEvento estado, boolean postCharla, int cupoMaximo, List<Pelicula> pelis) {
         validarAlta(fIni, hIni, fFin, hFin, estado);
-        var cc = new CicloCine(nombre, crearDateTime(fIni, hIni), crearDateTime(fFin, hFin), postCharla, cupoMaximo);
-        cc.setEstado(estado);
+        var cc = new CicloCine();
+        cc.setNombre(nombre);
+        cc.setFechas(fIni, hIni, fFin, hFin);
+        cc.setPostCharla(postCharla);
+        cc.setCupoMaximo(cupoMaximo);
         if (pelis != null) pelis.forEach(cc::agregarPelicula);
+        if (estado == EstadoEvento.PLANIFICACIÓN) cc.setEstado(estado); else cc.cambiarEstado(estado);
         repositorio.guardarEvento(cc);
     }
 
-    // ===== UPDATES =====
+    // MODIFICACIONES
     public void actualizarFeria(Feria f, String nombre, LocalDate fIni, LocalDate fFin,
                                 LocalTime hIni, LocalTime hFin, EstadoEvento estado,
                                 int cantidadStands, TipoAmbiente ambiente) {
         validarUpdate(fIni, hIni, fFin, hFin);
-        f.setNombre(nombre); f.setFechaInicio(fIni.atTime(hIni)); f.setFechaFin(fFin.atTime(hFin));
-        f.setEstado(estado); f.setCantidadStands(cantidadStands); f.setAmbiente(ambiente);
+        f.setNombre(nombre);
+        f.setFechas(fIni, hIni, fFin, hFin);         // valida negocio en dominio
+        f.setCantidadStands(cantidadStands);
+        f.setAmbiente(ambiente);
+        if (estado != null && estado != f.getEstado()) f.cambiarEstado(estado);
         repositorio.actualizarEvento(f);
     }
 
@@ -102,16 +114,21 @@ public class Servicio {
                                     LocalTime hIni, LocalTime hFin, EstadoEvento estado,
                                     TipoEntrada tipoEntrada, int cupoMaximo) {
         validarUpdate(fIni, hIni, fFin, hFin);
-        c.setNombre(nombre); c.setFechaInicio(fIni.atTime(hIni)); c.setFechaFin(fFin.atTime(hFin));
-        c.setEstado(estado); c.setTipoEntrada(tipoEntrada); c.setCupoMaximo(cupoMaximo);
+        c.setNombre(nombre);
+        c.setFechas(fIni, hIni, fFin, hFin);
+        c.setTipoEntrada(tipoEntrada);
+        c.setCupoMaximo(cupoMaximo);
+        if (estado != null && estado != c.getEstado()) c.cambiarEstado(estado);
         repositorio.actualizarEvento(c);
     }
 
     public void actualizarExposicion(Exposicion x, String nombre, LocalDate fIni, LocalDate fFin,
                                      LocalTime hIni, LocalTime hFin, EstadoEvento estado, TipoArte tipoArte) {
         validarUpdate(fIni, hIni, fFin, hFin);
-        x.setNombre(nombre); x.setFechaInicio(fIni.atTime(hIni)); x.setFechaFin(fFin.atTime(hFin));
-        x.setEstado(estado); x.setTipoArte(tipoArte);
+        x.setNombre(nombre);
+        x.setFechas(fIni, hIni, fFin, hFin);
+        x.setTipoArte(tipoArte);
+        if (estado != null && estado != x.getEstado()) x.cambiarEstado(estado);
         repositorio.actualizarEvento(x);
     }
 
@@ -119,38 +136,110 @@ public class Servicio {
                                  LocalTime hIni, LocalTime hFin, EstadoEvento estado,
                                  int cupoMaximo, Modalidad modalidad) {
         validarUpdate(fIni, hIni, fFin, hFin);
-        t.setNombre(nombre); t.setFechaInicio(fIni.atTime(hIni)); t.setFechaFin(fFin.atTime(hFin));
-        t.setEstado(estado); t.setCupoMaximo(cupoMaximo); t.setModalidad(modalidad);
+        t.setNombre(nombre);
+        t.setFechas(fIni, hIni, fFin, hFin);
+        t.setCupoMaximo(cupoMaximo);
+        t.setModalidad(modalidad);
+        if (estado != null && estado != t.getEstado()) t.cambiarEstado(estado);
         repositorio.actualizarEvento(t);
     }
 
     public void actualizarCicloCine(CicloCine cc, String nombre, LocalDate fIni, LocalDate fFin,
                                     LocalTime hIni, LocalTime hFin, EstadoEvento estado,
-                                    boolean postCharla, int cupoMaximo, java.util.List<Pelicula> pelis) {
+                                    boolean postCharla, int cupoMaximo, List<Pelicula> pelis) {
         validarUpdate(fIni, hIni, fFin, hFin);
-        cc.setNombre(nombre); cc.setFechaInicio(fIni.atTime(hIni)); cc.setFechaFin(fFin.atTime(hFin));
-        cc.setEstado(estado); cc.setPostCharla(postCharla); cc.setCupoMaximo(cupoMaximo);
-        cc.clearPeliculas(); if (pelis != null) pelis.forEach(cc::agregarPelicula);
+        cc.setNombre(nombre);
+        cc.setFechas(fIni, hIni, fFin, hFin);
+        cc.setPostCharla(postCharla);
+        cc.setCupoMaximo(cupoMaximo);
+        cc.clearPeliculas();
+        if (pelis != null) pelis.forEach(cc::agregarPelicula);
+        if (estado != null && estado != cc.getEstado()) cc.cambiarEstado(estado);
         repositorio.actualizarEvento(cc);
     }
 
-    // ===== Listados / Búsquedas / Eliminación =====
-    public java.util.List<Evento> listarEventos() { return repositorio.listarEventos(); }
-    public java.util.List<Evento> buscarEventos(TipoEvento tipo, EstadoEvento estado, LocalDate desde, LocalDate hasta) {
+    public void inscribirParticipante(Evento evento, Persona persona) {
+        if (evento == null || persona == null)
+            throw new IllegalArgumentException("Evento y persona son obligatorios.");
+
+        // 1) No puede estar ya con rol en este evento
+        if (evento.personaTieneRol(persona)) {
+            throw new IllegalStateException("No se puede inscribir: la persona ya tiene un rol asignado en este evento.");
+        }
+
+        boolean yaInscripta = repositorio.obtenerParticipantes(evento)
+                .stream().anyMatch(p -> p.equals(persona));
+        if (yaInscripta) {
+            throw new IllegalStateException("La persona ya está inscripta en este evento.");
+        }
+
+        repositorio.agregarParticipante(evento, persona);
+    }
+
+    public void desinscribirParticipante(Evento evento, Persona persona) {
+        repositorio.quitarParticipante(evento, persona);
+    }
+
+    public ObservableList<Persona> obtenerParticipantes(Evento evento) {
+        return repositorio.obtenerParticipantes(evento);
+    }
+
+    // ROLES
+    public RolEvento asignarRol(Evento evento, Persona persona, TipoRol rol) {
+        if (evento == null || persona == null || rol == null)
+            throw new IllegalArgumentException("Evento, persona y rol son obligatorios.");
+
+        boolean esParticipante = repositorio.obtenerParticipantes(evento)
+                .stream().anyMatch(p -> p.equals(persona));
+        if (esParticipante) {
+            throw new IllegalStateException("No se puede asignar un rol: la persona está inscripta como participante en este evento.");
+        }
+
+        boolean yaTieneRol = evento.getRoles() != null &&
+                evento.getRoles().stream().anyMatch(r -> r.getPersona().equals(persona));
+        if (yaTieneRol) {
+            throw new IllegalStateException("La persona ya tiene un rol asignado en este evento.");
+        }
+
+        RolEvento rolPersistido = repositorio.asignarRol(evento, persona, rol);
+        boolean yaEstaEnMemoria = evento.getRoles() != null &&
+                evento.getRoles().stream().anyMatch(r -> r.getPersona().equals(persona));
+        if (!yaEstaEnMemoria) {
+            evento.agregarRol(rolPersistido);
+        }
+        return rolPersistido;
+    }
+
+    public void eliminarRol(Evento evento, Persona persona, TipoRol rol) {
+        repositorio.eliminarRol(evento, persona, rol);
+        if (evento.getRoles() != null) {
+            evento.getRoles().removeIf(r -> r.getPersona().equals(persona) && r.getRol() == rol);
+        }
+    }
+
+    public ObservableList<RolEvento> obtenerRolesDeEvento(Evento evento) { return repositorio.obtenerRolesDeEvento(evento); }
+    public ObservableList<RolEvento> filtrarRoles(String nombreEvento, String nombrePersona, String dni) {
+        return repositorio.filtrarRoles(nombreEvento, nombrePersona, dni);
+    }
+
+    // Listados, Búsquedas y Eliminación
+    public List<Evento> listarEventos() { return repositorio.listarEventos(); }
+
+    public List<Evento> buscarEventos(TipoEvento tipo, EstadoEvento estado, LocalDate desde, LocalDate hasta) {
         return repositorio.buscarEventos(tipo, estado, desde, hasta);
     }
+
     public void eliminarEvento(Evento e) {
         if (e == null) throw new IllegalArgumentException("Evento inválido.");
-        if (e.getEstado() == EstadoEvento.CONFIRMADO)
-            throw new IllegalStateException("No puede eliminarse un evento confirmado.");
         repositorio.eliminarEvento(e);
     }
+
     public ObservableList<Evento> obtenerEventosConEstadosActualizados() {
         verificarEstadosEventos();
         return FXCollections.observableArrayList(repositorio.listarEventos());
     }
 
-    // ===== Personas =====
+    //  Personas
     public ObservableList<Persona> obtenerPersonas() { return repositorio.listarPersonas(); }
     public void guardarPersona(Persona persona) { repositorio.guardarPersona(persona); }
     public void eliminarPersona(Persona persona) { repositorio.eliminarPersona(persona); }
@@ -158,6 +247,7 @@ public class Servicio {
         original.actualizarCon(actualizada);
         repositorio.actualizarPersona(original);
     }
+
     public ObservableList<Persona> filtrarPersonas(String nombre, String dni) {
         var base = repositorio.listarPersonas();
         String n = nombre == null ? "" : nombre.trim().toLowerCase();
@@ -172,49 +262,7 @@ public class Servicio {
         return out;
     }
 
-    // ===== Participantes =====
-    public void inscribirParticipante(Evento evento, Persona persona) {
-        repositorio.agregarParticipante(evento, persona);
-    }
-    public void desinscribirParticipante(Evento evento, Persona persona) {
-        repositorio.quitarParticipante(evento, persona);
-    }
-    public ObservableList<Persona> obtenerParticipantes(Evento evento) {
-        return repositorio.obtenerParticipantes(evento);
-    }
-
-    // ===== Roles =====
-    /**
-     * Asigna rol persistiendo en BD y sincroniza la lista del evento EN MEMORIA
-     * para que la UI lo vea al instante sin recargar toda la pantalla.
-     */
-    public RolEvento asignarRol(Evento evento, Persona persona, TipoRol rol) {
-        // 1) Persisto (valida un solo rol por evento)
-        RolEvento rolPersistido = repositorio.asignarRol(evento, persona, rol);
-
-        // 2) Sincronizo el objeto en memoria (NO crear otro RolEvento nuevo)
-        boolean yaEsta = evento.getRoles() != null &&
-                evento.getRoles().stream().anyMatch(r -> r.getPersona().equals(persona));
-        if (!yaEsta) {
-            // agregar el MISMO objeto persistido
-            evento.agregarRol(rolPersistido);
-        }
-        return rolPersistido;
-    }
-
-    public void eliminarRol(Evento evento, Persona persona, TipoRol rol) {
-        repositorio.eliminarRol(evento, persona, rol);
-        if (evento.getRoles() != null) {
-            evento.getRoles().removeIf(r -> r.getPersona().equals(persona) && r.getRol() == rol);
-        }
-    }
-    public ObservableList<RolEvento> obtenerRolesDeEvento(Evento evento) { return repositorio.obtenerRolesDeEvento(evento); }
-    public ObservableList<RolEvento> obtenerRolesActivos() { return repositorio.obtenerRolesActivos(); }
-    public ObservableList<RolEvento> filtrarRoles(String nombreEvento, String nombrePersona, String dni) {
-        return repositorio.filtrarRoles(nombreEvento, nombrePersona, dni);
-    }
-
-    // ===== Películas =====
+    //  Películas
     public ObservableList<Pelicula> obtenerPeliculas() { return repositorio.listarPeliculas(); }
     public void guardarPelicula(Pelicula pelicula) { repositorio.guardarPelicula(pelicula); }
     public void eliminarPelicula(Pelicula pelicula) { repositorio.eliminarPelicula(pelicula); }
@@ -225,7 +273,7 @@ public class Servicio {
         repositorio.actualizarPelicula(original);
     }
 
-    // ===== Estados automáticos =====
+    // Estados automáticos
     public void verificarEstadosEventos() {
         for (Evento e : repositorio.listarEventos()) {
             EstadoEvento antes = e.getEstado();
@@ -234,8 +282,8 @@ public class Servicio {
         }
     }
 
-    // ===== Métricas / utilitarios =====
-    public java.util.List<Evento> listarEventosPorRango(LocalDateTime desde, LocalDateTime hasta) {
+    // Métricas / utilitarios
+    public List<Evento> listarEventosPorRango(LocalDateTime desde, LocalDateTime hasta) {
         var base = repositorio.buscarEventos(null, null, desde.toLocalDate(), hasta.toLocalDate());
         return base.stream()
                 .filter(e -> {
@@ -248,6 +296,7 @@ public class Servicio {
     }
 
     public long contarEventos() { return repositorio.listarEventos().size(); }
+
     public long contarEventosActivos() {
         LocalDateTime ahora = LocalDateTime.now();
         return repositorio.listarEventos().stream()
@@ -255,7 +304,9 @@ public class Servicio {
                 .filter(e -> e.getFechaFin() != null && e.getFechaFin().isAfter(ahora))
                 .count();
     }
+
     public long contarPersonas() { return repositorio.listarPersonas().size(); }
+
     public long contarInscripciones() {
         long total = 0L;
         for (Evento e : repositorio.listarEventos()) {
@@ -264,11 +315,7 @@ public class Servicio {
         return total;
     }
 
-    // ===== NUEVO: eventos que admiten inscripción =====
-    /** 
-     * MOD: lista SOLO los eventos que requieren inscripción (CONFIRMADOS, con fechaFin futura)
-     * y cuyo tipo admite inscripciones (Concierto, Taller, CicloCine).
-     */
+    // Inscripción utilitarios
     public List<Evento> listarEventosQueAdmitenInscripcion() {
         LocalDateTime ahora = LocalDateTime.now();
         return repositorio.listarEventos().stream()
@@ -277,22 +324,18 @@ public class Servicio {
                 .filter(e -> (e instanceof Concierto) || (e instanceof Taller) || (e instanceof CicloCine))
                 .toList();
     }
-    
-     /** Eventos inscribibles AHORA (CONFIRMADOS y no vencidos) */
+
     public ObservableList<Evento> obtenerEventosParaInscripcion() {
         return FXCollections.observableArrayList(
             repositorio.listarEventos().stream()
                 .filter(e -> e instanceof com.app_eventos.model.interfaces.IEventoConCupo)
                 .filter(e -> e.getEstado() == EstadoEvento.CONFIRMADO)
-                .filter(e -> e.getFechaFin() != null && e.getFechaFin().isAfter(java.time.LocalDateTime.now()))
+                .filter(e -> e.getFechaFin() != null && e.getFechaFin().isAfter(LocalDateTime.now()))
                 .toList()
         );
     }
 
-    /** Personas elegibles para inscribirse en el evento (sin rol y no inscriptas) – consultado en BD */
     public ObservableList<Persona> obtenerPersonasElegiblesParaEvento(Evento e) {
         return FXCollections.observableArrayList(repositorio.personasElegiblesParaInscripcion(e));
     }
-
-
 }

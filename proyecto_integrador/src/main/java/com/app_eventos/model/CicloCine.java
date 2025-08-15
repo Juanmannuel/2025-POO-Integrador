@@ -20,7 +20,7 @@ public class CicloCine extends Evento implements IEventoConCupo {
     /** Participantes persistidos en tabla puente genérica. */
     @ManyToMany
     @JoinTable(
-        name = "evento_participante",
+        name = "cine_participante",
         joinColumns = @JoinColumn(name = "evento_id"),
         inverseJoinColumns = @JoinColumn(name = "persona_id")
     )
@@ -76,7 +76,7 @@ public class CicloCine extends Evento implements IEventoConCupo {
 
     @Override
     public void setCupoMaximo(int v) {
-        if (v <= 0) throw new IllegalArgumentException("Cupo > 0");
+        if (v <= 0) throw new IllegalArgumentException("El cupo debe ser mayor a 0.");
         this.cupoMaximo = v;
     }
 

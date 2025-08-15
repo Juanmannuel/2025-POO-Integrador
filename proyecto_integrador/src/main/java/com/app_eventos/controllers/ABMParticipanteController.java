@@ -155,11 +155,6 @@ public class ABMParticipanteController {
     }
 
     @FXML
-    public void modificarParticipante() {
-        alertWarn("No hay campos para modificar. Use Baja y vuelva a dar el alta si corresponde.");
-    }
-
-    @FXML
     public void bajaParticipante() {
         Fila sel = tablaParticipantes.getSelectionModel().getSelectedItem();
         if (sel == null) { alertWarn("Seleccione una fila."); return; }

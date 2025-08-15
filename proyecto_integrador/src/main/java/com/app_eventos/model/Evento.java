@@ -1,17 +1,20 @@
 package com.app_eventos.model;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-
 import jakarta.persistence.*;
 import com.app_eventos.model.enums.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.*;
+
+/** Entidad base de eventos con invariantes en el dominio. */
 @Entity
 @Table(name = "evento")
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Evento {
+
+    private static final int MAX_YEARS_ADELANTE = 2;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,10 +24,10 @@ public abstract class Evento {
     @Column(nullable = false)
     private String nombre;
 
-    @Column
+    @Column(nullable = false)
     private LocalDateTime fechaInicio;
 
-    @Column
+    @Column(nullable = false)
     private LocalDateTime fechaFin;
 
     @Enumerated(EnumType.STRING)
@@ -38,62 +41,124 @@ public abstract class Evento {
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RolEvento> roles = new ArrayList<>();
 
+    // ========= Constructores =========
+
     protected Evento() {
         this.estado = EstadoEvento.PLANIFICACIÓN;
     }
 
     public Evento(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin, TipoEvento tipoEvento) {
         setNombre(nombre);
-        setFechaInicio(fechaInicio);
-        setFechaFin(fechaFin);
+        asignarFechas(fechaInicio, fechaFin); // único punto de verdad
         setTipoEvento(tipoEvento);
         this.estado = EstadoEvento.PLANIFICACIÓN;
     }
 
-    // Reglas de estado
+    // ========= Fechas (único punto de verdad) =========
+
+    /** Único método que valida y asigna ambas fechas. */
+    private void asignarFechas(LocalDateTime ini, LocalDateTime fin) {
+        Objects.requireNonNull(ini, "La fecha y hora de inicio es obligatoria.");
+        Objects.requireNonNull(fin, "La fecha y hora de fin es obligatoria.");
+
+        LocalDateTime limite = LocalDate.now()
+                .plusYears(MAX_YEARS_ADELANTE)
+                .atTime(23, 59, 59);
+
+        if (!fin.isAfter(ini))
+            throw new IllegalArgumentException("La fecha/hora de fin debe ser posterior al inicio.");
+        if (ini.isAfter(limite))
+            throw new IllegalArgumentException("La fecha/hora de inicio no puede superar 2 años desde hoy.");
+        if (fin.isAfter(limite))
+            throw new IllegalArgumentException("La fecha/hora de fin no puede superar 2 años desde hoy.");
+
+        this.fechaInicio = ini;
+        this.fechaFin = fin;
+    }
+
+    /** API cómoda desde UI/Servicio: setea y valida ambas fechas de una vez. */
+    public void setFechas(LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin) {
+        asignarFechas(LocalDateTime.of(fIni, hIni), LocalDateTime.of(fFin, hFin));
+    }
+
+    /** Setters individuales delegan para mantener invariantes. */
+    public void setFechaInicio(LocalDateTime nuevaInicio) { asignarFechas(nuevaInicio, this.fechaFin); }
+    public void setFechaFin(LocalDateTime nuevaFin)       { asignarFechas(this.fechaInicio, nuevaFin); }
+
+    // Reglas de estado 
     public void cambiarEstado(EstadoEvento nuevoEstado) {
+            Objects.requireNonNull(nuevoEstado, "Estado obligatorio");
+        if (this.estado == nuevoEstado) return;
+
         LocalDateTime now = LocalDateTime.now();
-        if (nuevoEstado == EstadoEvento.CONFIRMADO && this.fechaInicio.isBefore(now))
-            throw new IllegalStateException("No se puede confirmar con fecha pasada.");
-        if (nuevoEstado == EstadoEvento.EJECUCIÓN && (now.isBefore(fechaInicio) || now.isAfter(fechaFin)))
-            throw new IllegalStateException("Solo en ejecución entre inicio y fin.");
-        if (nuevoEstado == EstadoEvento.FINALIZADO && now.isBefore(fechaFin))
-            throw new IllegalStateException("No puede finalizar antes del fin.");
-        this.estado = nuevoEstado;
+
+        switch (this.estado) {
+            case PLANIFICACIÓN -> {
+                if (nuevoEstado != EstadoEvento.CONFIRMADO)
+                    throw new IllegalStateException("Desde PLANIFICACIÓN solo puede pasar a CONFIRMADO.");
+                if (this.fechaInicio.isBefore(now))
+                    throw new IllegalStateException("No se puede confirmar con fecha/hora de inicio pasada.");
+                validarRolesObligatorios(); // exige al menos ORGANIZADOR
+                this.estado = EstadoEvento.CONFIRMADO;
+            }
+            case CONFIRMADO, EJECUCIÓN, FINALIZADO -> {
+                throw new IllegalStateException("No se permite cambiar manualmente el estado desde " + this.estado + ".");
+            }
+        }
     }
 
-    public boolean Inscripcion() {
-        LocalDateTime now = LocalDateTime.now();
-        return this.estado == EstadoEvento.CONFIRMADO && now.isBefore(getFechaFin());
+    /** Setter “inteligente”: respeta la máquina de estados. */
+    public void setEstado(EstadoEvento nuevo) {
+        if (nuevo == null) throw new IllegalArgumentException("El estado del evento es obligatorio.");
+        if (this.estado == null || this.estado == nuevo) {
+            this.estado = nuevo; // inicialización o no-op
+        } else {
+            cambiarEstado(nuevo); // valida transiciones
+        }
     }
 
+    // Estados automáticos
     public void verificarEstadoAutomatico() {
         LocalDateTime now = LocalDateTime.now();
-        if ((this.estado == EstadoEvento.EJECUCIÓN || this.estado == EstadoEvento.CONFIRMADO)
-                && now.isAfter(this.fechaFin)) {
+
+        // CONFIRMADO -> EJECUCIÓN cuando llega la hora de inicio y todavía no pasó la de fin
+        if (estado == EstadoEvento.CONFIRMADO && !now.isBefore(fechaInicio) && now.isBefore(fechaFin)) {
+            this.estado = EstadoEvento.EJECUCIÓN;
+            return;
+        }
+
+        // CONFIRMADO/EJECUCIÓN -> FINALIZADO cuando pasó la hora de fin
+        if ((estado == EstadoEvento.CONFIRMADO || estado == EstadoEvento.EJECUCIÓN) && !now.isBefore(fechaFin)) {
             this.estado = EstadoEvento.FINALIZADO;
         }
     }
 
-    protected void validarPuedeInscribir() {
-        if (!Inscripcion()) throw new IllegalStateException("No se permite inscribir.");
+    public boolean esInscribible() {
+        LocalDateTime now = LocalDateTime.now();
+        return this.estado == EstadoEvento.CONFIRMADO && now.isBefore(getFechaFin());
     }
+
+    public boolean Inscripcion() { return esInscribible(); }
+
+    protected void validarPuedeInscribir() {
+        if (!esInscribible()) throw new IllegalStateException("No se permite inscribir.");
+    }
+
+    // Roles 
 
     /** Gancho para validaciones específicas de subtipos cuando asignan roles. */
-    protected void validarRestriccionesRol(TipoRol rol, Persona persona) {
-        // Por defecto, sin restricciones extra
-    }
+    protected void validarRestriccionesRol(TipoRol rol, Persona persona) { /* por defecto nada */ }
 
-    // Roles - asigna un rol a una persona
+    protected void validarRolesObligatorios() { validarInvariantes(); }
+
     public void agregarResponsable(Persona persona, TipoRol rol) {
         if (persona == null || rol == null) throw new IllegalArgumentException("Persona y rol requeridos.");
         if (!rolPermitido(rol)) throw new IllegalArgumentException("Rol no permitido para " + tipoEvento);
-        // Verifica si ya tiene un rol asignado
-        boolean yaTieneAlguno = roles.stream().anyMatch(r -> r.getPersona().equals(persona));
-        if (yaTieneAlguno) throw new IllegalArgumentException("La persona ya tiene un rol asignado en este evento.");
+
+        boolean yaTieneRol = roles.stream().anyMatch(r -> r.getPersona().equals(persona));
+        if (yaTieneRol) throw new IllegalArgumentException("La persona ya tiene un rol asignado en este evento.");
 
         validarRestriccionesRol(rol, persona);
-
         this.roles.add(new RolEvento(this, persona, rol));
     }
 
@@ -103,10 +168,7 @@ public abstract class Evento {
     }
 
     public List<Persona> obtenerResponsables(TipoRol rol) {
-        return roles.stream()
-                .filter(r -> r.getRol() == rol)
-                .map(RolEvento::getPersona)
-                .toList();
+        return roles.stream().filter(r -> r.getRol() == rol).map(RolEvento::getPersona).toList();
     }
 
     public boolean personaTieneRol(Persona persona) {
@@ -117,9 +179,10 @@ public abstract class Evento {
         return roles.stream().filter(r -> r.getRol() == rol).count();
     }
 
+    /** Invariante por defecto: al menos un ORGANIZADOR. Subclases pueden reforzar. */
     public void validarInvariantes() {
         if (contarPorRol(TipoRol.ORGANIZADOR) == 0)
-            throw new IllegalStateException("Todo evento debe tener al menos un organizador.");
+            throw new IllegalStateException("Todo evento debe tener al menos un ORGANIZADOR.");
     }
 
     protected abstract boolean rolPermitido(TipoRol rol);
@@ -130,42 +193,26 @@ public abstract class Evento {
         return set;
     }
 
-    public void agregarRol(RolEvento rol) {
-        if (rol != null) roles.add(rol);
-    }
+    public void agregarRol(RolEvento rol) { if (rol != null) roles.add(rol); }
+
+    // ========= Getters =========
 
     public Long getIdEvento() { return idEvento; }
     public void setIdEvento(Long idEvento) { this.idEvento = idEvento; }
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) {
-        if (nombre == null || nombre.isBlank()) throw new IllegalArgumentException("Nombre vacío.");
+        if (nombre == null || nombre.isBlank()) throw new IllegalArgumentException("Nombre obligatorio.");
         this.nombre = nombre;
     }
 
     public LocalDateTime getFechaInicio() { return fechaInicio; }
-    public void setFechaInicio(LocalDateTime fechaInicio) {
-        if (fechaInicio == null) throw new IllegalArgumentException("Inicio nulo.");
-        this.fechaInicio = fechaInicio;
-    }
+    public LocalDateTime getFechaFin()    { return fechaFin; }
 
-    public LocalDateTime getFechaFin() { return fechaFin; }
-    public void setFechaFin(LocalDateTime fechaFin) {
-        if (fechaFin == null) throw new IllegalArgumentException("Fin nulo.");
-        if (this.fechaInicio != null && fechaFin.isBefore(this.fechaInicio))
-            throw new IllegalArgumentException("Fin antes que inicio.");
-        this.fechaFin = fechaFin;
-    }
-
-    public EstadoEvento getEstado() { return estado; }
-    public void setEstado(EstadoEvento estado) {
-        if (estado == null) throw new IllegalArgumentException("Estado nulo.");
-        this.estado = estado;
-    }
-
-    public TipoEvento getTipoEvento() { return tipoEvento; }
+    public EstadoEvento getEstado()       { return estado; }
+    public TipoEvento getTipoEvento()     { return tipoEvento; }
     public void setTipoEvento(TipoEvento tipoEvento) {
-        if (tipoEvento == null) throw new IllegalArgumentException("Tipo de evento nulo.");
+        if (tipoEvento == null) throw new IllegalArgumentException("El tipo de evento es obligatorio.");
         this.tipoEvento = tipoEvento;
     }
 

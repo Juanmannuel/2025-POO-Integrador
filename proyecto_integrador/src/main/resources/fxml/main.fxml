@@ -14,8 +14,9 @@
         <Button fx:id="btnInicio" text="Inicio" onAction="#mostrarInicio" styleClass="sidebar-button"/>
         <Button fx:id="btnEventos" text="Eventos" onAction="#mostrarEventos" styleClass="sidebar-button" />
         <Button fx:id="btnPersona" text="Personas" onAction="#mostrarPersonas" styleClass="sidebar-button" />
-        <Button fx:id="btnParticipantes" text="Participantes" onAction="#mostrarParticipantes" styleClass="sidebar-button" />
         <Button fx:id="btnPeliculas" text="Películas" onAction="#mostrarPeliculas" styleClass="sidebar-button"/>
+        <Button fx:id="btnParticipantes" text="Participantes" onAction="#mostrarParticipantes" styleClass="sidebar-button" />
+
 
     </VBox>
 

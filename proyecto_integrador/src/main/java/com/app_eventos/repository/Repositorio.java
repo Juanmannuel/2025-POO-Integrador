@@ -201,19 +201,10 @@ public class Repositorio {
                 "select r from RolEvento r " +
                 "join fetch r.persona p " +
                 "where r.evento.idEvento=:id " +
-                "order by r.fechaAsignacion desc, r.id desc",
+                "order by r.id desc",              // ← antes: r.fechaAsignacion desc, r.id desc
                 RolEvento.class
             ).setParameter("id", evento.getIdEvento())
-             .getResultList()
-        ));
-    }
-
-    public ObservableList<RolEvento> obtenerRolesActivos() {
-        return tx(em -> FXCollections.observableArrayList(
-            em.createQuery(
-                "select r from RolEvento r join fetch r.evento e join fetch r.persona p order by r.fechaAsignacion desc, r.id desc",
-                RolEvento.class
-            ).getResultList()
+            .getResultList()
         ));
     }
 
@@ -226,7 +217,7 @@ public class Repositorio {
             if (ne != null && !ne.isBlank()) { jpql.append(" and lower(e.nombre) like :ne"); params.put("ne","%"+ne.toLowerCase()+"%"); }
             if (np != null && !np.isBlank()) { jpql.append(" and (lower(p.nombre) like :np or lower(p.apellido) like :np)"); params.put("np","%"+np.toLowerCase()+"%"); }
             if (dni!= null && !dni.isBlank()){ jpql.append(" and p.dni like :dni"); params.put("dni","%"+dni+"%"); }
-            jpql.append(" order by r.fechaAsignacion desc, r.id desc");
+            jpql.append(" order by r.id desc"); 
             TypedQuery<RolEvento> q = em.createQuery(jpql.toString(), RolEvento.class);
             params.forEach(q::setParameter);
             return FXCollections.observableArrayList(q.getResultList());

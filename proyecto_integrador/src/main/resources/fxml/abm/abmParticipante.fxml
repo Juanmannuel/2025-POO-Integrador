@@ -44,7 +44,6 @@
 
             <HBox spacing="12" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
                 <Button text="Alta" onAction="#mostrarModalAlta" styleClass="btn-alta"/>
-                <Button text="Modificar" onAction="#modificarParticipante" styleClass="btn-modificar"/>
                 <Button text="Baja" onAction="#bajaParticipante" styleClass="btn-baja"/>
             </HBox>
         </VBox>
