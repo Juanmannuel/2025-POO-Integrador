@@ -63,49 +63,56 @@ public class Repositorio {
     public void eliminarPelicula(Pelicula p){ tx(em->{ em.remove(em.contains(p)?p:em.merge(p)); return null; }); }
 
     // ---------- Helpers privados ----------
-    /** ¿La persona ya tiene algún rol en el evento? */
-    private boolean personaTieneRolEnEvento(EntityManager em, Evento ev, Persona pe){
+
+    /** ¿La persona ya tiene algún rol en el evento? (check por id, rápido) */
+    private boolean personaTieneRolEnEvento(EntityManager em, long idEvento, long idPersona){
         return !em.createQuery(
-            "select r.id from RolEvento r where r.evento=:e and r.persona=:p", Long.class)
-            .setParameter("e", ev)
-            .setParameter("p", pe)
+            "select 1 from RolEvento r " +
+            "where r.evento.idEvento = :ide and r.persona.idPersona = :idp", Integer.class)
+            .setParameter("ide", idEvento)
+            .setParameter("idp", idPersona)
             .setMaxResults(1)
             .getResultList()
             .isEmpty();
     }
 
-    /** ¿La persona ya está inscripta como participante en el evento? */
-    private boolean esParticipanteDeEvento(EntityManager em, Evento ev, Persona pe){
+    /** ¿La persona ya está inscripta como participante en el evento? (por subtipo) */
+    private boolean esParticipanteDeEvento(EntityManager em, Evento ev, long idPersona){
+        Long idEv = ev.getIdEvento();
         if (ev instanceof Concierto){
-            Long cnt = em.createQuery(
-                "select count(p) from Concierto c join c.participantes p " +
-                "where c.idEvento=:id and p=:p", Long.class)
-                .setParameter("id", ev.getIdEvento())
-                .setParameter("p", pe)
-                .getSingleResult();
-            return cnt > 0;
+            return !em.createQuery(
+                "select 1 from Concierto c join c.participantes p " +
+                "where c.idEvento = :id and p.idPersona = :idp", Integer.class)
+                .setParameter("id", idEv)
+                .setParameter("idp", idPersona)
+                .setMaxResults(1)
+                .getResultList()
+                .isEmpty();
         } else if (ev instanceof Taller){
-            Long cnt = em.createQuery(
-                "select count(p) from Taller t join t.participantes p " +
-                "where t.idEvento=:id and p=:p", Long.class)
-                .setParameter("id", ev.getIdEvento())
-                .setParameter("p", pe)
-                .getSingleResult();
-            return cnt > 0;
+            return !em.createQuery(
+                "select 1 from Taller t join t.participantes p " +
+                "where t.idEvento = :id and p.idPersona = :idp", Integer.class)
+                .setParameter("id", idEv)
+                .setParameter("idp", idPersona)
+                .setMaxResults(1)
+                .getResultList()
+                .isEmpty();
         } else if (ev instanceof CicloCine){
-            Long cnt = em.createQuery(
-                "select count(p) from CicloCine c join c.participantes p " +
-                "where c.idEvento=:id and p=:p", Long.class)
-                .setParameter("id", ev.getIdEvento())
-                .setParameter("p", pe)
-                .getSingleResult();
-            return cnt > 0;
+            return !em.createQuery(
+                "select 1 from CicloCine c join c.participantes p " +
+                "where c.idEvento = :id and p.idPersona = :idp", Integer.class)
+                .setParameter("id", idEv)
+                .setParameter("idp", idPersona)
+                .setMaxResults(1)
+                .getResultList()
+                .isEmpty();
         }
-        return false; // los demás no tienen inscripción
+        // los demás no tienen inscripción
+        return false;
     }
 
-    /** Valida rol permitido por tipo de evento + unicidad (INSTRUCTOR/CURADOR) y no-participante. */
-    private void validarReglasDeRol(EntityManager em, Evento ev, Persona pe, TipoRol rol){
+    /** Valida rol permitido por tipo + unicidad (INSTRUCTOR/CURADOR) + no-participante. */
+    private void validarReglasDeRol(EntityManager em, Evento ev, long idPersona, TipoRol rol){
         // Permisos por tipo
         boolean permitido =
             (ev instanceof Concierto && (rol==TipoRol.ORGANIZADOR || rol==TipoRol.ARTISTA)) ||
@@ -117,30 +124,33 @@ public class Repositorio {
             throw new IllegalArgumentException("Rol "+rol+" no permitido para el evento seleccionado.");
 
         // Único INSTRUCTOR (Taller)
-        if (ev instanceof Taller && rol==TipoRol.INSTRUCTOR){
-            Long cant = em.createQuery(
-                "select count(r) from RolEvento r where r.evento=:e and r.rol=:rol", Long.class)
-                .setParameter("e", ev)
+        if (ev instanceof Taller){
+            Long cantInst = em.createQuery(
+                "select count(r) from RolEvento r where r.evento.idEvento=:ide and r.rol=:rol", Long.class)
+                .setParameter("ide", ev.getIdEvento())
                 .setParameter("rol", TipoRol.INSTRUCTOR)
                 .getSingleResult();
-            if (cant > 0) throw new IllegalStateException("El taller ya tiene un INSTRUCTOR asignado.");
+            if (rol == TipoRol.INSTRUCTOR && cantInst > 0)
+                throw new IllegalStateException("El taller ya tiene un INSTRUCTOR asignado.");
         }
         // Único CURADOR (Exposición)
-        if (ev instanceof Exposicion && rol==TipoRol.CURADOR){
-            Long cant = em.createQuery(
-                "select count(r) from RolEvento r where r.evento=:e and r.rol=:rol", Long.class)
-                .setParameter("e", ev)
+        if (ev instanceof Exposicion){
+            Long cantCur = em.createQuery(
+                "select count(r) from RolEvento r where r.evento.idEvento=:ide and r.rol=:rol", Long.class)
+                .setParameter("ide", ev.getIdEvento())
                 .setParameter("rol", TipoRol.CURADOR)
                 .getSingleResult();
-            if (cant > 0) throw new IllegalStateException("La exposición ya tiene un CURADOR asignado.");
+            if (rol == TipoRol.CURADOR && cantCur > 0)
+                throw new IllegalStateException("La exposición ya tiene un CURADOR asignado.");
         }
 
         // No puede tener rol si ya es participante
-        if (esParticipanteDeEvento(em, ev, pe))
+        if (esParticipanteDeEvento(em, ev, idPersona))
             throw new IllegalStateException("La persona ya está inscripta como participante en este evento.");
     }
 
     // ---------- Roles ----------
+
     /**
      * Asigna y persiste un rol cumpliendo reglas:
      *  - una persona NO puede tener más de un rol en el mismo evento
@@ -150,30 +160,35 @@ public class Repositorio {
      */
     public RolEvento asignarRol(Evento evento, Persona persona, TipoRol rol) {
         return tx(em -> {
-            // find para obtener la subclase real (Taller/Concierto/etc.)
+            // Cargar entidades administradas
             Evento ev = em.find(Evento.class, evento.getIdEvento());
             Persona pe = em.getReference(Persona.class, persona.getIdPersona());
 
+            long idEv = ev.getIdEvento();
+            long idPe = pe.getIdPersona();
+
             // Un rol por (persona, evento)
-            if (personaTieneRolEnEvento(em, ev, pe))
+            if (personaTieneRolEnEvento(em, idEv, idPe))
                 throw new IllegalStateException("La persona ya tiene un rol asignado en este evento.");
 
-            // Reglas del dominio
-            validarReglasDeRol(em, ev, pe, rol);
+            // Reglas (incluye chequeo de no-participante)
+            validarReglasDeRol(em, ev, idPe, rol);
 
-            // Idempotencia
+            // Idempotencia exacta
             RolEvento existente = em.createQuery(
-                "select r from RolEvento r where r.evento=:e and r.persona=:p and r.rol=:r",
+                "select r from RolEvento r " +
+                "where r.evento.idEvento = :ide and r.persona.idPersona = :idp and r.rol = :rol",
                 RolEvento.class
-            ).setParameter("e", ev)
-             .setParameter("p", pe)
-             .setParameter("r", rol)
+            ).setParameter("ide", idEv)
+             .setParameter("idp", idPe)
+             .setParameter("rol", rol)
+             .setMaxResults(1)
              .getResultStream()
              .findFirst()
              .orElse(null);
             if (existente != null) return existente;
 
-            // Persistir (fecha_asignacion se setea en ctor/prePersist)
+            // Persistir
             RolEvento nuevo = new RolEvento(ev, pe, rol);
             em.persist(nuevo);
             return nuevo;
@@ -183,28 +198,27 @@ public class Repositorio {
     /** Elimina el rol de una persona en un evento. */
     public void eliminarRol(Evento evento, Persona persona, TipoRol rol) {
         tx(em -> {
-            Evento ev = em.getReference(Evento.class, evento.getIdEvento());
-            Persona pe = em.getReference(Persona.class, persona.getIdPersona());
-            em.createQuery("delete from RolEvento r where r.evento=:e and r.persona=:p and r.rol=:r")
-              .setParameter("e", ev)
-              .setParameter("p", pe)
-              .setParameter("r", rol)
+            em.createQuery("delete from RolEvento r " +
+                           "where r.evento.idEvento=:ide and r.persona.idPersona=:idp and r.rol=:rol")
+              .setParameter("ide", evento.getIdEvento())
+              .setParameter("idp", persona.getIdPersona())
+              .setParameter("rol", rol)
               .executeUpdate();
             return null;
         });
     }
 
-    /** Roles de un evento (con persona precargada) ordenados por fecha asignación DESC. */
+    /** Roles de un evento (con persona precargada) ordenados por fecha asignación DESC/ID DESC. */
     public ObservableList<RolEvento> obtenerRolesDeEvento(Evento evento) {
         return tx(em -> FXCollections.observableArrayList(
             em.createQuery(
                 "select r from RolEvento r " +
                 "join fetch r.persona p " +
                 "where r.evento.idEvento=:id " +
-                "order by r.id desc",              // ← antes: r.fechaAsignacion desc, r.id desc
+                "order by r.id desc",
                 RolEvento.class
             ).setParameter("id", evento.getIdEvento())
-            .getResultList()
+             .getResultList()
         ));
     }
 
@@ -217,7 +231,7 @@ public class Repositorio {
             if (ne != null && !ne.isBlank()) { jpql.append(" and lower(e.nombre) like :ne"); params.put("ne","%"+ne.toLowerCase()+"%"); }
             if (np != null && !np.isBlank()) { jpql.append(" and (lower(p.nombre) like :np or lower(p.apellido) like :np)"); params.put("np","%"+np.toLowerCase()+"%"); }
             if (dni!= null && !dni.isBlank()){ jpql.append(" and p.dni like :dni"); params.put("dni","%"+dni+"%"); }
-            jpql.append(" order by r.id desc"); 
+            jpql.append(" order by r.id desc");
             TypedQuery<RolEvento> q = em.createQuery(jpql.toString(), RolEvento.class);
             params.forEach(q::setParameter);
             return FXCollections.observableArrayList(q.getResultList());
@@ -225,13 +239,17 @@ public class Repositorio {
     }
 
     // ---------- Participantes ----------
+
     public void agregarParticipante(Evento evento, Persona persona) {
         tx(em -> {
             Evento e = em.find(Evento.class, evento.getIdEvento());
             Persona p = em.getReference(Persona.class, persona.getIdPersona());
 
+            long idEv = e.getIdEvento();
+            long idPe = p.getIdPersona();
+
             // No inscribir si tiene algún rol en el evento
-            if (personaTieneRolEnEvento(em, e, p))
+            if (personaTieneRolEnEvento(em, idEv, idPe))
                 throw new IllegalStateException("No se puede inscribir: la persona tiene un rol en este evento.");
 
             // Estado/corte de inscripción
@@ -239,19 +257,69 @@ public class Repositorio {
             if (e.getEstado() != EstadoEvento.CONFIRMADO || now.isAfter(e.getFechaFin()))
                 throw new IllegalStateException("No se permite inscribir para este evento.");
 
-            // Por subtipo con cupo
+            // Por subtipo con cupo (consultas por conteo + id)
             if (e instanceof Concierto c) {
-                if (c.getParticipantes().contains(p)) throw new IllegalArgumentException("La persona ya está inscripta.");
-                if (c.getParticipantes().size() >= c.getCupoMaximo()) throw new IllegalStateException("Cupo completo.");
+                // duplicado
+                boolean ya = !em.createQuery(
+                    "select 1 from Concierto c join c.participantes p " +
+                    "where c.idEvento=:id and p.idPersona=:idp", Integer.class)
+                    .setParameter("id", idEv)
+                    .setParameter("idp", idPe)
+                    .setMaxResults(1)
+                    .getResultList().isEmpty();
+                if (ya) throw new IllegalArgumentException("La persona ya está inscripta.");
+
+                // cupo
+                Long inscritos = em.createQuery(
+                    "select count(p) from Concierto c join c.participantes p " +
+                    "where c.idEvento=:id", Long.class)
+                    .setParameter("id", idEv)
+                    .getSingleResult();
+                if (inscritos >= c.getCupoMaximo())
+                    throw new IllegalStateException("Cupo completo.");
+
                 c.getParticipantes().add(p);
+
             } else if (e instanceof Taller t) {
-                if (t.getParticipantes().contains(p)) throw new IllegalArgumentException("La persona ya está inscripta.");
-                if (t.getParticipantes().size() >= t.getCupoMaximo()) throw new IllegalStateException("Cupo completo.");
+                boolean ya = !em.createQuery(
+                    "select 1 from Taller t join t.participantes p " +
+                    "where t.idEvento=:id and p.idPersona=:idp", Integer.class)
+                    .setParameter("id", idEv)
+                    .setParameter("idp", idPe)
+                    .setMaxResults(1)
+                    .getResultList().isEmpty();
+                if (ya) throw new IllegalArgumentException("La persona ya está inscripta.");
+
+                Long inscritos = em.createQuery(
+                    "select count(p) from Taller t join t.participantes p " +
+                    "where t.idEvento=:id", Long.class)
+                    .setParameter("id", idEv)
+                    .getSingleResult();
+                if (inscritos >= t.getCupoMaximo())
+                    throw new IllegalStateException("Cupo completo.");
+
                 t.getParticipantes().add(p);
+
             } else if (e instanceof CicloCine cc) {
-                if (cc.getParticipantes().contains(p)) throw new IllegalArgumentException("La persona ya está inscripta.");
-                if (cc.getParticipantes().size() >= cc.getCupoMaximo()) throw new IllegalStateException("Cupo completo.");
+                boolean ya = !em.createQuery(
+                    "select 1 from CicloCine c join c.participantes p " +
+                    "where c.idEvento=:id and p.idPersona=:idp", Integer.class)
+                    .setParameter("id", idEv)
+                    .setParameter("idp", idPe)
+                    .setMaxResults(1)
+                    .getResultList().isEmpty();
+                if (ya) throw new IllegalArgumentException("La persona ya está inscripta.");
+
+                Long inscritos = em.createQuery(
+                    "select count(p) from CicloCine c join c.participantes p " +
+                    "where c.idEvento=:id", Long.class)
+                    .setParameter("id", idEv)
+                    .getSingleResult();
+                if (inscritos >= cc.getCupoMaximo())
+                    throw new IllegalStateException("Cupo completo.");
+
                 cc.getParticipantes().add(p);
+
             } else {
                 throw new IllegalArgumentException("El evento no admite inscripción.");
             }
@@ -276,15 +344,21 @@ public class Repositorio {
             Long id = evento.getIdEvento();
             if (evento instanceof Concierto)
                 return FXCollections.observableArrayList(
-                    em.createQuery("select p from Concierto c join c.participantes p where c.idEvento=:id order by p.apellido, p.nombre", Persona.class)
+                    em.createQuery(
+                        "select p from Concierto c join c.participantes p " +
+                        "where c.idEvento=:id order by p.apellido, p.nombre", Persona.class)
                       .setParameter("id", id).getResultList());
             else if (evento instanceof Taller)
                 return FXCollections.observableArrayList(
-                    em.createQuery("select p from Taller t join t.participantes p where t.idEvento=:id order by p.apellido, p.nombre", Persona.class)
+                    em.createQuery(
+                        "select p from Taller t join t.participantes p " +
+                        "where t.idEvento=:id order by p.apellido, p.nombre", Persona.class)
                       .setParameter("id", id).getResultList());
             else if (evento instanceof CicloCine)
                 return FXCollections.observableArrayList(
-                    em.createQuery("select p from CicloCine c join c.participantes p where c.idEvento=:id order by p.apellido, p.nombre", Persona.class)
+                    em.createQuery(
+                        "select p from CicloCine c join c.participantes p " +
+                        "where c.idEvento=:id order by p.apellido, p.nombre", Persona.class)
                       .setParameter("id", id).getResultList());
             return FXCollections.observableArrayList();
         });
@@ -332,48 +406,51 @@ public class Repositorio {
     /** Personas elegibles para inscribirse en 'e': no tienen rol en el evento ni están inscriptas. */
     public java.util.List<Persona> personasElegiblesParaInscripcion(Evento e) {
         return tx(em -> {
-            // obtener la subclase real
             Evento ev = em.find(Evento.class, e.getIdEvento());
+            Long idEv = ev.getIdEvento();
 
             // base: personas sin rol en el evento
             String base = """
                 select p from Persona p
-                where p not in (select r.persona from RolEvento r where r.evento.idEvento = :id)
+                where not exists (
+                    select 1 from RolEvento r
+                    where r.evento.idEvento = :idEv and r.persona.idPersona = p.idPersona
+                )
                 """;
 
             String order = " order by p.apellido, p.nombre";
 
             if (ev instanceof Concierto) {
                 String jpql = base + """
-                    and p not in (
-                        select p2 from Concierto c join c.participantes p2
-                        where c.idEvento = :id
+                    and not exists (
+                        select 1 from Concierto c join c.participantes px
+                        where c.idEvento = :idEv and px.idPersona = p.idPersona
                     )
                     """ + order;
                 return em.createQuery(jpql, Persona.class)
-                        .setParameter("id", ev.getIdEvento())
+                        .setParameter("idEv", idEv)
                         .getResultList();
 
             } else if (ev instanceof Taller) {
                 String jpql = base + """
-                    and p not in (
-                        select p2 from Taller t join t.participantes p2
-                        where t.idEvento = :id
+                    and not exists (
+                        select 1 from Taller t join t.participantes px
+                        where t.idEvento = :idEv and px.idPersona = p.idPersona
                     )
                     """ + order;
                 return em.createQuery(jpql, Persona.class)
-                        .setParameter("id", ev.getIdEvento())
+                        .setParameter("idEv", idEv)
                         .getResultList();
 
             } else if (ev instanceof CicloCine) {
                 String jpql = base + """
-                    and p not in (
-                        select p2 from CicloCine c join c.participantes p2
-                        where c.idEvento = :id
+                    and not exists (
+                        select 1 from CicloCine c join c.participantes px
+                        where c.idEvento = :idEv and px.idPersona = p.idPersona
                     )
                     """ + order;
                 return em.createQuery(jpql, Persona.class)
-                        .setParameter("id", ev.getIdEvento())
+                        .setParameter("idEv", idEv)
                         .getResultList();
             }
 

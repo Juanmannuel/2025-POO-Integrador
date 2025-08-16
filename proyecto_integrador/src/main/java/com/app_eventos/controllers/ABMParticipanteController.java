@@ -18,7 +18,6 @@ import javafx.util.StringConverter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /** ABM Participantes */
 public class ABMParticipanteController {
@@ -254,7 +253,7 @@ public class ABMParticipanteController {
                 .toList();
     }
 
-    /** ¿El evento está inscribible ahora? (CONFIRMADO y no vencido). */
+    /** ¿El evento está inscribible ahora? (CONFIRMADO). */
     private boolean esInscribibleAhora(Evento e) {
         if (!(e instanceof IEventoConCupo)) return false;
         LocalDateTime ahora = LocalDateTime.now();

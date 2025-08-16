@@ -48,6 +48,7 @@ public class CicloCine extends Evento implements IEventoConCupo {
         if (p == null) throw new IllegalArgumentException("Película nula");
         peliculas.add(p);
     }
+    
     public void sacarPelicula(Pelicula p) { peliculas.remove(p); }
     public void clearPeliculas() { peliculas.clear(); }
     public List<Pelicula> getPeliculas() { return new ArrayList<>(peliculas); }
