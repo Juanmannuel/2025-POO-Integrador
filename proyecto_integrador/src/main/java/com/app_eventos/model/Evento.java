@@ -14,8 +14,6 @@ import java.util.*;
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Evento {
 
-    private static final int MAX_YEARS_ADELANTE = 2;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "idEvento")
@@ -54,15 +52,12 @@ public abstract class Evento {
         this.estado = EstadoEvento.PLANIFICACIÓN;
     }
 
-    // ========= Fechas (único punto de verdad) =========
-
     /** Único método que valida y asigna ambas fechas. */
     private void asignarFechas(LocalDateTime ini, LocalDateTime fin) {
         Objects.requireNonNull(ini, "La fecha y hora de inicio es obligatoria.");
         Objects.requireNonNull(fin, "La fecha y hora de fin es obligatoria.");
 
         LocalDateTime limite = LocalDate.now()
-                .plusYears(MAX_YEARS_ADELANTE)
                 .atTime(23, 59, 59);
 
         if (!fin.isAfter(ini))
@@ -85,9 +80,9 @@ public abstract class Evento {
     public void setFechaInicio(LocalDateTime nuevaInicio) { asignarFechas(nuevaInicio, this.fechaFin); }
     public void setFechaFin(LocalDateTime nuevaFin)       { asignarFechas(this.fechaInicio, nuevaFin); }
 
-    // Reglas de estado 
+    // ========= Reglas de estado =========
     public void cambiarEstado(EstadoEvento nuevoEstado) {
-            Objects.requireNonNull(nuevoEstado, "Estado obligatorio");
+        Objects.requireNonNull(nuevoEstado, "Estado obligatorio");
         if (this.estado == nuevoEstado) return;
 
         LocalDateTime now = LocalDateTime.now();
@@ -117,7 +112,7 @@ public abstract class Evento {
         }
     }
 
-    // Estados automáticos
+    // ========= Estados automáticos =========
     public void verificarEstadoAutomatico() {
         LocalDateTime now = LocalDateTime.now();
 
@@ -144,7 +139,21 @@ public abstract class Evento {
         if (!esInscribible()) throw new IllegalStateException("No se permite inscribir.");
     }
 
-    // Roles 
+    // ========= Roles =========
+
+    /** Helper para congelar gestión de roles en EJECUCIÓN/FINALIZADO. */
+    private void validarPuedeGestionarRoles() {
+        // Por si el objeto quedó en memoria y el tiempo avanzó
+        verificarEstadoAutomatico();
+
+        if (estado == EstadoEvento.EJECUCIÓN || estado == EstadoEvento.FINALIZADO) {
+            throw new IllegalStateException(
+                "No se pueden gestionar roles cuando el evento está en EJECUCIÓN o FINALIZADO."
+            );
+        }
+        // Si querés permitir solo en PLANIFICACIÓN (no en CONFIRMADO), reemplazá por:
+        // if (estado != EstadoEvento.PLANIFICACIÓN) { throw new IllegalStateException(...); }
+    }
 
     /** Gancho para validaciones específicas de subtipos cuando asignan roles. */
     protected void validarRestriccionesRol(TipoRol rol, Persona persona) { /* por defecto nada */ }
@@ -152,6 +161,8 @@ public abstract class Evento {
     protected void validarRolesObligatorios() { validarInvariantes(); }
 
     public void agregarResponsable(Persona persona, TipoRol rol) {
+        validarPuedeGestionarRoles(); // <--- NUEVO
+
         if (persona == null || rol == null) throw new IllegalArgumentException("Persona y rol requeridos.");
         if (!rolPermitido(rol)) throw new IllegalArgumentException("Rol no permitido para " + tipoEvento);
 
@@ -163,6 +174,8 @@ public abstract class Evento {
     }
 
     public void borrarResponsable(Persona persona, TipoRol rol) {
+        validarPuedeGestionarRoles(); // <--- también congelamos bajas
+
         if (persona == null || rol == null) return;
         roles.removeIf(r -> r.getPersona().equals(persona) && r.getRol() == rol);
     }
@@ -195,7 +208,7 @@ public abstract class Evento {
 
     public void agregarRol(RolEvento rol) { if (rol != null) roles.add(rol); }
 
-    // ========= Getters =========
+    // ========= Getters/Setters =========
 
     public Long getIdEvento() { return idEvento; }
     public void setIdEvento(Long idEvento) { this.idEvento = idEvento; }

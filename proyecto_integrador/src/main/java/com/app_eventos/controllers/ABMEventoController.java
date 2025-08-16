@@ -7,6 +7,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+// <<< NUEVO
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -53,10 +54,10 @@ public class ABMEventoController {
     @FXML private TableColumn<Evento, String> colResponsables;
 
     // ----------- Filtros -----------
-    @FXML private ComboBox<TipoEvento> comboTipoEventoFiltro; // OK en FXML
-    private ComboBox<EstadoEvento> comboEstadoFiltro;          // detectado por tipo
-    private DatePicker dateDesdeFiltro;                        // detectado por tipo
-    private DatePicker dateHastaFiltro;                        // detectado por tipo
+    @FXML private ComboBox<TipoEvento> comboTipoEventoFiltro;
+    private ComboBox<EstadoEvento> comboEstadoFiltro;          
+    private DatePicker dateDesdeFiltro;                        
+    private DatePicker dateHastaFiltro;                        
 
     // ----------- Estado interno -----------
     private final ObservableList<Evento> modeloTabla = FXCollections.observableArrayList();
@@ -152,7 +153,12 @@ public class ABMEventoController {
     }
 
     private void buscarYRefrescarTabla() {
-        servicio.verificarEstadosEventos();
+        try {
+            servicio.verificarEstadosEventos();
+        } catch (RuntimeException ex) { // <<< NUEVO: por si algo falla en verificación automática
+            // No detenemos la UI; solo informamos
+            mostrarAlerta("Aviso", "No se pudieron verificar algunos estados automáticamente: " + ex.getMessage());
+        }
 
         LocalDate desde = (dateDesdeFiltro != null) ? dateDesdeFiltro.getValue() : null;
         LocalDate hasta = (dateHastaFiltro != null) ? dateHastaFiltro.getValue() : null;
@@ -223,15 +229,31 @@ public class ABMEventoController {
     private void agregarBotonAsignarRol() {
         colAcciones.setCellFactory(col -> new TableCell<>() {
             private final Button btn = new Button("Asignar Rol");
-            { btn.setOnAction(e -> {
+            {
+                btn.setOnAction(e -> {
+                    Evento ev = getTableView().getItems().get(getIndex());
+                    if (ev != null) abrirModalAsignacionRoles(ev);
+                });
+            }
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                    return;
+                }
                 Evento ev = getTableView().getItems().get(getIndex());
-                if (ev != null) abrirModalAsignacionRoles(ev);
-            });}
-            protected void updateItem(Void it, boolean empty){ super.updateItem(it, empty); setGraphic(empty?null:btn); }
+                boolean habilitado = ev != null
+                        && ev.getEstado() != EstadoEvento.EJECUCIÓN
+                        && ev.getEstado() != EstadoEvento.FINALIZADO;
+
+                btn.setDisable(!habilitado);
+                setGraphic(btn);
+            }
         });
     }
 
-    private void abrirModalAsignacionRoles(Evento evento) {
+        private void abrirModalAsignacionRoles(Evento evento) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmEventoResources/asignacionRoles.fxml"));
             VBox vista = loader.load();
@@ -244,17 +266,12 @@ public class ABMEventoController {
             dlg.getDialogPane().setContent(vista);
             dlg.getDialogPane().getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
             dlg.setResizable(true);
-            ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK))
-                    .addEventFilter(javafx.event.ActionEvent.ACTION, a -> {
-                        try { evento.validarInvariantes(); }
-                        catch (IllegalStateException ex){ a.consume(); mostrarAlerta("Validación", ex.getMessage()); }
-                    });
 
             dlg.setOnHidden(e -> buscarYRefrescarTabla());
             dlg.showAndWait();
+
         } catch (IOException ex) {
             ex.printStackTrace();
-            mostrarAlerta("Error", "No se pudo cargar la ventana de roles.");
         }
     }
 
@@ -347,11 +364,10 @@ public class ABMEventoController {
             buscarYRefrescarTabla();
             cerrarModal();
 
-        } catch (IllegalArgumentException | IllegalStateException ex) {
+        } catch (IllegalArgumentException | IllegalStateException ex) { // <<< mantiene captura de validaciones de dominio
             mostrarAlerta("Error de validación", ex.getMessage());
         }
     }
-
 
     private void crearSegunTipo(String nombre, TipoEvento tipo,
                 LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
