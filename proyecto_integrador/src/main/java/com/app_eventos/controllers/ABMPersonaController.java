@@ -2,7 +2,6 @@ package com.app_eventos.controllers;
 
 import com.app_eventos.model.Persona;
 import com.app_eventos.services.Servicio;
-import jakarta.persistence.PersistenceException;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -84,53 +83,13 @@ public class ABMPersonaController {
         modalOverlay.setVisible(false);
     }
 
-    // ================= Acciones Toolbar / Modal =================
+    // Acciones Toolbar / Modal
 
     @FXML
     public void mostrarModal() {
         modoEdicion = false;
         limpiarFormulario();
         modalOverlay.setVisible(true);
-    }
-
-    @FXML
-    public void modificarPersona() {
-        if (personaSeleccionada == null) {
-            mostrarAlertaError("Debe seleccionar una persona para modificar.");
-            return;
-        }
-        modoEdicion = true;
-
-        txtNombre.setText(personaSeleccionada.getNombre());
-        txtApellido.setText(personaSeleccionada.getApellido());
-        txtDNI.setText(personaSeleccionada.getDni());
-        txtTelefono.setText(personaSeleccionada.getTelefono());
-        txtEmail.setText(personaSeleccionada.getEmail());
-
-        modalOverlay.setVisible(true);
-    }
-
-    @FXML
-    public void eliminarPersona() {
-        if (personaSeleccionada == null) {
-            mostrarAlertaError("Debe seleccionar una persona para eliminar.");
-            return;
-        }
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmación");
-        confirm.setHeaderText("¿Eliminar a " + personaSeleccionada + "?");
-        confirm.setContentText("Esta acción no se puede deshacer.");
-        Optional<ButtonType> res = confirm.showAndWait();
-        if (res.isPresent() && res.get() == ButtonType.OK) {
-            try {
-                servicio.eliminarPersona(personaSeleccionada);
-                personaSeleccionada = null;
-                // Releer desde BD
-                refrescarDatos();
-            } catch (RuntimeException ex) {
-                mostrarAlertaError(mensajeAmigable(ex));
-            }
-        }
     }
 
     @FXML
@@ -149,18 +108,53 @@ public class ABMPersonaController {
             } else {
                 servicio.guardarPersona(nueva);
             }
-
-            // Releer lista desde BD (no solo refresh visual)
+            // Limpiar formulario
             refrescarDatos();
 
             // Cerrar modal
             cerrarModal();
 
-        } catch (RuntimeException ex) {
-            // Valida y traduce errores de unicidad/datos
-            mostrarAlertaError(mensajeAmigable(ex));
-        } catch (Exception ex) {
-            mostrarAlertaError(ex.getMessage());
+        } catch (RuntimeException ex) {error(mensajeDNI(ex)); } // Valida y traduce errores de unicidad/datos
+        catch (Exception ex) {
+            error(ex.getMessage());
+        }
+    }
+
+    @FXML
+    public void modificarPersona() {
+        if (personaSeleccionada == null) {
+            advertencia("Debe seleccionar una persona para modificar.");
+            return;
+        }
+        modoEdicion = true;
+
+        txtNombre.setText(personaSeleccionada.getNombre());
+        txtApellido.setText(personaSeleccionada.getApellido());
+        txtDNI.setText(personaSeleccionada.getDni());
+        txtTelefono.setText(personaSeleccionada.getTelefono());
+        txtEmail.setText(personaSeleccionada.getEmail());
+
+        modalOverlay.setVisible(true);
+    }
+
+    @FXML
+    public void eliminarPersona() {
+        if (personaSeleccionada == null) {
+            advertencia("Debe seleccionar una persona para dar de baja.");
+            return;
+        }
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirmación");
+        confirm.setHeaderText("¿Desea dar de baja a " + personaSeleccionada + "?");
+        confirm.setContentText("Esta acción no se puede deshacer.");
+        Optional<ButtonType> res = confirm.showAndWait();
+        if (res.isPresent() && res.get() == ButtonType.OK) {
+            try {
+                servicio.eliminarPersona(personaSeleccionada);
+                personaSeleccionada = null;
+                // Releer desde BD
+                refrescarDatos();
+            } catch (RuntimeException ex) { error(mensajeDNI(ex)); }
         }
     }
 
@@ -172,7 +166,7 @@ public class ABMPersonaController {
         modoEdicion = false;
     }
 
-    // ================= Filtros / Tabla =================
+    // Filtros / Tabla
 
     private void filtrar(KeyEvent e) {
         ObservableList<Persona> filtradas = servicio.filtrarPersonas(
@@ -191,7 +185,7 @@ public class ABMPersonaController {
         tablaPersonas.refresh();
     }
 
-    // ================= Helpers =================
+    // Helpers
 
     private void limpiarFormulario() {
         txtNombre.clear();
@@ -201,7 +195,15 @@ public class ABMPersonaController {
         txtEmail.clear();
     }
 
-    private void mostrarAlertaError(String msg) {
+    private void advertencia(String msg) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Advertencia");
+        alert.setHeaderText(null);
+        alert.setContentText(msg);
+        alert.showAndWait();
+    }
+
+    private void error(String msg) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
         alert.setHeaderText(null);
@@ -209,40 +211,24 @@ public class ABMPersonaController {
         alert.showAndWait();
     }
 
-    /**
-     * Devuelve un mensaje amigable para errores frecuentes:
-     * - Violación de unicidad de DNI (útil cuando hay UNIQUE en persona.dni).
-     * - Otras ConstraintViolationException.
-     */
-    private String mensajeAmigable(Throwable ex) {
-        // Desenrollar causa
+    private String mensajeDNI(Throwable ex) {
         Throwable cause = ex;
         while (cause.getCause() != null) cause = cause.getCause();
 
-        // 1) Hibernate constraint
+        // Hibernate constraint
         if (cause instanceof ConstraintViolationException cve) {
             String constraint = cve.getConstraintName() == null ? "" : cve.getConstraintName().toLowerCase();
             if (constraint.contains("dni") || constraint.contains("uk") || constraint.contains("unique")) {
                 return "Ya existe una persona con ese DNI.";
             }
-            return "No se pudo guardar por una restricción de base de datos.";
         }
 
-        // 2) JPA wrapper
-        if (cause instanceof PersistenceException pe) {
-            String msg = pe.getMessage() == null ? "" : pe.getMessage().toLowerCase();
-            if (msg.contains("unique") || msg.contains("dni")) {
-                return "Ya existe una persona con ese DNI.";
-            }
-            return "No se pudo completar la operación en la base de datos.";
-        }
-
-        // 3) Validaciones propias (IllegalArgumentException del modelo)
+        // Validaciones propias
         if (ex instanceof IllegalArgumentException || ex.getCause() instanceof IllegalArgumentException) {
             return ex.getMessage();
         }
 
-        // 4) Fallback
+        // Fallback
         String m = ex.getMessage();
         return (m == null || m.isBlank()) ? "Ocurrió un error inesperado." : m;
     }

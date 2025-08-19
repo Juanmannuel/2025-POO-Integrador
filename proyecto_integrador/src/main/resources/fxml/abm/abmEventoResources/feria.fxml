@@ -10,19 +10,17 @@
       
     <Label text="Datos específicos de Feria" style="-fx-font-weight: bold;" />
 
-    <GridPane hgap="125" vgap="10">
-        <columnConstraints>
-            <ColumnConstraints percentWidth="50"/>
-            <ColumnConstraints percentWidth="50"/>
-        </columnConstraints>
-
-        <!-- Cantidad de stands -->
-        <Label text="Cantidad de Stands" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <Spinner fx:id="spinnerCantidadStands" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-
-        <!-- Ambiente -->
-        <Label text="Ambiente" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-        <ComboBox fx:id="comboAmbiente" promptText="Seleccione un ambiente"
-                  GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+    <GridPane>
+        <HBox spacing="20">
+            <VBox spacing="5">
+                <!-- Cantidad de stands y ambiente -->
+                <Label text="Cantidad de Stands" />
+                <Spinner fx:id="spinnerCantidadStands" prefWidth="250"/>
+            </VBox>
+            <VBox spacing="5">
+                <Label text="Ambiente"/>
+                <ComboBox fx:id="comboAmbiente" promptText="Seleccione un ambiente" prefWidth="250"/>
+            </VBox>
+        </HBox>
     </GridPane>
 </VBox>

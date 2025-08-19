@@ -59,31 +59,33 @@
 
     <!-- MODAL -->
     <StackPane fx:id="modalOverlay" visible="false" styleClass="modal-overlay">
-        <VBox maxWidth="620" maxHeight="335" spacing="15" styleClass="modal-contenido">
+        <VBox maxWidth="620" maxHeight="200" spacing="15" styleClass="modal-contenido">
             <Label text="Película" styleClass="modal-titulo"/>
 
             <GridPane hgap="15" vgap="10">
                 <columnConstraints>
-                    <ColumnConstraints percentWidth="50"/>
-                    <ColumnConstraints percentWidth="50"/>
+                    <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                    <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
                 </columnConstraints>
 
-                <!-- TÍTULO -->
-                <Label text="Título" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <!-- TÍTULO (ocupa 2 columnas) -->
+                <Label text="Título" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
                 <TextField fx:id="txtTitulo" promptText="Ingrese el título de la película"
-                           GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                        maxWidth="Infinity" GridPane.hgrow="ALWAYS"
+                        GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
 
-                <!-- DURACIÓN -->
-                <Label text="Duración" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-                <HBox spacing="8" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                <!-- DURACIÓN (columna izquierda) -->
+                <Label text="Duración" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <HBox spacing="8" GridPane.rowIndex="3" GridPane.columnIndex="0">
                     <Spinner fx:id="spinnerDuracion"/>
                     <Label text="(HH:mm)"/>
                 </HBox>
 
-                <!-- TIPO -->
-                <Label text="Tipo" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <!-- TIPO (columna derecha) -->
+                <Label text="Tipo" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
                 <ComboBox fx:id="comboTipoPelicula" promptText="Seleccione tipo"
-                          GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                        maxWidth="Infinity" GridPane.hgrow="ALWAYS"
+                        GridPane.rowIndex="3" GridPane.columnIndex="1"/>
             </GridPane>
 
             <HBox alignment="CENTER_RIGHT" spacing="10">

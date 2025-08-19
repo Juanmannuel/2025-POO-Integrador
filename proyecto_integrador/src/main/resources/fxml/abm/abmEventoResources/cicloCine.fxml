@@ -23,7 +23,7 @@
         </HBox>
 
         <!-- Lista películas con checkboxes -->
-        <ListView fx:id="listaPeliculas" prefHeight="240"/>
+        <ListView fx:id="listaPeliculas" prefHeight="200"/>
     </VBox>
 
     <!-- Charlas y cupo -->

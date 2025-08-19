@@ -60,54 +60,52 @@
             <!-- Scroll con formulario libre -->
             <ScrollPane fitToWidth="true" styleClass="modal-scroll">
                 <content>
-                    <VBox spacing="20" style="-fx-padding: 10;">
-                        
-                        <!-- Nombre y Tipo -->
-                        <HBox spacing="20">
-                            <VBox spacing="5">
-                                <Label text="Nombre del Evento" />
-                                <TextField fx:id="txtNombre" promptText="Ingrese el nombre del Evento" prefWidth="250"/>
-                            </VBox>
-                            <VBox spacing="5">
-                                <Label text="Tipo de Evento" />
-                                <ComboBox fx:id="comboTipoEvento" promptText="Seleccione un tipo" prefWidth="250"/>
-                            </VBox>
-                        </HBox>
+                    <!-- Grid de 2 columnas (50/50) -->
+                    <GridPane hgap="20" vgap="12" style="-fx-padding: 10;">
+                        <columnConstraints>
+                            <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+                            <ColumnConstraints hgrow="ALWAYS" percentWidth="50"/>
+                        </columnConstraints>
 
-                        <!-- Fechas -->
-                        <HBox spacing="20">
-                            <VBox spacing="5">
-                                <Label text="Fecha de Inicio" />
-                                <DatePicker fx:id="dateInicio" prefWidth="250"/>
-                            </VBox>
-                            <VBox spacing="5">
-                                <Label text="Fecha de Fin" />
-                                <DatePicker fx:id="dateFin" prefWidth="250"/>
-                            </VBox>
-                        </HBox>
+                        <!-- Fila 0: Nombre / Tipo -->
+                        <Label text="Nombre del Evento" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <Label text="Tipo de Evento" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
-                        <!-- Horarios -->
-                        <HBox spacing="20">
-                            <VBox spacing="5">
-                                <Label text="Hora de Inicio" />
-                                <Spinner fx:id="spinnerHoraInicio" prefWidth="250"/>
-                            </VBox>
-                            <VBox spacing="5">
-                                <Label text="Hora de Fin" />
-                                <Spinner fx:id="spinnerHoraFin" prefWidth="250"/>
-                            </VBox>
-                        </HBox>
+                        <TextField fx:id="txtNombre" promptText="Ingrese el nombre del Evento"
+                                maxWidth="Infinity" GridPane.hgrow="ALWAYS"
+                                GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <ComboBox fx:id="comboTipoEvento" promptText="Seleccione un tipo"
+                                maxWidth="Infinity" GridPane.hgrow="ALWAYS"
+                                GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
-                        <!-- Estado -->
-                        <VBox spacing="5">
-                            <Label text="Estado" />
-                            <ComboBox fx:id="comboEstado" promptText="Seleccione un estado" prefWidth="250"/>
-                        </VBox>
+                        <!-- Fila 2: Fechas -->
+                        <Label text="Fecha de Inicio" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <Label text="Fecha de Fin" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
-                        <!-- Fragmento dinámico -->
-                        <Pane fx:id="seccionDinamica" />
+                        <DatePicker fx:id="dateInicio" maxWidth="Infinity" GridPane.hgrow="ALWAYS"
+                                    GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                        <DatePicker fx:id="dateFin" maxWidth="Infinity" GridPane.hgrow="ALWAYS"
+                                    GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
-                    </VBox>
+                        <!-- Fila 4: Horarios -->
+                        <Label text="Hora de Inicio" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                        <Label text="Hora de Fin" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                        <Spinner fx:id="spinnerHoraInicio" maxWidth="Infinity" GridPane.hgrow="ALWAYS"
+                                GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                        <Spinner fx:id="spinnerHoraFin" maxWidth="Infinity" GridPane.hgrow="ALWAYS"
+                                GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+                        <!-- Fila 6: Estado (A TODO EL ANCHO) -->
+                        <Label text="Estado" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                        <ComboBox fx:id="comboEstado" promptText="Seleccione un estado" maxWidth="Infinity" GridPane.hgrow="ALWAYS"
+                                GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+
+                        <!-- Fila 8: Fragmento dinámico (A TODO EL ANCHO) -->
+                        <Pane fx:id="seccionDinamica"
+                            GridPane.rowIndex="8" GridPane.columnIndex="0" GridPane.columnSpan="2"
+                            maxWidth="Infinity" GridPane.hgrow="ALWAYS" />
+                    </GridPane>
                 </content>
             </ScrollPane>
 

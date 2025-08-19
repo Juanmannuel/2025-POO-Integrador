@@ -433,7 +433,7 @@ public class ABMEventoController {
     @FXML
     private void modificarEvento() {
         Evento e = tablaEventos.getSelectionModel().getSelectedItem();
-        if (e == null) { mostrarAlerta("Selección requerida", "Seleccione un evento."); return; }
+        if (e == null) { mostrarAlerta("Selección requerida", "Debe seleccionar un evento para modificar."); return; }
         modoEdicion = true; eventoEnEdicion = e; comboTipoEvento.setDisable(true);
         setEstadosParaEdicion();
 
@@ -460,7 +460,7 @@ public class ABMEventoController {
     @FXML
     private void eliminarEvento() {
         Evento sel = tablaEventos.getSelectionModel().getSelectedItem();
-        if (sel == null) { mostrarAlerta("Selección requerida", "Seleccione un evento."); return; }
+        if (sel == null) { mostrarAlerta("Selección requerida", "Debe seleccionar un evento para dar de baja."); return; }
         Alert c = new Alert(Alert.AlertType.CONFIRMATION, "¿Eliminar \""+sel.getNombre()+"\"?", ButtonType.OK, ButtonType.CANCEL);
         c.setHeaderText(null); c.setTitle("Confirmar eliminación");
         c.showAndWait().ifPresent(b -> {

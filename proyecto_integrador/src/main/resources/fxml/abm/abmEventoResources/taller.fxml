@@ -9,15 +9,17 @@
 
     <Label text="Datos específicos de Taller" style="-fx-font-weight: bold;" />
 
-    <GridPane hgap="188" vgap="12">
-        <!-- Cupo máximo -->
-        <Label text="Cupo máximo" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <Spinner fx:id="spinnerCupoMaximo"
-                GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-
-        <!-- Modalidad -->
-        <Label text="Modalidad" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-        <ComboBox fx:id="comboModalidad" promptText="Seleccione una modalidad"
-                GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+    <GridPane>
+        <!-- Cupo máximo y modalidad-->
+        <HBox spacing="20">
+            <VBox spacing="5">
+                <Label text="Cupo máximo"/>
+                <Spinner fx:id="spinnerCupoMaximo" prefWidth="250"/>
+            </VBox>
+            <VBox spacing="5">
+                <Label text="Modalidad" />
+                <ComboBox fx:id="comboModalidad" promptText="Seleccione una modalidad" prefWidth="250"/>
+            </VBox>
+        </HBox>
     </GridPane>
 </VBox>
