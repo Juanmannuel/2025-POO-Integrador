@@ -104,8 +104,21 @@ public class CicloCineController {
     
     public void preseleccionarPeliculas(List<Pelicula> pelis) {
         seleccionadas.clear();
-        if (pelis != null) seleccionadas.addAll(pelis);
-        listaPeliculas.refresh();
+        if (pelis != null && !pelis.isEmpty()) {
+            // 1) armo un set de IDs de las pelis preseleccionadas
+            java.util.Set<Long> ids = pelis.stream()
+                .map(Pelicula::getIdPelicula)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+
+            // 2) agrego a 'seleccionadas' LAS INSTANCIAS QUE YA ESTÁN EN LA LISTA
+            for (Pelicula item : todas) { // 'todas' es la backing list de la ListView
+                if (ids.contains(item.getIdPelicula())) {
+                    seleccionadas.add(item);
+                }
+            }
+        }
+        listaPeliculas.refresh();  // fuerza que los CheckBox se re-rendericen
         actualizarContador();
     }
     

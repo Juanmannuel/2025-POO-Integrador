@@ -22,7 +22,7 @@ public class Exposicion extends Evento {
         setTipoArte(t);
     }
 
-    // Getters y Setters
+    // Getters / Setters
     public TipoArte getTipoArte() { return tipoArte; }
 
     public void setTipoArte(TipoArte t) {
@@ -30,23 +30,26 @@ public class Exposicion extends Evento {
         this.tipoArte = t;
     }
 
-    // Participantes
+    // Roles permitidos
     @Override
     protected boolean rolPermitido(TipoRol rol) {
         return rol == TipoRol.ORGANIZADOR || rol == TipoRol.CURADOR;
     }
 
-    // Validaciones de rol
+    // Restricciones al asignar roles
     @Override
     protected void validarRestriccionesRol(TipoRol rol, Persona persona) {
         if (rol == TipoRol.CURADOR && contarPorRol(TipoRol.CURADOR) >= 1) {
-            throw new IllegalStateException("La exposición solo admite un curador.");
+            throw new IllegalStateException("La exposición solo admite un CURADOR.");
         }
     }
 
-    // Asignación de curador
-    public void asignarCurador(Persona persona) {
-        if (persona == null) throw new IllegalArgumentException("Curador nulo.");
-        agregarResponsable(persona, TipoRol.CURADOR); // pasa por validarRestriccionesRol(...)
+    // Invariantes del dominio
+    @Override
+    public void validarInvariantes() {
+        super.validarInvariantes(); // exige al menos un ORGANIZADOR
+        if (contarPorRol(TipoRol.CURADOR) < 1) {
+            throw new IllegalStateException("La exposición debe tener un CURADOR.");
+        }
     }
 }

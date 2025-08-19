@@ -19,7 +19,7 @@ public class Taller extends Evento implements IEventoConCupo {
     @Column(name = "modalidad", nullable = false)
     private Modalidad modalidad;
 
-    /** Tabla propia para participantes del taller. */
+    // Tabla propia para participantes del taller.
     @ManyToMany
     @JoinTable(
         name = "taller_participante",
@@ -39,7 +39,7 @@ public class Taller extends Evento implements IEventoConCupo {
         setModalidad(m);
     }
 
-    // --- Participantes ---
+    // Participantes
     @Override
     public void inscribirParticipante(Persona persona) {
         validarPuedeInscribir();
@@ -47,7 +47,7 @@ public class Taller extends Evento implements IEventoConCupo {
         if (personaTieneRol(persona))
             throw new IllegalStateException("No puede ser participante y responsable a la vez.");
 
-        // ✅ Validación de cupo sin métodos booleanos
+        // Validación de cupo
         if (getCupoDisponible() <= 0)
             throw new IllegalStateException("Cupo lleno.");
 
@@ -60,7 +60,7 @@ public class Taller extends Evento implements IEventoConCupo {
     @Override public void desinscribirParticipante(Persona persona) { participantes.remove(persona); }
     @Override public List<Persona> getParticipantes() { return participantes; }
 
-    // --- Cupo (sin booleanos) ---
+    // Cupo (sin booleanos)
     @Override public int getCupoMaximo() { return cupoMaximo; }
 
     @Override
@@ -77,14 +77,14 @@ public class Taller extends Evento implements IEventoConCupo {
         return Math.max(0, disp);
     }
 
-    // --- Propios de Taller ---
+    // Propios de Taller
     public void setModalidad(Modalidad m) {
         if (m == null) throw new IllegalArgumentException("Modalidad requerida.");
         this.modalidad = m;
     }
     public Modalidad getModalidad() { return modalidad; }
 
-    // --- Roles permitidos / restricciones ---
+    // Roles permitidos / restricciones
     @Override
     protected boolean rolPermitido(TipoRol rol) {
         return rol == TipoRol.INSTRUCTOR || rol == TipoRol.ORGANIZADOR;
@@ -93,13 +93,16 @@ public class Taller extends Evento implements IEventoConCupo {
     @Override
     protected void validarRestriccionesRol(TipoRol rol, Persona persona) {
         if (rol == TipoRol.INSTRUCTOR && contarPorRol(TipoRol.INSTRUCTOR) >= 1)
-            throw new IllegalStateException("El taller solo admite un instructor.");
+            throw new IllegalStateException("El taller solo admite un Instructor.");
         if (participantes.contains(persona))
             throw new IllegalStateException("Ya es participante; no puede ser responsable.");
     }
 
-    public void asignarInstructor(Persona persona) {
-        if (persona == null) throw new IllegalArgumentException("Instructor nulo.");
-        agregarResponsable(persona, TipoRol.INSTRUCTOR);
+    @Override
+    public void validarInvariantes() {
+        super.validarInvariantes();
+        if (contarPorRol(TipoRol.INSTRUCTOR) < 1) {
+            throw new IllegalStateException("El taller debe tener un INSTRUCTOR.");
+        }
     }
 }

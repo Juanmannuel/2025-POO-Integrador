@@ -316,12 +316,10 @@ public class ABMEventoController {
         if (spinnerHoraFin.getValueFactory()!=null)    spinnerHoraFin.getValueFactory().setValue(null);
     }
 
-    private static EnumSet<EstadoEvento> ESTADOS_ALTA =
-            EnumSet.of(EstadoEvento.PLANIFICACIÓN, EstadoEvento.CONFIRMADO);
-
     private void setEstadosParaAlta() {
-        comboEstado.setItems(FXCollections.observableArrayList(ESTADOS_ALTA));
+        comboEstado.setItems(FXCollections.observableArrayList(EstadoEvento.PLANIFICACIÓN));
         comboEstado.getSelectionModel().select(EstadoEvento.PLANIFICACIÓN);
+        comboEstado.setDisable(true); // bloquea cambios en el alta
     }
 
     private void setEstadosParaEdicion() {
@@ -451,8 +449,12 @@ public class ABMEventoController {
             case CONCIERTO -> { if (controladorFragmento instanceof ConciertoController c && e instanceof Concierto x) c.setValores(x.getTipoEntrada(), x.getCupoMaximo()); }
             case EXPOSICION -> { if (controladorFragmento instanceof ExposicionController c && e instanceof Exposicion x) c.setValores(x.getTipoArte()); }
             case TALLER -> { if (controladorFragmento instanceof TallerController c && e instanceof Taller x) c.setValores(x.getCupoMaximo(), x.getModalidad()); }
-            case CICLO_CINE -> { if (controladorFragmento instanceof CicloCineController c && e instanceof CicloCine x) {
-                c.setCupoMaximo(x.getCupoMaximo()); c.setPostCharla(x.isPostCharla()); c.preseleccionarPeliculas(x.getPeliculas()); } }
+            case CICLO_CINE -> { if (controladorFragmento instanceof CicloCineController c && e instanceof CicloCine x) { CicloCine ccDet = servicio.obtenerPeliculas(x.getIdEvento());
+                c.setCupoMaximo(x.getCupoMaximo());
+                c.setPostCharla(x.isPostCharla());
+                // Usar la colección inicializada
+                c.preseleccionarPeliculas(ccDet.getPeliculas());}}
+
         }
         modalOverlay.setVisible(true); modalOverlay.toFront();
     }

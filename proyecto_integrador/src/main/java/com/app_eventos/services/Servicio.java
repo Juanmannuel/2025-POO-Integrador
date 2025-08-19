@@ -8,6 +8,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.time.*;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -19,25 +20,21 @@ public class Servicio {
 
     private final Repositorio repositorio = new Repositorio();
 
-    // ========= Helpers de estado =========
+    // Helpers de estado
 
-    /** Aplica el estado inicial respetando la máquina de estados del dominio. */
+    // Aplica el estado inicial respetando el dominio.
     private void aplicarEstadoInicial(Evento e, EstadoEvento estado) {
-        if (estado == EstadoEvento.PLANIFICACIÓN) {
-            e.setEstado(estado);
-        } else {
-            e.cambiarEstado(estado); // validará solo PLANIFICACIÓN -> CONFIRMADO
-        }
+           e.setEstado(EstadoEvento.PLANIFICACIÓN);
     }
 
-    /** En updates, solo intenta cambiar si realmente difiere. */
+    // En updates, solo intenta cambiar si realmente difiere.
     private void aplicarCambioEstadoSiCorresponde(Evento e, EstadoEvento estado) {
         if (estado != null && estado != e.getEstado()) {
             e.cambiarEstado(estado); // el dominio bloquea cualquier transición manual inválida
         }
     }
 
-    // ========= Guards de nulidad para fechas/horas =========
+    // Guards de nulidad para fechas/horas
     private void validarAlta(LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin, EstadoEvento estado) {
         if (fIni == null)  throw new IllegalArgumentException("La Fecha de inicio es obligatoria.");
         if (hIni == null)  throw new IllegalArgumentException("La Hora de inicio es obligatoria.");
@@ -53,7 +50,7 @@ public class Servicio {
         if (hFin == null)  throw new IllegalArgumentException("La Hora de fin es obligatoria.");
     }
 
-    // ========= ALTAS =========
+    // ALTAS
 
     public void crearFeria(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
                            EstadoEvento estado, int cantidadStands, TipoAmbiente ambiente) {
@@ -102,21 +99,30 @@ public class Servicio {
         repositorio.guardarEvento(t);
     }
 
-    public void crearCicloCine(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
-                               EstadoEvento estado, boolean postCharla, int cupoMaximo, List<Pelicula> pelis) {
+    // CICLO CINE
+
+    public void crearCicloCineConPeliculasIds(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
+                                              EstadoEvento estado, boolean postCharla, int cupoMaximo,
+                                              List<Long> peliculaIds) {
         validarAlta(fIni, hIni, fFin, hFin, estado);
         var cc = new CicloCine();
         cc.setNombre(nombre);
         cc.setFechas(fIni, hIni, fFin, hFin);
         cc.setPostCharla(postCharla);
         cc.setCupoMaximo(cupoMaximo);
-        if (pelis != null) pelis.forEach(cc::agregarPelicula);
         aplicarEstadoInicial(cc, estado);
-        repositorio.guardarEvento(cc);
+        repositorio.guardarCicloCinePeliculas(cc, peliculaIds);
     }
 
-    // ========= MODIFICACIONES =========
+    public void crearCicloCine(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
+                               EstadoEvento estado, boolean postCharla, int cupoMaximo, List<Pelicula> pelis) {
+        validarAlta(fIni, hIni, fFin, hFin, estado);
+        List<Long> ids = extraerIdsPeliculasOrFail(pelis, "Al crear el ciclo, las películas deben existir (id no puede ser null). " +
+                                                          "Primero da de alta la película y luego asóciala al ciclo.");
+        crearCicloCineConPeliculasIds(nombre, fIni, fFin, hIni, hFin, estado, postCharla, cupoMaximo, ids);
+    }
 
+    // MODIFICACIONES 
     public void actualizarFeria(Feria f, String nombre, LocalDate fIni, LocalDate fFin,
                                 LocalTime hIni, LocalTime hFin, EstadoEvento estado,
                                 int cantidadStands, TipoAmbiente ambiente) {
@@ -163,21 +169,40 @@ public class Servicio {
         repositorio.actualizarEvento(t);
     }
 
-    public void actualizarCicloCine(CicloCine cc, String nombre, LocalDate fIni, LocalDate fFin,
-                                    LocalTime hIni, LocalTime hFin, EstadoEvento estado,
-                                    boolean postCharla, int cupoMaximo, List<Pelicula> pelis) {
+    public void actualizarCicloCinePeliculasIds(
+            CicloCine cc, String nombre, LocalDate fIni, LocalDate fFin,
+            LocalTime hIni, LocalTime hFin, EstadoEvento estado,
+            boolean postCharla, int cupoMaximo, List<Long> peliculaIds) {
+
+        // validaciones y setters de campos escalares
         validarActualizar(fIni, hIni, fFin, hFin);
         cc.setNombre(nombre);
         cc.setFechas(fIni, hIni, fFin, hFin);
         cc.setPostCharla(postCharla);
         cc.setCupoMaximo(cupoMaximo);
-        cc.clearPeliculas();
-        if (pelis != null) pelis.forEach(cc::agregarPelicula);
         aplicarCambioEstadoSiCorresponde(cc, estado);
-        repositorio.actualizarEvento(cc);
+
+        // todo el reemplazo de películas ocurre en el repositorio
+        repositorio.actualizarCicloCinePeliculas(cc, peliculaIds);
     }
 
-    // ========= Listados / Búsquedas / Eliminación =========
+    public void actualizarCicloCine(CicloCine cc, String nombre, LocalDate fIni, LocalDate fFin,
+                                    LocalTime hIni, LocalTime hFin, EstadoEvento estado,
+                                    boolean postCharla, int cupoMaximo, List<Pelicula> pelis) {
+        validarActualizar(fIni, hIni, fFin, hFin);
+        List<Long> ids = extraerIdsPeliculasOrFail(pelis, "Al actualizar el ciclo, las películas deben existir (id no puede ser null).");
+        actualizarCicloCinePeliculasIds(cc, nombre, fIni, fFin, hIni, hFin, estado, postCharla, cupoMaximo, ids);
+    }
+
+    public CicloCine obtenerPeliculas(Long idCiclo) {
+        return repositorio.obtenerPeliculasCicloCine(idCiclo);
+    }
+
+    public ObservableList<Pelicula> obtenerPeliculasDeCiclo(Long idCiclo) {
+        return repositorio.listarPeliculasDeCiclo(idCiclo);
+    }
+
+    // Listados / Búsquedas / Eliminación
 
     public List<Evento> listarEventos() { return repositorio.listarEventos(); }
 
@@ -195,7 +220,7 @@ public class Servicio {
         return FXCollections.observableArrayList(repositorio.listarEventos());
     }
 
-    // ========= Personas =========
+    // Personas
 
     public ObservableList<Persona> obtenerPersonas() { return repositorio.listarPersonas(); }
     public void guardarPersona(Persona persona) { repositorio.guardarPersona(persona); }
@@ -219,21 +244,21 @@ public class Servicio {
         return out;
     }
 
-    // ========= Participantes =========
+    // Participantes
 
     public void inscribirParticipante(Evento evento, Persona persona) {
-        repositorio.agregarParticipante(evento, persona);
+        repositorio.altaParticipante(evento, persona);
     }
 
     public void desinscribirParticipante(Evento evento, Persona persona) {
-        repositorio.quitarParticipante(evento, persona);
+        repositorio.bajaParticipante(evento, persona);
     }
 
     public ObservableList<Persona> obtenerParticipantes(Evento evento) {
         return repositorio.obtenerParticipantes(evento);
     }
 
-    // ========= Roles =========
+    // Roles
 
     public RolEvento asignarRol(Evento evento, Persona persona, TipoRol rol) {
         RolEvento rolPersistido = repositorio.asignarRol(evento, persona, rol);
@@ -258,7 +283,7 @@ public class Servicio {
         return repositorio.filtrarRoles(nombreEvento, nombrePersona, dni);
     }
 
-    // ========= Películas =========
+    // Películas
 
     public ObservableList<Pelicula> obtenerPeliculas() { return repositorio.listarPeliculas(); }
     public void guardarPelicula(Pelicula pelicula) { repositorio.guardarPelicula(pelicula); }
@@ -270,7 +295,7 @@ public class Servicio {
         repositorio.actualizarPelicula(original);
     }
 
-    // ========= Estados automáticos =========
+    // Estados automáticos
 
     public void verificarEstadosEventos() {
         for (Evento e : repositorio.listarEventos()) {
@@ -280,7 +305,7 @@ public class Servicio {
         }
     }
 
-    // ========= Métricas / utilitarios =========
+    // Métricas / utilitarios
 
     public List<Evento> listarEventosPorRango(LocalDateTime desde, LocalDateTime hasta) {
         var base = repositorio.buscarEventos(null, null, desde.toLocalDate(), hasta.toLocalDate());
@@ -314,9 +339,9 @@ public class Servicio {
         return total;
     }
 
-    // ========= Inscripción utilitarios =========
+    // Inscripción utilitarios
 
-    public List<Evento> listarEventosQueAdmitenInscripcion() {
+    public List<Evento> listarEventosConInscripcion() {
         LocalDateTime ahora = LocalDateTime.now();
         return repositorio.listarEventos().stream()
                 .filter(e -> e.getEstado() == EstadoEvento.CONFIRMADO)
@@ -337,5 +362,20 @@ public class Servicio {
 
     public ObservableList<Persona> obtenerPersonasElegiblesParaEvento(Evento e) {
         return FXCollections.observableArrayList(repositorio.personasElegiblesParaInscripcion(e));
+    }
+
+    // Helpers privados
+
+    // Extrae IDs de películas; si alguna no tiene id, lanza error con mensaje claro.
+    private List<Long> extraerIdsPeliculasOrFail(List<Pelicula> pelis, String mensajeSiFaltaId) {
+        List<Long> ids = new ArrayList<>();
+        if (pelis == null) return ids;
+        for (Pelicula p : pelis) {
+            if (p == null || p.getIdPelicula() == null) {
+                throw new IllegalArgumentException(mensajeSiFaltaId);
+            }
+            ids.add(p.getIdPelicula());
+        }
+        return ids;
     }
 }
