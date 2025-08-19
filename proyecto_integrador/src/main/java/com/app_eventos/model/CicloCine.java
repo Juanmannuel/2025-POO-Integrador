@@ -8,16 +8,23 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Ciclo de cine con cupo, películas en memoria y participantes persistidos (tabla genérica). */
+/** Ciclo de cine con cupo, películas asociadas y participantes. */
 @Entity
 @Table(name = "cicloCine")
 public class CicloCine extends Evento implements IEventoConCupo {
 
-    // Películas: en memoria (si luego querés persistir, usar entidad puente).
-    @Transient
-    private final List<Pelicula> peliculas = new ArrayList<>();
+    /** 
+     * ✅ PELÍCULAS: ahora se PERSISTEN con una tabla puente propia.
+     */
+    @ManyToMany
+    @JoinTable(
+        name = "ciclo_cine_peliculas",                  // tabla intermedia clara
+        joinColumns = @JoinColumn(name = "ciclo_id"),   // FK a ciclo
+        inverseJoinColumns = @JoinColumn(name = "pelicula_id") // FK a película
+    )
+    private List<Pelicula> peliculas = new ArrayList<>();
 
-    /** Participantes persistidos en tabla puente genérica. */
+    /** Participantes persistidos. */
     @ManyToMany
     @JoinTable(
         name = "cine_participante",
@@ -43,17 +50,20 @@ public class CicloCine extends Evento implements IEventoConCupo {
         setCupoMaximo(cupo);
     }
 
-    // Películas
+    // ===== Películas (mismos métodos que ya usabas) =====
     public void agregarPelicula(Pelicula p) {
         if (p == null) throw new IllegalArgumentException("Película nula");
-        peliculas.add(p);
+        if (!peliculas.contains(p)) peliculas.add(p);
     }
-    
+
     public void sacarPelicula(Pelicula p) { peliculas.remove(p); }
+
     public void clearPeliculas() { peliculas.clear(); }
+
+    /** Devuelve una copia para no exponer la colección interna. */
     public List<Pelicula> getPeliculas() { return new ArrayList<>(peliculas); }
 
-    // Participantes
+    // ===== Participantes =====
     @Override
     public void inscribirParticipante(Persona persona) {
         validarPuedeInscribir();
@@ -72,7 +82,7 @@ public class CicloCine extends Evento implements IEventoConCupo {
     @Override public void desinscribirParticipante(Persona persona) { participantes.remove(persona); }
     @Override public List<Persona> getParticipantes() { return participantes; }
 
-    // Cupo
+    // ===== Cupo =====
     @Override public int getCupoMaximo() { return cupoMaximo; }
 
     @Override
@@ -87,16 +97,16 @@ public class CicloCine extends Evento implements IEventoConCupo {
         return Math.max(0, disp);
     }
 
-    // Roles
+    // ===== Roles =====
     @Override protected boolean rolPermitido(TipoRol rol) { return rol == TipoRol.ORGANIZADOR; }
 
-    // Validación de restricciones de rol
     @Override
     protected void validarRestriccionesRol(TipoRol rol, Persona persona) {
         if (participantes.contains(persona))
             throw new IllegalStateException("Ya es participante; no puede ser responsable.");
     }
 
+    // ===== Get/Set extra =====
     public boolean isPostCharla() { return postCharla; }
     public void setPostCharla(boolean v) { this.postCharla = v; }
 }

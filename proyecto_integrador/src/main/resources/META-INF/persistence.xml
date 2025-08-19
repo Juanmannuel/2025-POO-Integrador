@@ -10,7 +10,7 @@
         <!-- Auto-scan: no es necesario listar cada clase si están en el mismo paquete base -->
         <properties>
             <!-- Configuración de conexión -->
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/prueba_integradorPOO"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/IntegradorPOO1"/>
             <property name="jakarta.persistence.jdbc.user" value="postgres"/>
             <property name="jakarta.persistence.jdbc.password" value="POSTGRES"/>
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
