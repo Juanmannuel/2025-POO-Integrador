@@ -63,7 +63,7 @@ public abstract class Evento {
         this.fechaFin = fin;
     }
 
-   // Setters para fechas con LocalDate y LocalTime
+    // Setters para fechas con LocalDate y LocalTime
     public void setFechas(LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin) {
         asignarFechas(LocalDateTime.of(fIni, hIni), LocalDateTime.of(fFin, hFin));
     }
@@ -88,7 +88,7 @@ public abstract class Evento {
             throw new IllegalStateException("No se puede confirmar con fecha/hora de inicio pasada.");
 
         // Reglas de dominio (Evento + overrides de subtipos, p.ej. Taller)
-        validarRolesObligatorios(); 
+        validarRolesObligatorios();
 
         this.estado = EstadoEvento.CONFIRMADO;
     }
@@ -174,7 +174,7 @@ public abstract class Evento {
         }
     }
 
-    // Gancho para validaciones específicas de subtipos cuando asignan roles. 
+    // Gancho para validaciones específicas de subtipos cuando asignan roles.
     protected void validarRestriccionesRol(TipoRol rol, Persona persona) {}
 
     // Wrapper para mantener semántica previa.
@@ -249,4 +249,23 @@ public abstract class Evento {
 
     // Copia defensiva para no exponer la colección interna.
     public List<RolEvento> getRoles() { return new ArrayList<>(roles); }
+
+    /*  Valida que el evento no pueda modificarse si está en ejecución o finalizado. */
+    public void validarPuedeModificar() {
+        verificarEstadoAutomatico();
+        if (estado == EstadoEvento.EJECUCIÓN || estado == EstadoEvento.FINALIZADO) {
+            throw new IllegalStateException("El evento está en ejecución o finalizó, no se puede modificar");
+        }
+    }
+
+    /* Valida que las fechas de alta sean a partir de hoy (sin pasado). */
+    public static void validarFechasAlta(LocalDate fIni, LocalDate fFin) {
+        if (fIni == null || fFin == null) {
+            throw new IllegalArgumentException("Las fechas del evento son obligatorias");
+        }
+        LocalDate hoy = LocalDate.now();
+        if (fIni.isBefore(hoy) || fFin.isBefore(hoy)) {
+            throw new IllegalArgumentException("Las fechas del evento deben ser desde hoy en adelante");
+        }
+    }
 }

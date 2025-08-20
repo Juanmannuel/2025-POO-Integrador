@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.EnumSet;
 
 // Dominio
 import com.app_eventos.model.*;
@@ -55,9 +54,9 @@ public class ABMEventoController {
 
     // ----------- Filtros -----------
     @FXML private ComboBox<TipoEvento> comboTipoEventoFiltro;
-    private ComboBox<EstadoEvento> comboEstadoFiltro;          
-    private DatePicker dateDesdeFiltro;                        
-    private DatePicker dateHastaFiltro;                        
+    private ComboBox<EstadoEvento> comboEstadoFiltro;
+    private DatePicker dateDesdeFiltro;
+    private DatePicker dateHastaFiltro;
 
     // ----------- Estado interno -----------
     private final ObservableList<Evento> modeloTabla = FXCollections.observableArrayList();
@@ -155,7 +154,7 @@ public class ABMEventoController {
     private void buscarYRefrescarTabla() {
         try {
             servicio.verificarEstadosEventos();
-        } catch (RuntimeException ex) { // <<< NUEVO: por si algo falla en verificación automática
+        } catch (RuntimeException ex) { // por si algo falla en verificación automática
             // No detenemos la UI; solo informamos
             mostrarAlerta("Aviso", "No se pudieron verificar algunos estados automáticamente: " + ex.getMessage());
         }
@@ -253,7 +252,7 @@ public class ABMEventoController {
         });
     }
 
-        private void abrirModalAsignacionRoles(Evento evento) {
+    private void abrirModalAsignacionRoles(Evento evento) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/abm/abmEventoResources/asignacionRoles.fxml"));
             VBox vista = loader.load();
@@ -362,13 +361,17 @@ public class ABMEventoController {
             buscarYRefrescarTabla();
             cerrarModal();
 
-        } catch (IllegalArgumentException | IllegalStateException ex) { // <<< mantiene captura de validaciones de dominio
+        } catch (IllegalArgumentException | IllegalStateException ex) { // mantiene captura de validaciones de dominio
             mostrarAlerta("Error de validación", ex.getMessage());
         }
     }
 
     private void crearSegunTipo(String nombre, TipoEvento tipo,
                 LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
+
+        // no permitir fechas anteriores a hoy en ALTA
+        Evento.validarFechasAlta(fIni, fFin);
+
         if (tipo == null) throw new IllegalArgumentException("Seleccione un tipo de evento.");
         if (controladorFragmento == null)
             throw new IllegalStateException("Complete los datos específicos del tipo seleccionado.");
@@ -404,6 +407,10 @@ public class ABMEventoController {
 
     private void actualizarSegunTipo(Evento original, String nombre, TipoEvento tipo,
                                      LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
+
+        // bloquear MODIFICACIONES si está en ejecución o finalizado
+        original.validarPuedeModificar();
+
         switch (tipo) {
             case FERIA -> {
                 if (controladorFragmento instanceof FeriaController c && original instanceof Feria f)
@@ -454,7 +461,6 @@ public class ABMEventoController {
                 c.setPostCharla(x.isPostCharla());
                 // Usar la colección inicializada
                 c.preseleccionarPeliculas(ccDet.getPeliculas());}}
-
         }
         modalOverlay.setVisible(true); modalOverlay.toFront();
     }
