@@ -8,19 +8,23 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-// Ciclo de cine con cupo, películas asociadas y participantes.
+/** Ciclo de cine con cupo, películas asociadas y participantes. */
 @Entity
 @Table(name = "cicloCine")
 public class CicloCine extends Evento implements IEventoConCupo {
 
-    @OneToMany(
-        mappedBy = "cicloCine",
-        cascade = CascadeType.MERGE,
-        orphanRemoval = false
+    /**
+     * ✅ PELÍCULAS: persistidas con una tabla puente propia.
+     */
+    @ManyToMany
+    @JoinTable(
+        name = "ciclo_cine_peliculas",                                          // tabla intermedia
+        joinColumns = @JoinColumn(name = "ciclo_id", referencedColumnName = "idEvento"),      // CAMBIO: referencia explícita a PK de Evento
+        inverseJoinColumns = @JoinColumn(name = "pelicula_id", referencedColumnName = "idPelicula") // CAMBIO: referencia explícita a PK de Pelicula
     )
     private List<Pelicula> peliculas = new ArrayList<>();
 
-    // Participantes
+    /** Participantes persistidos. */
     @ManyToMany
     @JoinTable(
         name = "cine_participante",
@@ -46,44 +50,20 @@ public class CicloCine extends Evento implements IEventoConCupo {
         setCupoMaximo(cupo);
     }
 
-    // Películas
+    // ===== Películas (mismos métodos que ya usabas) =====
     public void agregarPelicula(Pelicula p) {
-        if (p == null) throw new IllegalArgumentException("Se debe agregar al menos una película.");
-        if (!peliculas.contains(p)) {
-            peliculas.add(p);
-            p.setCicloCine(this);
-        }
+        if (p == null) throw new IllegalArgumentException("Película nula");
+        if (!peliculas.contains(p)) peliculas.add(p);
     }
 
-    public void sacarPelicula(Pelicula p) {
-        if (p == null) return;
-        if (peliculas.remove(p)) {
-            if (p.getCicloCine() == this) {
-                p.setCicloCine(null);
-            }
-        }
-    }
+    public void sacarPelicula(Pelicula p) { peliculas.remove(p); }
 
-    public void clearPeliculas() {
-        for (Pelicula p : new ArrayList<>(peliculas)) {
-            sacarPelicula(p);
-        }
-    }
+    public void clearPeliculas() { peliculas.clear(); }
 
-    // Devuelve una copia para no exponer la colección interna.
+    /** Devuelve una copia para no exponer la colección interna. */
     public List<Pelicula> getPeliculas() { return new ArrayList<>(peliculas); }
 
-    // Reemplaza toda la lista manteniendo la sincronía de ambos lados.
-    public void setPeliculas(List<Pelicula> nuevas) {
-        clearPeliculas();
-        if (nuevas != null) {
-            for (Pelicula p : nuevas) {
-                agregarPelicula(p);
-            }
-        }
-    }
-
-    // Participantes
+    // ===== Participantes =====
     @Override
     public void inscribirParticipante(Persona persona) {
         validarPuedeInscribir();
@@ -102,7 +82,7 @@ public class CicloCine extends Evento implements IEventoConCupo {
     @Override public void desinscribirParticipante(Persona persona) { participantes.remove(persona); }
     @Override public List<Persona> getParticipantes() { return participantes; }
 
-    // Cupo
+    // ===== Cupo =====
     @Override public int getCupoMaximo() { return cupoMaximo; }
 
     @Override
@@ -117,7 +97,7 @@ public class CicloCine extends Evento implements IEventoConCupo {
         return Math.max(0, disp);
     }
 
-    // Roles
+    // ===== Roles =====
     @Override protected boolean rolPermitido(TipoRol rol) { return rol == TipoRol.ORGANIZADOR; }
 
     @Override
@@ -126,7 +106,7 @@ public class CicloCine extends Evento implements IEventoConCupo {
             throw new IllegalStateException("Ya es participante; no puede ser responsable.");
     }
 
-    // Get/Set extra
+    // ===== Get/Set extra =====
     public boolean isPostCharla() { return postCharla; }
     public void setPostCharla(boolean v) { this.postCharla = v; }
 }

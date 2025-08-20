@@ -29,8 +29,8 @@ public class CicloCineController {
     private final ObservableList<Pelicula> todas = FXCollections.observableArrayList();
     private FilteredList<Pelicula> filtradas;
 
-    // Selección persistente
-    private final Set<Pelicula> seleccionadas = new HashSet<>();
+    // Selección basada en IDs (evita comparar instancias distintas)
+    private final Set<Long> seleccionadasIds = new HashSet<>();
 
     @FXML
     public void initialize() {
@@ -47,10 +47,12 @@ public class CicloCineController {
         // Celda con checkbox persistente y formato "Xh Ymin"
         listaPeliculas.setCellFactory(CheckBoxListCell.forListView(
             pelicula -> {
-                SimpleBooleanProperty prop = new SimpleBooleanProperty(seleccionadas.contains(pelicula));
+                Long id = (pelicula != null ? pelicula.getIdPelicula() : null);
+                SimpleBooleanProperty prop = new SimpleBooleanProperty(id != null && seleccionadasIds.contains(id));
                 prop.addListener((obs, wasSelected, isNowSelected) -> {
-                    if (isNowSelected) seleccionadas.add(pelicula);
-                    else seleccionadas.remove(pelicula);
+                    if (id == null) return;
+                    if (isNowSelected) seleccionadasIds.add(id);
+                    else seleccionadasIds.remove(id);
                     actualizarContador();
                 });
                 return prop;
@@ -59,16 +61,12 @@ public class CicloCineController {
                 @Override
                 public String toString(Pelicula pelicula) {
                     if (pelicula == null) return "";
+                    String tipo = (pelicula.getTipo() != null ? pelicula.getTipo().getEtiqueta() : "-");
                     return pelicula.getTitulo() + " (" +
                            formatoHorasMinutos(pelicula.getDuracionMinutos()) + ", " +
-                           (pelicula.getTipo() != null ? pelicula.getTipo().getEtiqueta() : "-") +
-                           ")";
+                           tipo + ")";
                 }
-
-                @Override
-                public Pelicula fromString(String string) {
-                    return null; // no se usa
-                }
+                @Override public Pelicula fromString(String string) { return null; }
             }
         ));
 
@@ -84,7 +82,7 @@ public class CicloCineController {
     }
 
     private void actualizarContador() {
-        lblContador.setText(seleccionadas.size() + " seleccionadas");
+        lblContador.setText(seleccionadasIds.size() + " seleccionadas");
     }
 
     private static String formatoHorasMinutos(int minutos) {
@@ -95,44 +93,34 @@ public class CicloCineController {
 
     // === Getters usados por ABMEventoController ===
     public boolean isPostCharla() { return radioSi.isSelected(); }
-
     public void setPostCharla(boolean v) { if (v) radioSi.setSelected(true); else radioNo.setSelected(true); }
 
     public int getCupoMaximo() { return spinnerCupoMaximo.getValue(); }
-
     public void setCupoMaximo(int v) { spinnerCupoMaximo.getValueFactory().setValue(v); }
-    
-    public void preseleccionarPeliculas(List<Pelicula> pelis) {
-        seleccionadas.clear();
-        if (pelis != null && !pelis.isEmpty()) {
-            // 1) armo un set de IDs de las pelis preseleccionadas
-            java.util.Set<Long> ids = pelis.stream()
-                .map(Pelicula::getIdPelicula)
-                .filter(java.util.Objects::nonNull)
-                .collect(java.util.stream.Collectors.toSet());
 
-            // 2) agrego a 'seleccionadas' LAS INSTANCIAS QUE YA ESTÁN EN LA LISTA
-            for (Pelicula item : todas) { // 'todas' es la backing list de la ListView
-                if (ids.contains(item.getIdPelicula())) {
-                    seleccionadas.add(item);
-                }
+    // Preselecciona por ID (funciona aunque las instancias sean distintas)
+    public void preseleccionarPeliculas(List<Pelicula> pelis) {
+        seleccionadasIds.clear();
+        if (pelis != null) {
+            for (Pelicula p : pelis) {
+                if (p != null && p.getIdPelicula() != null) seleccionadasIds.add(p.getIdPelicula());
             }
         }
-        listaPeliculas.refresh();  // fuerza que los CheckBox se re-rendericen
+        listaPeliculas.refresh();
         actualizarContador();
     }
-    
-    // Devuelve una copia inmutable de las seleccionadas (conjunto)
+
+    // Devuelve las seleccionadas actuales (instancias de 'todas')
     public List<Pelicula> getPeliculasSeleccionadas() {
-        return List.copyOf(seleccionadas);
+        return todas.stream()
+                .filter(p -> p.getIdPelicula() != null && seleccionadasIds.contains(p.getIdPelicula()))
+                .toList();
     }
 
-    // Opcional: mismas seleccionadas pero en el orden en que aparecen en la ListView
+    // Opcional: mismas seleccionadas pero respetando el orden visual
     public List<Pelicula> getPeliculasSeleccionadasEnOrden() {
-        var out = new java.util.ArrayList<Pelicula>();
-        for (Pelicula p : listaPeliculas.getItems()) {
-            if (seleccionadas.contains(p)) out.add(p);
-        }
-        return out;
+        return listaPeliculas.getItems().stream()
+                .filter(p -> p.getIdPelicula() != null && seleccionadasIds.contains(p.getIdPelicula()))
+                .toList();
     }
 }
