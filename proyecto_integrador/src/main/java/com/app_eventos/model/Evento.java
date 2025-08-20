@@ -41,52 +41,84 @@ public abstract class Evento {
     // Constructores
 
     protected Evento() {
-        this.estado = EstadoEvento.PLANIFICACIÓN;
+        // estado ya inicializado en el campo
     }
 
     public Evento(String nombre, LocalDateTime fechaInicio, LocalDateTime fechaFin, TipoEvento tipoEvento) {
         setNombre(nombre);
         asignarFechas(fechaInicio, fechaFin); // único punto de verdad
         setTipoEvento(tipoEvento);
-        this.estado = EstadoEvento.PLANIFICACIÓN;
+        // estado ya inicializado en el campo
     }
 
-    // Fechas
+    // --- Fechas ---
 
-    /** Único método que valida y asigna ambas fechas. */
+    /** Único método que valida y asigna ambas fechas con MENSAJE CONSOLIDADO. */
     private void asignarFechas(LocalDateTime ini, LocalDateTime fin) {
-        Objects.requireNonNull(ini, "La fecha y hora de inicio es obligatoria.");
-        Objects.requireNonNull(fin, "La fecha y hora de fin es obligatoria.");
-        if (!fin.isAfter(ini))
-            throw new IllegalArgumentException("La fecha/hora de fin debe ser posterior al inicio.");
+        List<String> errores = new ArrayList<>(3);
+
+        if (ini == null) errores.add("Falta la fecha y hora de inicio.");
+        if (fin == null) errores.add("Falta la fecha y hora de fin.");
+        if (ini != null && fin != null && !fin.isAfter(ini)) {
+            errores.add("La fecha/hora de fin debe ser posterior al inicio.");
+        }
+
+        if (!errores.isEmpty()) {
+            throw new IllegalArgumentException(String.join(" ", errores));
+        }
+
         this.fechaInicio = ini;
         this.fechaFin = fin;
     }
 
-    // Setters para fechas con LocalDate y LocalTime
-    public void setFechas(LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin) {
-        asignarFechas(LocalDateTime.of(fIni, hIni), LocalDateTime.of(fFin, hFin));
+    /** Helper: si falta fecha u hora, retorna null (el validador consolidado arma el mensaje). */
+    private static LocalDateTime fechaHora(LocalDate f, LocalTime h) {
+        return (f != null && h != null) ? LocalDateTime.of(f, h) : null;
     }
 
-    // Setters individuales delegan para mantener invariantes.
-    public void setFechaInicio(LocalDateTime nuevaInicio) { asignarFechas(nuevaInicio, this.fechaFin); }
-    public void setFechaFin(LocalDateTime nuevaFin)       { asignarFechas(this.fechaInicio, nuevaFin); }
+    // Setters para fechas con LocalDate y LocalTime (sin mensajes duplicados)
+    public void setFechas(LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin) {
+        asignarFechas(
+            fechaHora(fIni, hIni),  // si falta algo en inicio -> mensaje único
+            fechaHora(fFin, hFin)   // si falta algo en fin    -> mensaje único
+        );
+    }
 
-    // Reglas de estado
+    // Setters individuales delegan y aprovechan el mensaje único
+    public void setFechaInicio(LocalDateTime nuevaInicio) {
+        asignarFechas(nuevaInicio, this.fechaFin);
+    }
+
+    public void setFechaFin(LocalDateTime nuevaFin) {
+        asignarFechas(this.fechaInicio, nuevaFin);
+    }
+
+    // --- Reglas de estado ---
+
+    // Reúne precondiciones temporales para confirmar
+    private void validarConfirmacionTemporal() {
+        if (this.fechaInicio == null || this.fechaFin == null) {
+            throw new IllegalStateException("No se puede confirmar sin fechas definidas.");
+        }
+        if (this.fechaInicio.isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("No se puede confirmar con fecha/hora de inicio pasada.");
+        }
+    }
+
     // Cambia el estado del evento, validando la transición.
     public void cambiarEstado(EstadoEvento nuevoEstado) {
         Objects.requireNonNull(nuevoEstado, "Estado obligatorio");
         if (this.estado == nuevoEstado) return;
 
         // Solo se permite PLANIFICACIÓN -> CONFIRMADO
-        if (this.estado != EstadoEvento.PLANIFICACIÓN)
+        if (this.estado != EstadoEvento.PLANIFICACIÓN) {
             throw new IllegalStateException("No se permite cambiar manualmente el estado desde " + this.estado + ".");
-        if (nuevoEstado != EstadoEvento.CONFIRMADO)
+        }
+        if (nuevoEstado != EstadoEvento.CONFIRMADO) {
             throw new IllegalStateException("La única transición manual permitida es PLANIFICACIÓN -> CONFIRMADO.");
+        }
 
-        if (this.fechaInicio.isBefore(LocalDateTime.now()))
-            throw new IllegalStateException("No se puede confirmar con fecha/hora de inicio pasada.");
-
+        validarConfirmacionTemporal();
         // Reglas de dominio (Evento + overrides de subtipos, p.ej. Taller)
         validarRolesObligatorios();
 
@@ -97,14 +129,12 @@ public abstract class Evento {
     public void setEstado(EstadoEvento nuevo) {
         if (nuevo == null) throw new IllegalArgumentException("El estado del evento es obligatorio.");
 
-        // Caso: entidad NUEVA (aún sin id). Permitimos PLANIFICACIÓN o CONFIRMADO.
+        // Caso: entidad NUEVA (aún sin id).
         if (this.idEvento == null) {
             if (nuevo == EstadoEvento.CONFIRMADO) {
-                if (this.fechaInicio.isBefore(LocalDateTime.now()))
-                    throw new IllegalStateException("No se puede confirmar con fecha/hora de inicio pasada.");
-                // OJO: NO validamos roles aquí porque se asignan después del alta.
+                validarConfirmacionTemporal();
             } else if (nuevo != EstadoEvento.PLANIFICACIÓN) {
-                throw new IllegalStateException("Al crear solo se permite PLANIFICACIÓN o CONFIRMADO.");
+                throw new IllegalStateException("Al crear solo se permite PLANIFICACIÓN.");
             }
             this.estado = nuevo;
             return;
@@ -127,17 +157,15 @@ public abstract class Evento {
             return;
         }
 
-        // CONFIRMADO/EJECUCIÓN -> FINALIZADO cuando pasó la hora de fin
         if ((estado == EstadoEvento.CONFIRMADO || estado == EstadoEvento.EJECUCIÓN) && !now.isBefore(fechaFin)) {
             this.estado = EstadoEvento.FINALIZADO;
         }
     }
 
-    // Inscripción
+    // --- Inscripción ---
 
     public boolean esInscribible() {
         LocalDateTime now = LocalDateTime.now();
-        // Solo inscribible si está confirmado, no vencido, y cumple invariantes (roles listos)
         return this.estado == EstadoEvento.CONFIRMADO
                 && now.isBefore(getFechaFin())
                 && invariantesCumplidasDeFormaSegura();
@@ -145,12 +173,10 @@ public abstract class Evento {
 
     public boolean Inscripcion() { return esInscribible(); }
 
-    // Lanza si no se puede inscribir
     protected void validarPuedeInscribir() {
         if (!esInscribible()) throw new IllegalStateException("No se permite inscribir.");
     }
 
-    // Evalúa invariantes sin lanzar (para esInscribible)
     private boolean invariantesCumplidasDeFormaSegura() {
         try {
             validarInvariantes();
@@ -160,14 +186,17 @@ public abstract class Evento {
         }
     }
 
-    // Roles
+    // --- Roles ---
 
-    // Helper para congelar gestión de roles en EJECUCIÓN/FINALIZADO.
+    // Predicado común para bloqueo por estado
+    private boolean estadoBloqueado() {
+        return estado == EstadoEvento.EJECUCIÓN || estado == EstadoEvento.FINALIZADO;
+    }
+
     private void validarPuedeGestionarRoles() {
         // verificar estado antes de permitir asignar o borrar roles
         verificarEstadoAutomatico();
-
-        if (estado == EstadoEvento.EJECUCIÓN || estado == EstadoEvento.FINALIZADO) {
+        if (estadoBloqueado()) {
             throw new IllegalStateException(
                 "No se pueden gestionar roles cuando el evento está en EJECUCIÓN o FINALIZADO."
             );
@@ -181,15 +210,43 @@ public abstract class Evento {
     protected void validarRolesObligatorios() { validarInvariantes(); }
 
     public void agregarResponsable(Persona persona, TipoRol rol) {
-        validarPuedeGestionarRoles(); // congelamos altas en ejecución/finalizado
-        if (persona == null || rol == null) throw new IllegalArgumentException("Persona y rol requeridos.");
-        if (!rolPermitido(rol)) throw new IllegalArgumentException("Rol no permitido para " + tipoEvento);
+        // API ergonómica: delega toda la lógica en agregarRol(...)
+        if (persona == null || rol == null) {
+            throw new IllegalArgumentException("Persona y rol requeridos.");
+        }
+        agregarRol(new RolEvento(this, persona, rol));
+    }
 
-        boolean yaTieneRol = roles.stream().anyMatch(r -> r.getPersona().equals(persona));
-        if (yaTieneRol) throw new IllegalArgumentException("La persona ya tiene un rol asignado en este evento.");
+    public void agregarRol(RolEvento rol) {
+        validarPuedeGestionarRoles(); // no permitir altas si está en EJECUCIÓN/FINALIZADO
 
-        validarRestriccionesRol(rol, persona);
-        this.roles.add(new RolEvento(this, persona, rol));
+        if (rol == null) return;
+        if (rol.getPersona() == null || rol.getRol() == null) {
+            throw new IllegalArgumentException("Persona y rol requeridos.");
+        }
+
+        // Verificar permiso por tipo de evento
+        if (!rolPermitido(rol.getRol())) {
+            throw new IllegalArgumentException("Rol no permitido para " + tipoEvento);
+        }
+
+        // Asegurar back-reference coherente para el mappedBy
+        if (rol.getEvento() != this) {
+            rol.setEvento(this);
+        }
+
+        // Evitar duplicados por (persona, rol)
+        boolean duplicado = roles.stream().anyMatch(r ->
+            Objects.equals(r.getPersona(), rol.getPersona()) && r.getRol() == rol.getRol()
+        );
+        if (duplicado) {
+            throw new IllegalArgumentException("La persona ya tiene ese rol asignado en este evento.");
+        }
+
+        // Hook para restricciones específicas (p.ej. un solo CURADOR, etc.)
+        validarRestriccionesRol(rol.getRol(), rol.getPersona());
+
+        roles.add(rol);
     }
 
     public void borrarResponsable(Persona persona, TipoRol rol) {
@@ -224,9 +281,7 @@ public abstract class Evento {
         return set;
     }
 
-    public void agregarRol(RolEvento rol) { if (rol != null) roles.add(rol); }
-
-    // Getters/Setters
+    // --- Getters/Setters básicos ---
 
     public Long getIdEvento() { return idEvento; }
     public void setIdEvento(Long idEvento) { this.idEvento = idEvento; }
@@ -253,7 +308,7 @@ public abstract class Evento {
     /*  Valida que el evento no pueda modificarse si está en ejecución o finalizado. */
     public void validarPuedeModificar() {
         verificarEstadoAutomatico();
-        if (estado == EstadoEvento.EJECUCIÓN || estado == EstadoEvento.FINALIZADO) {
+        if (estadoBloqueado()) {
             throw new IllegalStateException("El evento está en ejecución o finalizó, no se puede modificar");
         }
     }
