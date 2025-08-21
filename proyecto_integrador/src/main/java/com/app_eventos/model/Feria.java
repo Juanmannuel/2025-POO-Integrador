@@ -17,8 +17,19 @@ public class Feria extends Evento {
 
     @Override protected boolean rolPermitido(TipoRol rol) { return rol == TipoRol.ORGANIZADOR; }
 
-    public int getCantidadStands() { return cantidadStands; }
-    public void setCantidadStands(int v) { if (v <= 0) throw new IllegalArgumentException("Stands > 0"); this.cantidadStands = v; }
-    public TipoAmbiente getAmbiente() { return ambiente; }
-    public void setAmbiente(TipoAmbiente a) { if (a == null) throw new IllegalArgumentException("Ambiente nulo"); this.ambiente = a; }
+    public int getCantidadStands() { 
+        return cantidadStands; 
+    }
+
+    public void setCantidadStands(int v) { 
+        if (v <= 0) throw new IllegalArgumentException("La cantidad de Stands deben ser mayor a 0."); this.cantidadStands = v; 
+    }
+
+    public TipoAmbiente getAmbiente() { 
+        return ambiente; 
+    
+    }
+    public void setAmbiente(TipoAmbiente a) { 
+        if (a == null) throw new IllegalArgumentException("Por favor, seleccione un ambiente."); this.ambiente = a; 
+    }
 }

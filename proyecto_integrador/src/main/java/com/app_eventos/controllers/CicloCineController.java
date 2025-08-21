@@ -35,7 +35,7 @@ public class CicloCineController {
     @FXML
     public void initialize() {
         spinnerCupoMaximo.setValueFactory(
-            new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 10000, 0)
+            new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 10000, 0)
         );
         spinnerCupoMaximo.setEditable(true);
 

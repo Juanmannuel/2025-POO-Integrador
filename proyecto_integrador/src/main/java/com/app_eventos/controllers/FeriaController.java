@@ -16,7 +16,7 @@ public class FeriaController {
 
     @FXML
     public void initialize() {
-        spinnerCantidadStands.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 500, 1));
+        spinnerCantidadStands.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 500, 0));
         comboAmbiente.getItems().setAll(TipoAmbiente.values());
     }
 

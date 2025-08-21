@@ -16,9 +16,9 @@ public class ConciertoController {
 
     @FXML
     public void initialize() {
-        // Cupo máximo entre 1 y 100000, valor inicial 1
-        spinnerCupoMaximo.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 5000, 1));
-
+        // Cupo máximo entre 0 y 100000
+        spinnerCupoMaximo.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 5000, 0));
+        spinnerCupoMaximo.setEditable(true);
         // Cargar enum TipoEntrada
         comboTipoEntradaConcierto.getItems().setAll(TipoEntrada.values());
     }

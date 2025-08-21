@@ -63,7 +63,7 @@ public class Concierto extends Evento implements IEventoConCupo {
 
     @Override
     public void setCupoMaximo(int v) {
-        if (v <= 0) throw new IllegalArgumentException("El cupo debe ser mayor a cero.");
+        if (v <= 0) throw new IllegalArgumentException("El cupo debe ser mayor a 0.");
         this.cupoMaximo = v;
     }
 
@@ -89,7 +89,7 @@ public class Concierto extends Evento implements IEventoConCupo {
     // Props
     public TipoEntrada getTipoEntrada() { return tipoEntrada; }
     public void setTipoEntrada(TipoEntrada t) {
-        if (t == null) throw new IllegalArgumentException("Tipo de entrada requerido.");
+        if (t == null) throw new IllegalArgumentException("Por favor, seleccione un tipo de entrada.");
         this.tipoEntrada = t;
     }
 

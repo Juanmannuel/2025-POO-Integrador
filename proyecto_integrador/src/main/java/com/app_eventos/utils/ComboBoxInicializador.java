@@ -5,7 +5,6 @@ import com.app_eventos.model.enums.TipoEntrada;
 import com.app_eventos.model.enums.TipoEvento;
 import javafx.scene.control.ComboBox;
 import javafx.util.StringConverter;
-import java.util.Arrays;
 
 public class ComboBoxInicializador {
 
@@ -40,22 +39,7 @@ public class ComboBoxInicializador {
     }
 
     public static void cargarEstadoEvento(ComboBox<EstadoEvento> comboBox) {
-        comboBox.getItems().setAll(
-                Arrays.stream(EstadoEvento.values())
-                        .filter(e -> e != EstadoEvento.FINALIZADO)
-                        .toList()
-        );
-
-        comboBox.setConverter(new StringConverter<>() {
-            @Override
-            public String toString(EstadoEvento estado) {
-                return estado != null ? estado.name().charAt(0) + estado.name().substring(1).toLowerCase() : "";
-            }
-
-            @Override
-            public EstadoEvento fromString(String s) {
-                return EstadoEvento.valueOf(s.toUpperCase());
-            }
-        });
+        comboBox.getItems().setAll(EstadoEvento.values());
+        comboBox.setConverter(null); // opcional: JavaFX usa el name() del enum
     }
 }

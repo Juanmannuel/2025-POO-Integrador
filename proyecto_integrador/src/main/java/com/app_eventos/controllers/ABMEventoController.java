@@ -109,13 +109,13 @@ public class ABMEventoController {
         comboTipoEvento.valueProperty().addListener((o, a, b) -> cargarFragmentoEspecifico(b));
 
         agregarBotonAsignarRol();
-        detectarFiltrosDeFormaSegura();
+        detectarFiltros();
 
         buscarYRefrescarTabla();
     }
 
     @SuppressWarnings("unchecked")
-    private void detectarFiltrosDeFormaSegura() {
+    private void detectarFiltros() {
         if (!(tablaEventos.getParent() instanceof VBox panel)) return;
         if (panel.getChildren().isEmpty()) return;
         if (!(panel.getChildren().get(0) instanceof HBox hbox)) return;
@@ -151,19 +151,12 @@ public class ABMEventoController {
     }
 
     private void buscarYRefrescarTabla() {
-        try {
-            servicio.verificarEstadosEventos();
-        } catch (RuntimeException ex) { // por si algo falla en verificación automática
-            // No detenemos la UI; solo informamos
-            mostrarAlerta("Aviso", "No se pudieron verificar algunos estados automáticamente: " + ex.getMessage());
-        }
 
+        servicio.verificarEstadosEventos();
+   
         LocalDate desde = (dateDesdeFiltro != null) ? dateDesdeFiltro.getValue() : null;
         LocalDate hasta = (dateHastaFiltro != null) ? dateHastaFiltro.getValue() : null;
-        if (desde != null && hasta != null && desde.isAfter(hasta)) {
-            mostrarAlerta("Rango inválido", "Fecha desde mayor que fecha hasta");
-            return;
-        }
+        
         TipoEvento tipo = (comboTipoEventoFiltro != null) ? comboTipoEventoFiltro.getValue() : null;
         EstadoEvento estado = (comboEstadoFiltro != null) ? comboEstadoFiltro.getValue() : null;
 
@@ -366,43 +359,40 @@ public class ABMEventoController {
     }
 
     private void crearSegunTipo(String nombre, TipoEvento tipo,
-                LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
+            LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
 
         // no permitir fechas anteriores a hoy en ALTA
         Evento.validarFechasAlta(fIni, fFin);
 
-        if (tipo == null) throw new IllegalArgumentException("Seleccione un tipo de evento.");
-        if (controladorFragmento == null)
-            throw new IllegalStateException("Complete los datos específicos del tipo seleccionado.");
-
         switch (tipo) {
             case FERIA -> {
-                if (!(controladorFragmento instanceof FeriaController c))
-                    throw new IllegalStateException("Formulario de Feria no cargado.");
-                servicio.crearFeria(nombre, fIni, fFin, hIni, hFin, estado, c.getCantidadStands(), c.getAmbienteSeleccionado());
+                FeriaController c = (FeriaController) controladorFragmento;
+                servicio.crearFeria(nombre, fIni, fFin, hIni, hFin, estado,
+                        c.getCantidadStands(), c.getAmbienteSeleccionado());
             }
             case CONCIERTO -> {
-                if (!(controladorFragmento instanceof ConciertoController c))
-                    throw new IllegalStateException("Formulario de Concierto no cargado.");
-                servicio.crearConcierto(nombre, fIni, fFin, hIni, hFin, estado, c.getTipoEntradaSeleccionada(), c.getCupoMaximo());
+                ConciertoController c = (ConciertoController) controladorFragmento;
+                servicio.crearConcierto(nombre, fIni, fFin, hIni, hFin, estado,
+                        c.getTipoEntradaSeleccionada(), c.getCupoMaximo());
             }
             case EXPOSICION -> {
-                if (!(controladorFragmento instanceof ExposicionController c))
-                    throw new IllegalStateException("Formulario de Exposición no cargado.");
-                servicio.crearExposicion(nombre, fIni, fFin, hIni, hFin, estado, c.getTipoArteSeleccionado());
+                ExposicionController c = (ExposicionController) controladorFragmento;
+                servicio.crearExposicion(nombre, fIni, fFin, hIni, hFin, estado,
+                        c.getTipoArteSeleccionado());
             }
             case TALLER -> {
-                if (!(controladorFragmento instanceof TallerController c))
-                    throw new IllegalStateException("Formulario de Taller no cargado.");
-                servicio.crearTaller(nombre, fIni, fFin, hIni, hFin, estado, c.getCupoMaximo(), c.getModalidadSeleccionada());
+                TallerController c = (TallerController) controladorFragmento;
+                servicio.crearTaller(nombre, fIni, fFin, hIni, hFin, estado,
+                        c.getCupoMaximo(), c.getModalidadSeleccionada());
             }
             case CICLO_CINE -> {
-                if (!(controladorFragmento instanceof CicloCineController c))
-                    throw new IllegalStateException("Formulario de Ciclo de Cine no cargado.");
-                servicio.crearCicloCine(nombre, fIni, fFin, hIni, hFin, estado, c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas());
+                CicloCineController c = (CicloCineController) controladorFragmento;
+                servicio.crearCicloCine(nombre, fIni, fFin, hIni, hFin, estado,
+                        c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas());
             }
         }
     }
+
 
     private void actualizarSegunTipo(Evento original, String nombre, TipoEvento tipo,
                                      LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
@@ -468,7 +458,7 @@ public class ABMEventoController {
     private void eliminarEvento() {
         Evento sel = tablaEventos.getSelectionModel().getSelectedItem();
         if (sel == null) { mostrarAlerta("Selección requerida", "Debe seleccionar un evento para dar de baja."); return; }
-        Alert c = new Alert(Alert.AlertType.CONFIRMATION, "¿Eliminar \""+sel.getNombre()+"\"?", ButtonType.OK, ButtonType.CANCEL);
+        Alert c = new Alert(Alert.AlertType.CONFIRMATION, "¿Está seguro que desea eliminar \""+sel.getNombre()+"\"?", ButtonType.OK, ButtonType.CANCEL);
         c.setHeaderText(null); c.setTitle("Confirmar eliminación");
         c.showAndWait().ifPresent(b -> {
             if (b == ButtonType.OK) {

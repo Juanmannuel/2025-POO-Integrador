@@ -243,7 +243,7 @@ public abstract class Evento {
     public void validarPuedeModificar() {
         verificarEstadoAutomatico();
         if (estado == EstadoEvento.EJECUCIÓN || estado == EstadoEvento.FINALIZADO) {
-            throw new IllegalStateException("El evento está en ejecución o finalizó, no se puede modificar");
+            throw new IllegalStateException("El evento se encuentra en ejecución o finalizó, no se puede modificar");
         }
     }
 
@@ -253,7 +253,7 @@ public abstract class Evento {
         }
         LocalDate hoy = LocalDate.now();
         if (fIni.isBefore(hoy) || fFin.isBefore(hoy)) {
-            throw new IllegalArgumentException("Las fechas del evento deben ser desde hoy en adelante");
+            throw new IllegalArgumentException("Las fechas del evento deben ser desde la actual en adelante");
         }
     }
 }
