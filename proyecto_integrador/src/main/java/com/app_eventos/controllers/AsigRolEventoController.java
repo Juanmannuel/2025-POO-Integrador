@@ -16,9 +16,6 @@ import javafx.util.StringConverter;
 
 import java.util.function.Consumer;
 
-/**
- * Modal de asignación de roles..
- */
 public class AsigRolEventoController {
 
     @FXML private ComboBox<Persona> comboPersona;
@@ -70,7 +67,7 @@ public class AsigRolEventoController {
             return;
         }
         try {
-            // Persistir (evita duplicados persona+evento+rol)
+            // Persistir, asegura que el objeto RolEvento es válido.
             var creado = servicio.asignarRol(evento, persona, rol);
             if (creado == null) {
                 mostrarAdvertencia("Aviso", "Ese rol ya está asignado a esa persona.");
@@ -142,7 +139,7 @@ public class AsigRolEventoController {
         a.setTitle(titulo); a.setHeaderText(null); a.setContentText(mensaje); a.showAndWait();
     }
 
-    // ===== API para el padre =====
+    // API para el padre
     public void setEvento(Evento evento) {
         this.evento = evento;
         if (evento != null) {

@@ -60,7 +60,7 @@ public class MainController {
         }
     }
 
-    // --- HANDLERS DE BOTONES ---
+    // HANDLERS DE BOTONES
     @FXML
     private void mostrarInicio() {
         cargarContenidoCentral("/fxml/inicio.fxml");

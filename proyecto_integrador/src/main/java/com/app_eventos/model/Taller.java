@@ -19,7 +19,7 @@ public class Taller extends Evento implements IEventoConCupo {
     @Column(name = "modalidad", nullable = false)
     private Modalidad modalidad;
 
-    // Tabla propia para participantes del taller.
+    // Tabla propia para participantes del taller
     @ManyToMany
     @JoinTable(
         name = "taller_participante",
@@ -65,7 +65,7 @@ public class Taller extends Evento implements IEventoConCupo {
 
     @Override
     public void setCupoMaximo(int v) {
-        // ⇨ Validación mínima aquí (sin mirar la colección lazy)
+        // Validación mínima aquí (sin mirar la colección lazy)
         if (v <= 0) throw new IllegalArgumentException("El cupo debe ser mayor a cero.");
         this.cupoMaximo = v;
     }

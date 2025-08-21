@@ -50,16 +50,14 @@ public abstract class Evento {
     }
 
     // Fechas
-    /** Único método que valida y asigna ambas fechas. */
+    // método que valida y asigna ambas fechas.
     private void asignarFechas(LocalDateTime ini, LocalDateTime fin) {
         Objects.requireNonNull(ini, "La fecha y hora de inicio es obligatoria.");
         Objects.requireNonNull(fin, "La fecha y hora de fin es obligatoria.");
 
-        // No permitir inicio en el pasado (sí permite "ahora" o futuro)
         if (ini.isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("La fecha/hora de inicio no puede estar en el pasado.");
         }
-        // Fin estrictamente posterior a inicio
         if (!fin.isAfter(ini)) {
             throw new IllegalArgumentException("La fecha/hora de fin debe ser posterior a la de inicio.");
         }
@@ -68,12 +66,12 @@ public abstract class Evento {
         this.fechaFin = fin;
     }
 
-    /** Asignación usando fecha y hora separadas (útil para DatePicker + TimePicker). */
+    // Asignación usando fecha y hora separadas.
     public void setFechas(LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin) {
         asignarFechas(LocalDateTime.of(fIni, hIni), LocalDateTime.of(fFin, hFin));
     }
 
-    /** Setters individuales delegan siempre al validador para mantener invariantes. */
+    // Setters individuales delegan siempre al validador para mantener invariantes.
     public void setFechaInicio(LocalDateTime nuevaInicio) {
         asignarFechas(nuevaInicio, this.fechaFin);
     }
@@ -83,46 +81,40 @@ public abstract class Evento {
     }
 
     // Reglas de estado
-    /** Cambia el estado del evento, validando la transición permitida. */
+    // cambia el estado del evento validando la transición permitida.
     public void cambiarEstado(EstadoEvento nuevoEstado) {
         Objects.requireNonNull(nuevoEstado, "Estado obligatorio");
         if (this.estado == nuevoEstado) return;
 
-        // Solo se permite PLANIFICACIÓN -> CONFIRMADO
         if (this.estado != EstadoEvento.PLANIFICACIÓN) {
             throw new IllegalStateException("No se permite cambiar manualmente el estado desde " + this.estado + ".");
         }
-
-        // No confirmar si el inicio ya quedó en el pasado
         if (this.fechaInicio.isBefore(LocalDateTime.now())) {
             throw new IllegalStateException("No se puede confirmar con fecha/hora de inicio pasada.");
         }
 
-        // Reglas de dominio (Evento + overrides de subtipos)
         validarRolesObligatorios();
 
         this.estado = EstadoEvento.CONFIRMADO;
     }
 
+    // Set estado con validación de máquina de estados.
     public void setEstado(EstadoEvento nuevo) {
         if (nuevo == null) throw new IllegalArgumentException("El estado del evento es obligatorio.");
 
-        // Entidad NUEVA (sin id): forzar PLANIFICACIÓN siempre
         if (this.idEvento == null) {
             this.estado = EstadoEvento.PLANIFICACIÓN;
             return;
         }
 
-        // Entidad ya persistida -> respetar máquina de estados
         if (this.estado == nuevo) return;
         cambiarEstado(nuevo);
     }
 
-    /** Avance automático de estado según fechas actuales. */
+    // Avance automático de estado según fechas actuales.
     public void verificarEstadoAutomatico() {
         LocalDateTime now = LocalDateTime.now();
 
-        // CONFIRMADO -> EJECUCIÓN cuando llega inicio (y antes de fin)
         if (estado == EstadoEvento.CONFIRMADO && !now.isBefore(fechaInicio) && now.isBefore(fechaFin)) {
             // Antes de ejecutar, exigimos invariantes (roles listos).
             validarRolesObligatorios();
@@ -130,7 +122,6 @@ public abstract class Evento {
             return;
         }
 
-        // CONFIRMADO/EJECUCIÓN -> FINALIZADO cuando pasó la hora de fin
         if ((estado == EstadoEvento.CONFIRMADO || estado == EstadoEvento.EJECUCIÓN) && !now.isBefore(fechaFin)) {
             this.estado = EstadoEvento.FINALIZADO;
         }
@@ -139,20 +130,18 @@ public abstract class Evento {
     // Inscripción
     public boolean esInscribible() {
         LocalDateTime now = LocalDateTime.now();
-        // Solo inscribible si está confirmado, no vencido, y cumple invariantes (roles listos)
-        return this.estado == EstadoEvento.CONFIRMADO
-                && now.isBefore(getFechaFin())
-                && invariantesCumplidasDeFormaSegura();
+        // solo inscribible si está confirmado, no vencido, y cumple invariantes
+        return this.estado == EstadoEvento.CONFIRMADO && now.isBefore(getFechaFin()) && invariantesCumplidasDeFormaSegura();
     }
 
+    // Verifica si se puede inscribir.
     public boolean Inscripcion() { return esInscribible(); }
 
-    /** Lanza si no se puede inscribir. */
     protected void validarPuedeInscribir() {
         if (!esInscribible()) throw new IllegalStateException("No se permite inscribir.");
     }
 
-    /** Evalúa invariantes sin lanzar (para esInscribible). */
+    // Verifica invariantes de forma segura, sin lanzar excepciones.
     private boolean invariantesCumplidasDeFormaSegura() {
         try {
             validarInvariantes();
@@ -163,7 +152,7 @@ public abstract class Evento {
     }
 
     // Roles
-    /** Congela gestión de roles en EJECUCIÓN/FINALIZADO. */
+    // Congela gestión de roles en EJECUCIÓN/FINALIZADO.
     private void validarPuedeGestionarRoles() {
         // verificar estado antes de permitir asignar o borrar roles
         verificarEstadoAutomatico();
@@ -175,10 +164,10 @@ public abstract class Evento {
         }
     }
 
-    /** Gancho para validaciones específicas de subtipos al asignar roles. */
+    // Gancho para validaciones específicas de subtipos al asignar roles.
     protected void validarRestriccionesRol(TipoRol rol, Persona persona) {}
 
-    /** Wrapper para mantener semántica previa. */
+    // Wrapper para mantener semántica previa.
     protected void validarRolesObligatorios() { validarInvariantes(); }
 
     public void agregarResponsable(Persona persona, TipoRol rol) {
@@ -211,7 +200,7 @@ public abstract class Evento {
         return roles.stream().filter(r -> r.getRol() == rol).count();
     }
 
-    /** Invariante por defecto: al menos un ORGANIZADOR. */
+    // Invariante por defecto: al menos un ORGANIZADOR.
     public void validarInvariantes() {
         if (contarPorRol(TipoRol.ORGANIZADOR) == 0)
             throw new IllegalStateException("El evento debe tener al menos un ORGANIZADOR.");
@@ -228,7 +217,6 @@ public abstract class Evento {
     public void agregarRol(RolEvento rol) { if (rol != null) roles.add(rol); }
 
     // Getters / Setters
-
     public Long getIdEvento() { return idEvento; }
     public void setIdEvento(Long idEvento) { this.idEvento = idEvento; }
 
@@ -248,10 +236,10 @@ public abstract class Evento {
         this.tipoEvento = tipoEvento;
     }
 
-    /** Copia defensiva para no exponer la colección interna. */
+    // Copia defensiva para no exponer la colección interna.
     public List<RolEvento> getRoles() { return new ArrayList<>(roles); }
 
-    /** Valida que el evento no pueda modificarse si está en ejecución o finalizado. */
+    // Valida que el evento no pueda modificarse si está en ejecución o finalizado.
     public void validarPuedeModificar() {
         verificarEstadoAutomatico();
         if (estado == EstadoEvento.EJECUCIÓN || estado == EstadoEvento.FINALIZADO) {

@@ -19,7 +19,7 @@ public class Servicio {
 
     private final Repositorio repositorio = new Repositorio();
 
-    // ========= Helpers de estado =========
+    // Helpers de estado
 
     private void aplicarEstadoInicial(Evento e, EstadoEvento estado) {
         if (estado == EstadoEvento.PLANIFICACIÓN) {
@@ -35,7 +35,7 @@ public class Servicio {
         }
     }
 
-    // ========= Guards de nulidad =========
+    // Guards de nulidad
     private void validarAlta(LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin, EstadoEvento estado) {
         if (fIni == null)  throw new IllegalArgumentException("La Fecha de inicio es obligatoria.");
         if (hIni == null)  throw new IllegalArgumentException("La Hora de inicio es obligatoria.");
@@ -51,7 +51,7 @@ public class Servicio {
         if (hFin == null)  throw new IllegalArgumentException("La Hora de fin es obligatoria.");
     }
 
-    // ========= ALTAS =========
+    // ALTAS 
 
     public void crearFeria(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
                            EstadoEvento estado, int cantidadStands, TipoAmbiente ambiente) {
@@ -119,7 +119,7 @@ public class Servicio {
         repositorio.actualizarPeliculasCiclo(cc.getIdEvento(), pelis);
     }
 
-    // ========= MODIFICACIONES =========
+    // MODIFICACIONES
 
     public void actualizarFeria(Feria f, String nombre, LocalDate fIni, LocalDate fFin,
                                 LocalTime hIni, LocalTime hFin, EstadoEvento estado,
@@ -184,7 +184,7 @@ public class Servicio {
         repositorio.actualizarPeliculasCiclo(cc.getIdEvento(), pelis);
     }
 
-    // ========= Listados / Búsquedas / Eliminación =========
+    // Listados / Búsquedas / Eliminación
 
     public List<Evento> listarEventos() { return repositorio.listarEventos(); }
 
@@ -202,7 +202,7 @@ public class Servicio {
         return FXCollections.observableArrayList(repositorio.listarEventos());
     }
 
-    // ========= Personas =========
+    // Personas
 
     public ObservableList<Persona> obtenerPersonas() { return repositorio.listarPersonas(); }
     public void guardarPersona(Persona persona) { repositorio.guardarPersona(persona); }
@@ -226,7 +226,7 @@ public class Servicio {
         return out;
     }
 
-    // ========= Participantes =========
+    // Participantes
 
     public void inscribirParticipante(Evento evento, Persona persona) {
         repositorio.agregarParticipante(evento, persona);
@@ -240,7 +240,7 @@ public class Servicio {
         return repositorio.obtenerParticipantes(evento);
     }
 
-    // ========= Roles =========
+    // Roles
 
     public RolEvento asignarRol(Evento evento, Persona persona, TipoRol rol) {
         RolEvento rolPersistido = repositorio.asignarRol(evento, persona, rol);
@@ -265,7 +265,7 @@ public class Servicio {
         return repositorio.filtrarRoles(nombreEvento, nombrePersona, dni);
     }
 
-    // ========= Películas =========
+    // Películas
 
     public ObservableList<Pelicula> obtenerPeliculas() { return repositorio.listarPeliculas(); }
     public void guardarPelicula(Pelicula pelicula) { repositorio.guardarPelicula(pelicula); }
@@ -282,7 +282,7 @@ public class Servicio {
         return repositorio.findCicloCineConPeliculas(idCiclo);
     }
 
-    // ========= Estados automáticos =========
+    // Estados automáticos
 
     public void verificarEstadosEventos() {
         for (Evento e : repositorio.listarEventos()) {
@@ -292,7 +292,7 @@ public class Servicio {
         }
     }
 
-    // ========= Métricas / utilitarios =========
+    // Métricas / utilitarios
 
     public List<Evento> listarEventosPorRango(LocalDateTime desde, LocalDateTime hasta) {
         var base = repositorio.buscarEventos(null, null, desde.toLocalDate(), hasta.toLocalDate());

@@ -2,7 +2,6 @@ package com.app_eventos.model;
 
 import jakarta.persistence.*;
 
-/** Entidad Persona con validaciones y normalización. */
 @Entity
 @Table(name = "persona")
 public class Persona {
@@ -37,7 +36,7 @@ public class Persona {
         setEmail(email);
     }
 
-    // ===== Normalización automática antes de persistir/actualizar =====
+    // Normalización automática antes de persistir o actualizar
     @PrePersist @PreUpdate
     private void normalize() {
         if (nombre != null)   nombre   = titleCase(nombre.trim());
@@ -48,7 +47,7 @@ public class Persona {
         else email = null; // guardar null si viene vacío
     }
 
-    // ===== Setters con validación =====
+    // Setters con validación
     public void setDni(String dni){
         if (dni == null) throw new IllegalArgumentException("DNI requerido");
         String clean = onlyDigits(dni);
@@ -56,10 +55,10 @@ public class Persona {
         this.dni = clean;
     }
 
+    // Email con validación y normalización
     public void setEmail(String email){
         if (email == null || email.isBlank()) { this.email = null; return; }
         String v = email.trim().toLowerCase();
-        // patrón simple y suficiente para UI de escritorio
         if (!v.matches("^[\\w.!#$%&'*+/=?^_`{|}~-]+@[\\w-]+(?:\\.[A-Za-z]{2,})+$"))
             throw new IllegalArgumentException("Email inválido");
         if (v.length() > 254) throw new IllegalArgumentException("Email demasiado largo");
@@ -93,10 +92,10 @@ public class Persona {
     }
 
 
-    // ===== Utiles de normalización =====
+    // Utiles de normalización
     private static String onlyDigits(String s) { return s.replaceAll("\\D+", ""); }
 
-    /** Capitaliza cada palabra y subpalabra separada por espacio o guion: "juAN pérez-garcía" -> "Juan Pérez-García". */
+    // Separa cada palabra y subpalabra separada por espacio o guion
     private static String titleCase(String text) {
         String[] parts = text.toLowerCase().split("\\s+");
         StringBuilder out = new StringBuilder();
@@ -115,7 +114,7 @@ public class Persona {
         return String.join("-", sub);
     }
 
-    // ===== Getters =====
+    // Getters
     public Long getIdPersona(){ return idPersona; }
     public String getNombre(){ return nombre; }
     public String getApellido(){ return apellido; }

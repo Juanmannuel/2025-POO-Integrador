@@ -7,7 +7,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-// <<< NUEVO
+
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -31,7 +31,6 @@ public class ABMEventoController {
 
     private Servicio servicio = Servicio.getInstance();
 
-    // ----------- UI (modal) -----------
     @FXML private TextField txtNombre;
     @FXML private DatePicker dateInicio;
     @FXML private DatePicker dateFin;
@@ -43,7 +42,7 @@ public class ABMEventoController {
     @FXML private Pane seccionDinamica;
     @FXML private TableColumn<Evento, Void> colAcciones;
 
-    // ----------- Tabla -----------
+    // Tabla 
     @FXML private TableView<Evento> tablaEventos;
     @FXML private TableColumn<Evento, String> colNombre;
     @FXML private TableColumn<Evento, TipoEvento> colTipo;
@@ -52,13 +51,13 @@ public class ABMEventoController {
     @FXML private TableColumn<Evento, EstadoEvento> colEstado;
     @FXML private TableColumn<Evento, String> colResponsables;
 
-    // ----------- Filtros -----------
+    // Filtros
     @FXML private ComboBox<TipoEvento> comboTipoEventoFiltro;
     private ComboBox<EstadoEvento> comboEstadoFiltro;
     private DatePicker dateDesdeFiltro;
     private DatePicker dateHastaFiltro;
 
-    // ----------- Estado interno -----------
+    // Estado interno
     private final ObservableList<Evento> modeloTabla = FXCollections.observableArrayList();
     private Object controladorFragmento;
     private Evento eventoEnEdicion;

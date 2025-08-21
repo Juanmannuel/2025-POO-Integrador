@@ -19,15 +19,14 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-/** ABM Participantes */
 public class ABMParticipanteController {
 
-    // -------- filtros superiores --------
+    // filtros superiores
     @FXML private ComboBox<Evento> comboEventoFiltro;
     @FXML private TextField txtDNIFiltro;
     @FXML private TextField txtNombreFiltro;
 
-    // -------- tabla principal --------
+    // tabla principal
     @FXML private TableView<Fila> tablaParticipantes;
     @FXML private TableColumn<Fila, String> colEvento;
     @FXML private TableColumn<Fila, String> colNombre;
@@ -35,12 +34,11 @@ public class ABMParticipanteController {
     @FXML private TableColumn<Fila, String> colTelefono;
     @FXML private TableColumn<Fila, String> colEmail;
     @FXML private TableColumn<Fila, EstadoEvento> colEstadoEvento;
-    @FXML private TableColumn<Fila, String> colFechaAsignacion;
 
-    // -------- modal alta --------
+    // modal alta
     @FXML private StackPane modalOverlay;
-    @FXML private ComboBox<Evento> comboEvento;        // eventos inscribibles ahora
-    @FXML private ComboBox<Persona> comboParticipante; // personas elegibles
+    @FXML private ComboBox<Evento> comboEvento;
+    @FXML private ComboBox<Persona> comboParticipante;
 
     // Info evento en modal
     @FXML private Label lblEstadoEvento;
@@ -59,7 +57,7 @@ public class ABMParticipanteController {
 
     private static final DateTimeFormatter FECHAS = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
 
-    // ================= init =================
+    // init
     @FXML
     public void initialize() {
         // Converters
@@ -67,7 +65,7 @@ public class ABMParticipanteController {
         comboEvento.setConverter(eventoConverter());
         comboParticipante.setConverter(personaConverter());
 
-        // Filtro: eventos que requieren inscripción (independiente del estado)
+        // Filtro: eventos que requieren inscripción
         recargarEventosFiltro();
 
         // Combo personas vacío hasta elegir evento en el modal
@@ -82,7 +80,7 @@ public class ABMParticipanteController {
         // Listeners modal
         comboEvento.valueProperty().addListener((o,a,b)->{
             pintarInfoEvento(b);
-            cargarPersonasElegibles(b);     // << ahora viene de BD
+            cargarPersonasElegibles(b); 
         });
         comboParticipante.valueProperty().addListener((o,a,b)->pintarInfoPersona(b));
 
@@ -94,7 +92,6 @@ public class ABMParticipanteController {
         colTelefono.setCellValueFactory(d -> new SimpleStringProperty(nullSafe(d.getValue().persona().getTelefono())));
         colEmail.setCellValueFactory(d -> new SimpleStringProperty(nullSafe(d.getValue().persona().getEmail())));
         colEstadoEvento.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().evento().getEstado()));
-        colFechaAsignacion.setCellValueFactory(d -> new SimpleStringProperty("-"));
 
         tablaParticipantes.setItems(modeloTabla);
         modalOverlay.setVisible(false);
@@ -103,11 +100,11 @@ public class ABMParticipanteController {
         refrescarTabla();
     }
 
-    // ================= acciones toolbar =================
+    // acciones del modal
 
     @FXML
     public void mostrarModalAlta() {
-        // Modal: solo eventos CONFIRMADOS y no vencidos
+        // solo eventos CONFIRMADOS y no vencidos
         var inscribibles = servicio.obtenerEventosParaInscripcion();
         comboEvento.setItems(inscribibles);
 
@@ -118,7 +115,7 @@ public class ABMParticipanteController {
 
         limpiarModal(false); // no borrar items recién cargados
 
-        // Intentar preseleccionar el del filtro si aplica
+        // intentar preseleccionar el del filtro si aplica
         Evento selFiltro = comboEventoFiltro.getValue();
         if (selFiltro != null && esInscribibleAhora(selFiltro)) {
             seleccionarPorId(comboEvento, selFiltro.getIdEvento());
@@ -126,7 +123,7 @@ public class ABMParticipanteController {
             comboEvento.getSelectionModel().selectFirst();
         }
 
-        // Pintar info y cargar elegibles con la selección actual
+        // pintar info y cargar elegibles con la selección actual
         pintarInfoEvento(comboEvento.getValue());
         cargarPersonasElegibles(comboEvento.getValue());
 
@@ -165,7 +162,7 @@ public class ABMParticipanteController {
         }
     }
 
-    // ================= tabla =================
+    // tabla
 
     private void refrescarTabla() {
         modeloTabla.clear();
@@ -192,7 +189,7 @@ public class ABMParticipanteController {
         tablaParticipantes.refresh();
     }
 
-    // ================= helpers modal =================
+    // helpers modal
 
     private void pintarInfoEvento(Evento e) {
         if (e == null) {
@@ -244,16 +241,16 @@ public class ABMParticipanteController {
         comboParticipante.setPlaceholder(new Label("Seleccione un evento"));
     }
 
-    // ================= listas de eventos =================
+    // listas de eventos
 
-    /** Eventos que requieren inscripción (para el combo del filtro). */
+    // Eventos que requieren inscripción (para el combo del filtro).
     private List<Evento> eventosConCupo() {
         return servicio.listarEventos().stream()
                 .filter(e -> e instanceof IEventoConCupo)
                 .toList();
     }
 
-    /** ¿El evento está inscribible ahora? (CONFIRMADO). */
+    // Eventos que requieren inscripción y están CONFIRMADOS y no vencidos.
     private boolean esInscribibleAhora(Evento e) {
         if (!(e instanceof IEventoConCupo)) return false;
         LocalDateTime ahora = LocalDateTime.now();
@@ -269,7 +266,7 @@ public class ABMParticipanteController {
         if (idSel != null) seleccionarPorId(comboEventoFiltro, idSel);
     }
 
-    /** Selecciona por ID (evita problemas de proxies/equals). */
+    // Selecciona por ID (evita problemas de proxies/equals).
     private void seleccionarPorId(ComboBox<Evento> combo, Long id) {
         if (id == null) return;
         combo.getItems().stream()
@@ -278,9 +275,9 @@ public class ABMParticipanteController {
                 .ifPresent(e -> combo.getSelectionModel().select(e));
     }
 
-    // ================= personas elegibles =================
+    // personas elegibles
 
-    /** Llena el combo de personas con las elegibles para el evento (BD). */
+    // Llena el combo de personas con las elegibles para el evento (BD). 
     private void cargarPersonasElegibles(Evento e){
         if (e == null) {
             comboParticipante.setItems(FXCollections.observableArrayList());
@@ -292,7 +289,7 @@ public class ABMParticipanteController {
         if (libres.isEmpty()) comboParticipante.setPlaceholder(new Label("No hay personas elegibles"));
     }
 
-    // ================= util =================
+    // util
 
     private StringConverter<Evento> eventoConverter() {
         return new StringConverter<>() {
@@ -331,6 +328,6 @@ public class ABMParticipanteController {
         Alert a = new Alert(t); a.setHeaderText(h); a.setContentText(m); a.showAndWait();
     }
 
-    // ========= fila de la tabla =========
+    // fila de la tabla
     public record Fila(Evento evento, Persona persona) {}
 }

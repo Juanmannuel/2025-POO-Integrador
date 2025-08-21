@@ -1,7 +1,6 @@
 package com.app_eventos.controllers;
 
 import com.app_eventos.model.enums.TipoEntrada;
-import com.app_eventos.services.Servicio;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Spinner;
@@ -11,8 +10,6 @@ public class ConciertoController {
 
     @FXML
     private Spinner<Integer> spinnerCupoMaximo;
-
-    private final Servicio servicio = Servicio.getInstance();
     
     @FXML
     private ComboBox<TipoEntrada> comboTipoEntradaConcierto;

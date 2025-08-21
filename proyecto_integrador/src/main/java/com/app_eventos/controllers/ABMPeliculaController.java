@@ -82,12 +82,12 @@ public class ABMPeliculaController {
         spinnerDuracion.setValueFactory(crearFactoryDuracion(LocalTime.of(0, 1), LocalTime.of(9, 59), 5));
         spinnerDuracion.setEditable(true);
 
-        // --- Carga inicial (pedimos al Servicio SIEMPRE)
+        // Carga inicial pedimos a servicio
         refrescarDatos();
     }
 
     // Helpers de UI
-
+    
     // Crea la value factory para un spinner de LocalTime con paso en minutos.
     private SpinnerValueFactory<LocalTime> crearFactoryDuracion(LocalTime min, LocalTime max, int stepMin) {
         return new SpinnerValueFactory<>() {

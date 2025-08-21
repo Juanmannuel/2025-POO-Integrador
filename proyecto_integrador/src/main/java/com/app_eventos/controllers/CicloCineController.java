@@ -91,14 +91,14 @@ public class CicloCineController {
         return String.format("%dh %dmin", horas, mins);
     }
 
-    // === Getters usados por ABMEventoController ===
+    // Getters usados por ABMEventoController
     public boolean isPostCharla() { return radioSi.isSelected(); }
     public void setPostCharla(boolean v) { if (v) radioSi.setSelected(true); else radioNo.setSelected(true); }
 
     public int getCupoMaximo() { return spinnerCupoMaximo.getValue(); }
     public void setCupoMaximo(int v) { spinnerCupoMaximo.getValueFactory().setValue(v); }
 
-    // Preselecciona por ID (funciona aunque las instancias sean distintas)
+    // preselecciona por ID (funciona aunque las instancias sean distintas)
     public void preseleccionarPeliculas(List<Pelicula> pelis) {
         seleccionadasIds.clear();
         if (pelis != null) {
@@ -110,14 +110,14 @@ public class CicloCineController {
         actualizarContador();
     }
 
-    // Devuelve las seleccionadas actuales (instancias de 'todas')
+    // devuelve las seleccionadas actuales (instancias de 'todas')
     public List<Pelicula> getPeliculasSeleccionadas() {
         return todas.stream()
                 .filter(p -> p.getIdPelicula() != null && seleccionadasIds.contains(p.getIdPelicula()))
                 .toList();
     }
 
-    // Opcional: mismas seleccionadas pero respetando el orden visual
+    // mismas seleccionadas pero respetando el orden visual
     public List<Pelicula> getPeliculasSeleccionadasEnOrden() {
         return listaPeliculas.getItems().stream()
                 .filter(p -> p.getIdPelicula() != null && seleccionadasIds.contains(p.getIdPelicula()))

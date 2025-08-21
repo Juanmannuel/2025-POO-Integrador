@@ -32,13 +32,12 @@
             <!-- TABLA -->
             <TableView fx:id="tablaParticipantes" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="colEvento" text="Evento" />
-                    <TableColumn fx:id="colNombre" text="Participante" />
-                    <TableColumn fx:id="colDNI" text="DNI" />
-                    <TableColumn fx:id="colTelefono" text="Teléfono" />
-                    <TableColumn fx:id="colEmail" text="Email" />
-                    <TableColumn fx:id="colEstadoEvento" text="Estado Evento" />
-                    <TableColumn fx:id="colFechaAsignacion" text="Fecha Asignación" />
+                    <TableColumn fx:id="colEvento" text="Evento"/>
+                    <TableColumn fx:id="colNombre" text="Participante"/>
+                    <TableColumn fx:id="colDNI" text="DNI"/>
+                    <TableColumn fx:id="colTelefono" text="Teléfono"/>
+                    <TableColumn fx:id="colEmail" text="Email"/>
+                    <TableColumn fx:id="colEstadoEvento" text="Estado Evento"/>
                 </columns>
             </TableView>
 

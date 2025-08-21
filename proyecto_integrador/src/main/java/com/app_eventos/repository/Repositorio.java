@@ -12,7 +12,7 @@ import javafx.collections.ObservableList;
 import com.app_eventos.model.*;
 import com.app_eventos.model.enums.*;
 
-/** Acceso a datos con JPA. */
+// Acceso a datos con JPA.
 public class Repositorio {
 
     private static final EntityManagerFactory EMF =
@@ -23,7 +23,7 @@ public class Repositorio {
     @FunctionalInterface
     private interface Fn<T> { T apply(EntityManager em); }
 
-    /** Helper de transacciones: abre EM, begin/commit/rollback y cierra. */
+    // Helper de transacciones: abre EM, begin/commit/rollback y cierra.
     private <T> T tx(Fn<T> work) {
         EntityManager em = em();
         EntityTransaction tx = em.getTransaction();
@@ -40,7 +40,7 @@ public class Repositorio {
         }
     }
 
-    // ---------- Personas ----------
+    // Personas 
     public ObservableList<Persona> listarPersonas() {
         return tx(em -> FXCollections.observableArrayList(
             em.createQuery("select p from Persona p order by p.apellido, p.nombre", Persona.class)
@@ -51,7 +51,7 @@ public class Repositorio {
     public Persona actualizarPersona(Persona p){ return tx(em-> em.merge(p)); }
     public void eliminarPersona(Persona p){ tx(em->{ em.remove(em.contains(p)?p:em.merge(p)); return null; }); }
 
-    // ---------- Películas ----------
+    // Películas
     public ObservableList<Pelicula> listarPeliculas() {
         return tx(em -> FXCollections.observableArrayList(
             em.createQuery("select p from Pelicula p order by p.titulo", Pelicula.class)
@@ -62,7 +62,7 @@ public class Repositorio {
     public Pelicula actualizarPelicula(Pelicula p){ return tx(em-> em.merge(p)); }
     public void eliminarPelicula(Pelicula p){ tx(em->{ em.remove(em.contains(p)?p:em.merge(p)); return null; }); }
 
-    // Trae el CicloCine con la colección de películas inicializada (LEFT JOIN FETCH)
+    // Trae el CicloCine con la colección de películas inicializada
     public CicloCine findCicloCineConPeliculas(Long id) {
         return tx(em -> em.createQuery(
                 "select c from CicloCine c left join fetch c.peliculas where c.idEvento = :id",
@@ -71,7 +71,7 @@ public class Repositorio {
             .getSingleResult());
     }
 
-    // ====== SINCRONIZA SOLO DIFERENCIAS EN LA TABLA PUENTE (INSERT/DELETE nativos) ======
+    // SINCRONIZA SOLO DIFERENCIAS EN LA TABLA PUENTE (INSERT/DELETE nativos)
     public CicloCine actualizarPeliculasCiclo(Long idCiclo, java.util.List<Pelicula> nuevas) {
         return tx(em -> {
             // IDs nuevos desde UI
@@ -130,7 +130,7 @@ public class Repositorio {
         });
     }
 
-    // ---------- Helpers privados ----------
+    // Helpers privados
 
     private boolean personaTieneRolEnEvento(EntityManager em, long idEvento, long idPersona){
         return !em.createQuery(
@@ -209,7 +209,7 @@ public class Repositorio {
             throw new IllegalStateException("La persona ya está inscripta como participante en este evento.");
     }
 
-    // ---------- Roles ----------
+    // Roles
 
     public RolEvento asignarRol(Evento evento, Persona persona, TipoRol rol) {
         return tx(em -> {
@@ -283,7 +283,7 @@ public class Repositorio {
         });
     }
 
-    // ---------- Participantes ----------
+    // Participantes
 
     public void agregarParticipante(Evento evento, Persona persona) {
         tx(em -> {
@@ -398,7 +398,7 @@ public class Repositorio {
         });
     }
 
-    // ---------- Eventos ----------
+    // Eventos
     public List<Evento> listarEventos() {
         return tx(em ->
             em.createQuery(
@@ -437,7 +437,7 @@ public class Repositorio {
         });
     }
 
-    /** Personas elegibles para inscribirse en 'e': no tienen rol en el evento ni están inscriptas. */
+    // Personas elegibles para inscribirse en 'e': no tienen rol en el evento ni están inscriptas.
     public java.util.List<Persona> personasElegiblesParaInscripcion(Evento e) {
         return tx(em -> {
             Evento ev = em.find(Evento.class, e.getIdEvento());
