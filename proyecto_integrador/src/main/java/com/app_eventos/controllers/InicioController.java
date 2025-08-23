@@ -168,10 +168,15 @@ public class InicioController {
         lblNumeroDia.getStyleClass().add("calendario-numero-dia");
         contenidoCelda.getChildren().add(lblNumeroDia);
 
-        // Eventos del día (lista filtrada)
+        // Eventos del día (lista filtrada) - considerar todo el intervalo del evento
         LocalDate fechaDelDia = fechaActual.withDayOfMonth(dia);
         List<Evento> eventosDelDia = eventosFiltrados.stream()
-                .filter(e -> e.getFechaInicio().toLocalDate().equals(fechaDelDia))
+                .filter(e -> {
+                    LocalDate fechaInicio = e.getFechaInicio().toLocalDate();
+                    LocalDate fechaFin = e.getFechaFin().toLocalDate();
+                    // El evento se muestra en todas las fechas desde inicio hasta fin (inclusive)
+                    return !fechaDelDia.isBefore(fechaInicio) && !fechaDelDia.isAfter(fechaFin);
+                })
                 .collect(Collectors.toList());
 
         // Puntitos por tipo
@@ -201,21 +206,49 @@ public class InicioController {
         vboxEventosDia.getChildren().clear();
 
         if (eventos.isEmpty()) {
-            vboxEventosDia.getChildren().add(new Label("No hay eventos para este día."));
+            Label lblNoEventos = new Label("No hay eventos para este día.");
+            lblNoEventos.setWrapText(true);
+            lblNoEventos.setMaxWidth(Double.MAX_VALUE);
+            vboxEventosDia.getChildren().add(lblNoEventos);
             return;
         }
 
         DateTimeFormatter formatoHora = DateTimeFormatter.ofPattern("HH:mm");
+        DateTimeFormatter formatoFecha = DateTimeFormatter.ofPattern("dd/MM");
+        
         for (Evento evento : eventos) {
+            VBox contenedorEvento = new VBox(3);
+            contenedorEvento.setMaxWidth(Double.MAX_VALUE);
+            contenedorEvento.setStyle("-fx-padding: 8 0;");
+            
             Label lblEvento = new Label("• " + evento.getNombre());
-            lblEvento.setStyle("-fx-font-weight: bold;");
+            lblEvento.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+            lblEvento.setWrapText(true);
+            lblEvento.setMaxWidth(Double.MAX_VALUE);
 
-            Label lblHorario = new Label(
-                "  De " + evento.getFechaInicio().format(formatoHora) +
-                " a " + evento.getFechaFin().format(formatoHora) + " hs"
-            );
+            LocalDate fechaInicio = evento.getFechaInicio().toLocalDate();
+            LocalDate fechaFin = evento.getFechaFin().toLocalDate();
+            
+            String textoHorario;
+            if (fechaInicio.equals(fechaFin)) {
+                // Evento de un solo día
+                textoHorario = "  De " + evento.getFechaInicio().format(formatoHora) +
+                              " a " + evento.getFechaFin().format(formatoHora) + " hs";
+            } else {
+                // Evento de múltiples días
+                textoHorario = "  De " + evento.getFechaInicio().format(formatoHora) + " hs (" + 
+                              fechaInicio.format(formatoFecha) + ") a " + 
+                              evento.getFechaFin().format(formatoHora) + " hs (" + 
+                              fechaFin.format(formatoFecha) + ")";
+            }
 
-            vboxEventosDia.getChildren().addAll(lblEvento, lblHorario);
+            Label lblHorario = new Label(textoHorario);
+            lblHorario.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 11px;");
+            lblHorario.setWrapText(true);
+            lblHorario.setMaxWidth(Double.MAX_VALUE);
+
+            contenedorEvento.getChildren().addAll(lblEvento, lblHorario);
+            vboxEventosDia.getChildren().add(contenedorEvento);
         }
     }
 

@@ -214,7 +214,46 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0.5, 0, 2);
 }
 .card-estadistica { -fx-padding: 15px; -fx-alignment: center; }
-.panel-info-lateral { -fx-padding: 15px; }
+.panel-info-lateral { 
+    -fx-padding: 15px; 
+    -fx-spacing: 10;
+}
+
+/* Estilos para el ScrollPane del panel lateral */
+.panel-info-lateral .scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+.panel-info-lateral .scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.panel-info-lateral .scroll-pane .scroll-bar:vertical {
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 5;
+    -fx-pref-width: 8;
+}
+
+.panel-info-lateral .scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #c0c0c0;
+    -fx-background-radius: 5;
+}
+
+.panel-info-lateral .scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #a0a0a0;
+}
+
+/* Estilos para el contenido de eventos */
+.panel-info-lateral .vbox {
+    -fx-spacing: 8;
+}
+
+.panel-info-lateral .label {
+    -fx-wrap-text: true;
+    -fx-max-width: infinity;
+}
 .card-blanco { 
     -fx-background-radius: 12; 
     -fx-padding: 16; 
