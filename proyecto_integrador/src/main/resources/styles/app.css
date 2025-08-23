@@ -307,3 +307,44 @@
     -fx-cursor: hand;
 }
 .btn-navegacion-calendario:hover { -fx-background-color: rgba(0,0,0,0.06); }
+
+/* TIMEPICKER PERSONALIZADO */
+.time-picker {
+    -fx-padding: 5px;
+    -fx-background-color: white;
+    -fx-border-color: #d0d0d0;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.time-picker .combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #c0c0c0;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 4px;
+}
+
+.time-picker .combo-box:hover {
+    -fx-border-color: #3f86f2;
+}
+
+.time-picker .combo-box:focused {
+    -fx-border-color: #3f86f2;
+    -fx-effect: dropshadow(three-pass-box, rgba(63, 134, 242, 0.3), 3, 0, 0, 1);
+}
+
+.time-picker .combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.time-picker .combo-box .arrow {
+    -fx-background-color: #666;
+}
+
+.time-picker .label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+    -fx-padding: 0 5px;
+}

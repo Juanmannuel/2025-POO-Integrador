@@ -2,6 +2,7 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import com.app_eventos.utils.TimePicker?>
 
 <StackPane xmlns="http://javafx.com/javafx/21.0.1"
            xmlns:fx="http://javafx.com/fxml/1"
@@ -91,10 +92,10 @@
                         <Label text="Hora de Inicio" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
                         <Label text="Hora de Fin" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
 
-                        <Spinner fx:id="spinnerHoraInicio" maxWidth="Infinity" GridPane.hgrow="ALWAYS"
-                                GridPane.rowIndex="5" GridPane.columnIndex="0"/>
-                        <Spinner fx:id="spinnerHoraFin" maxWidth="Infinity" GridPane.hgrow="ALWAYS"
-                                GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+                        <TimePicker fx:id="timePickerInicio" 
+                                   GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                        <TimePicker fx:id="timePickerFin" 
+                                   GridPane.rowIndex="5" GridPane.columnIndex="1"/>
 
                         <!-- Fila 6: Estado (A TODO EL ANCHO) -->
                         <Label text="Estado" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
