@@ -95,6 +95,29 @@ public class ABMPersonaController {
     @FXML
     public void altaPersona() {
         try {
+            // Validar duplicados antes de crear/actualizar
+            if (!modoEdicion) {
+                // Validación para nueva persona
+                if (existePersonaConDNI(txtDNI.getText())) {
+                    error("Ya existe una persona con ese DNI.");
+                    return;
+                }
+                if (existePersonaConTelefono(txtTelefono.getText())) {
+                    error("Ya existe una persona con ese teléfono.");
+                    return;
+                }
+            } else {
+                // Validación para edición (excluir la persona actual)
+                if (existePersonaConDNI(txtDNI.getText(), personaSeleccionada.getIdPersona())) {
+                    error("Ya existe otra persona con ese DNI.");
+                    return;
+                }
+                if (existePersonaConTelefono(txtTelefono.getText(), personaSeleccionada.getIdPersona())) {
+                    error("Ya existe otra persona con ese teléfono.");
+                    return;
+                }
+            }
+
             Persona nueva = new Persona(
                 txtNombre.getText(),
                 txtApellido.getText(),
@@ -218,8 +241,20 @@ public class ABMPersonaController {
         // Hibernate constraint
         if (cause instanceof ConstraintViolationException cve) {
             String constraint = cve.getConstraintName() == null ? "" : cve.getConstraintName().toLowerCase();
-            if (constraint.contains("dni") || constraint.contains("uk") || constraint.contains("unique")) {
+            String message = cve.getMessage() == null ? "" : cve.getMessage().toLowerCase();
+            
+            if (constraint.contains("dni") || constraint.contains("uk") || constraint.contains("unique") || 
+                message.contains("dni") || message.contains("unique constraint")) {
                 return "Ya existe una persona con ese DNI.";
+            }
+            if (constraint.contains("telefono") || constraint.contains("uk") || constraint.contains("unique") || 
+                message.contains("telefono") || message.contains("unique constraint")) {
+                return "Ya existe una persona con ese teléfono.";
+            }
+            // Fallback para cualquier otra restricción única
+            if (constraint.contains("uk") || constraint.contains("unique") || 
+                message.contains("unique constraint")) {
+                return "Ya existe una persona con los datos ingresados.";
             }
         }
 
@@ -231,5 +266,38 @@ public class ABMPersonaController {
         // Fallback
         String m = ex.getMessage();
         return (m == null || m.isBlank()) ? "Ocurrió un error inesperado." : m;
+    }
+
+    // Métodos de validación para duplicados
+    private boolean existePersonaConDNI(String dni) {
+        if (dni == null || dni.trim().isEmpty()) return false;
+        String dniLimpio = dni.replaceAll("\\D+", ""); // Solo dígitos
+        ObservableList<Persona> personas = servicio.obtenerPersonas();
+        return personas.stream()
+                .anyMatch(p -> dniLimpio.equals(p.getDni()));
+    }
+
+    private boolean existePersonaConDNI(String dni, Long idExcluir) {
+        if (dni == null || dni.trim().isEmpty()) return false;
+        String dniLimpio = dni.replaceAll("\\D+", ""); // Solo dígitos
+        ObservableList<Persona> personas = servicio.obtenerPersonas();
+        return personas.stream()
+                .anyMatch(p -> dniLimpio.equals(p.getDni()) && !idExcluir.equals(p.getIdPersona()));
+    }
+
+    private boolean existePersonaConTelefono(String telefono) {
+        if (telefono == null || telefono.trim().isEmpty()) return false;
+        String telefonoLimpio = telefono.replaceAll("\\D+", ""); // Solo dígitos
+        ObservableList<Persona> personas = servicio.obtenerPersonas();
+        return personas.stream()
+                .anyMatch(p -> telefonoLimpio.equals(p.getTelefono()));
+    }
+
+    private boolean existePersonaConTelefono(String telefono, Long idExcluir) {
+        if (telefono == null || telefono.trim().isEmpty()) return false;
+        String telefonoLimpio = telefono.replaceAll("\\D+", ""); // Solo dígitos
+        ObservableList<Persona> personas = servicio.obtenerPersonas();
+        return personas.stream()
+                .anyMatch(p -> telefonoLimpio.equals(p.getTelefono()) && !idExcluir.equals(p.getIdPersona()));
     }
 }
