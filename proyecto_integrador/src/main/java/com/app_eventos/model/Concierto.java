@@ -92,6 +92,4 @@ public class Concierto extends Evento implements IEventoConCupo {
         if (t == null) throw new IllegalArgumentException("Por favor, seleccione un tipo de entrada.");
         this.tipoEntrada = t;
     }
-
-    public List<Persona> getArtistas() { return obtenerResponsables(TipoRol.ARTISTA); }
 }

@@ -92,16 +92,16 @@ public class Taller extends Evento implements IEventoConCupo {
 
     @Override
     protected void validarRestriccionesRol(TipoRol rol, Persona persona) {
-        if (rol == TipoRol.INSTRUCTOR && contarPorRol(TipoRol.INSTRUCTOR) >= 1)
+        if (rol == TipoRol.INSTRUCTOR && contarRol(TipoRol.INSTRUCTOR) >= 1)
             throw new IllegalStateException("El taller solo admite un Instructor.");
         if (participantes.contains(persona))
             throw new IllegalStateException("Ya es participante; no puede ser responsable.");
     }
 
     @Override
-    public void validarInvariantes() {
-        super.validarInvariantes();
-        if (contarPorRol(TipoRol.INSTRUCTOR) < 1) {
+    public void validarRol() {
+        super.validarRol();
+        if (contarRol(TipoRol.INSTRUCTOR) < 1) {
             throw new IllegalStateException("El taller debe tener un INSTRUCTOR.");
         }
     }

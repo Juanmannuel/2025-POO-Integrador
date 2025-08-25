@@ -6,10 +6,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-/**
- * Clase principal de la aplicación JavaFX.
- * Inicia la interfaz cargando el archivo main.fxml y aplicando estilos.
- */
 public class App extends Application {
 
     @Override

@@ -39,16 +39,16 @@ public class Exposicion extends Evento {
     // Restricciones al asignar roles
     @Override
     protected void validarRestriccionesRol(TipoRol rol, Persona persona) {
-        if (rol == TipoRol.CURADOR && contarPorRol(TipoRol.CURADOR) >= 1) {
+        if (rol == TipoRol.CURADOR && contarRol(TipoRol.CURADOR) >= 1) {
             throw new IllegalStateException("La exposición solo admite un CURADOR.");
         }
     }
 
     // Invariantes del dominio
     @Override
-    public void validarInvariantes() {
-        super.validarInvariantes(); // exige al menos un ORGANIZADOR
-        if (contarPorRol(TipoRol.CURADOR) < 1) {
+    public void validarRol() {
+        super.validarRol(); // exige al menos un ORGANIZADOR
+        if (contarRol(TipoRol.CURADOR) < 1) {
             throw new IllegalStateException("La exposición debe tener un CURADOR.");
         }
     }

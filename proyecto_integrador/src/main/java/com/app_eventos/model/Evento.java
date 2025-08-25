@@ -63,8 +63,8 @@ public abstract class Evento {
         this.fechaFin = fin;
     }
 
-    private boolean invariantesCumplidas() {
-        try { validarInvariantes(); return true; }
+    private boolean rolCumplido() {
+        try { validarRol(); return true; }
         catch (RuntimeException ex) { return false; }
     }
 
@@ -98,7 +98,7 @@ public abstract class Evento {
             throw new IllegalStateException("No se permite cambiar manualmente el estado desde " + this.estado + ".");
         if (this.fechaInicio.isBefore(LocalDateTime.now()))
             throw new IllegalStateException("No se puede confirmar con fecha/hora de inicio pasada.");
-        validarRolesObligatorios();
+        validarRol();
         this.estado = nuevoEstado;
     }
 
@@ -112,23 +112,21 @@ public abstract class Evento {
     }
 
     public void verificarEstadoAutomatico() {
-        LocalDateTime now = LocalDateTime.now();
-        if (estado == EstadoEvento.CONFIRMADO && !now.isBefore(fechaInicio) && now.isBefore(fechaFin)) {
-            validarRolesObligatorios();
+        LocalDateTime actual = LocalDateTime.now();
+        if (estado == EstadoEvento.CONFIRMADO && !actual.isBefore(fechaInicio) && actual.isBefore(fechaFin)) {
+            validarRol();
             this.estado = EstadoEvento.EJECUCIÓN;
             return;
         }
-        if ((estado == EstadoEvento.CONFIRMADO || estado == EstadoEvento.EJECUCIÓN) && !now.isBefore(fechaFin)) {
+        if ((estado == EstadoEvento.EJECUCIÓN) && !actual.isBefore(fechaFin)) {
             this.estado = EstadoEvento.FINALIZADO;
         }
     }
 
     // Inscripciones
     public boolean esInscribible() {
-        LocalDateTime now = LocalDateTime.now();
-        return this.estado == EstadoEvento.CONFIRMADO
-                && now.isBefore(getFechaFin())
-                && invariantesCumplidas();
+        LocalDateTime actual = LocalDateTime.now();
+        return this.estado == EstadoEvento.CONFIRMADO && actual.isBefore(getFechaFin()) && rolCumplido();
     }
 
     protected void validarPuedeInscribir() {
@@ -143,7 +141,6 @@ public abstract class Evento {
 
     // Gestión de roles
     protected void validarRestriccionesRol(TipoRol rol, Persona persona) {}
-    protected void validarRolesObligatorios() { validarInvariantes(); }
 
     public void agregarResponsable(Persona persona, TipoRol rol) {
         validarGestionarRoles();
@@ -157,24 +154,22 @@ public abstract class Evento {
 
     public void borrarResponsable(Persona persona, TipoRol rol) {
         validarGestionarRoles();
-        if (persona == null || rol == null || roles.isEmpty()) return;
+        if (persona == null || rol == null || roles.isEmpty()) {
+            return;
+        }
         roles.removeIf(r -> r.getPersona().equals(persona) && r.getRol() == rol);
-    }
-
-    public List<Persona> obtenerResponsables(TipoRol rol) {
-        return roles.stream().filter(r -> r.getRol() == rol).map(RolEvento::getPersona).toList();
     }
 
     public boolean personaTieneRol(Persona persona) {
         return roles.stream().anyMatch(r -> r.getPersona().equals(persona));
     }
 
-    public long contarPorRol(TipoRol rol) {
-        return roles.stream().filter(r -> r.getRol() == rol).count();
+    public int contarRol(TipoRol rol) {
+        return (int) roles.stream().filter(r -> r.getRol() == rol).count();
     }
 
-    public void validarInvariantes() {
-        if (contarPorRol(TipoRol.ORGANIZADOR) == 0)
+    public void validarRol() {
+        if (contarRol(TipoRol.ORGANIZADOR) == 0)
             throw new IllegalStateException("El evento debe tener al menos un ORGANIZADOR.");
     }
 

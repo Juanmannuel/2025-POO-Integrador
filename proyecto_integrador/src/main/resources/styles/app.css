@@ -199,26 +199,6 @@
     -fx-border-color: transparent;
 }
 
-/* OTROS */
-.cuadro-info {
-    -fx-background-color: #f5f5f5;
-    -fx-padding: 10;
-    -fx-border-radius: 8;
-    -fx-background-radius: 8;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 3, 0, 0, 1);
-}
-
-.card-estadistica, .panel-info-lateral, .card-blanco {
-    -fx-background-color: white;
-    -fx-background-radius: 8;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0.5, 0, 2);
-}
-.card-estadistica { -fx-padding: 15px; -fx-alignment: center; }
-.panel-info-lateral { 
-    -fx-padding: 15px; 
-    -fx-spacing: 10;
-}
-
 /* Estilos para el ScrollPane del panel lateral */
 .panel-info-lateral .scroll-pane {
     -fx-background-color: transparent;
@@ -244,36 +224,6 @@
 .panel-info-lateral .scroll-pane .scroll-bar:vertical .thumb:hover {
     -fx-background-color: #a0a0a0;
 }
-
-/* Estilos para el contenido de eventos */
-.panel-info-lateral .vbox {
-    -fx-spacing: 8;
-}
-
-.panel-info-lateral .label {
-    -fx-wrap-text: true;
-    -fx-max-width: infinity;
-}
-.card-blanco { 
-    -fx-background-radius: 12; 
-    -fx-padding: 16; 
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 18, 0.15, 0, 4);
-    -fx-spacing: 12;
-}
-
-.dato-estadistica { -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 5px 0 0 0; }
-
-.titulo-panel {
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
-    -fx-border-color: transparent transparent #e0e0e0 transparent;
-    -fx-border-width: 2px;
-    -fx-padding: 0 0 5px 0;
-}
-
-.titulo-card, .mes-anio { -fx-font-weight: bold; }
-.titulo-card { -fx-font-size: 16px; }
-.mes-anio { -fx-font-size: 16px; }
 
 /* CALENDARIO */
 .calendario-header {
@@ -307,6 +257,36 @@
     -fx-cursor: hand;
 }
 .btn-navegacion-calendario:hover { -fx-background-color: rgba(0,0,0,0.06); }
+
+/* Estilos para el contenido de eventos */
+.panel-info-lateral .vbox {
+    -fx-spacing: 8;
+}
+
+.panel-info-lateral .label {
+    -fx-wrap-text: true;
+    -fx-max-width: infinity;
+}
+.card-blanco { 
+    -fx-background-radius: 12; 
+    -fx-padding: 16; 
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 18, 0.15, 0, 4);
+    -fx-spacing: 12;
+}
+
+.dato-estadistica { -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 5px 0 0 0; }
+
+.titulo-panel {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent transparent #e0e0e0 transparent;
+    -fx-border-width: 2px;
+    -fx-padding: 0 0 5px 0;
+}
+
+.titulo-card, .mes-anio { -fx-font-weight: bold; }
+.titulo-card { -fx-font-size: 16px; }
+.mes-anio { -fx-font-size: 16px; }
 
 /* TIMEPICKER PERSONALIZADO */
 .time-picker {
@@ -347,4 +327,24 @@
     -fx-font-weight: bold;
     -fx-text-fill: #333;
     -fx-padding: 0 5px;
+}
+
+/* OTROS */
+.cuadro-info {
+    -fx-background-color: #f5f5f5;
+    -fx-padding: 10;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 3, 0, 0, 1);
+}
+
+.card-estadistica, .panel-info-lateral, .card-blanco {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0.5, 0, 2);
+}
+.card-estadistica { -fx-padding: 15px; -fx-alignment: center; }
+.panel-info-lateral { 
+    -fx-padding: 15px; 
+    -fx-spacing: 10;
 }
