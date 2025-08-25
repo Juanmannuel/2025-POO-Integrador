@@ -20,7 +20,7 @@ public class Persona {
     @Column(nullable = false, unique = true, length = 10)
     private String dni;
 
-    @Column(nullable = false, length = 15)
+    @Column(nullable = false, unique = true, length = 15) // 6–15 dígitos
     private String telefono;
 
     @Column(length = 254)

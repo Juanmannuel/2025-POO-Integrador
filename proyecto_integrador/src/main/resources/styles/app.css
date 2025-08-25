@@ -214,7 +214,46 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0.5, 0, 2);
 }
 .card-estadistica { -fx-padding: 15px; -fx-alignment: center; }
-.panel-info-lateral { -fx-padding: 15px; }
+.panel-info-lateral { 
+    -fx-padding: 15px; 
+    -fx-spacing: 10;
+}
+
+/* Estilos para el ScrollPane del panel lateral */
+.panel-info-lateral .scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+.panel-info-lateral .scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.panel-info-lateral .scroll-pane .scroll-bar:vertical {
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 5;
+    -fx-pref-width: 8;
+}
+
+.panel-info-lateral .scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #c0c0c0;
+    -fx-background-radius: 5;
+}
+
+.panel-info-lateral .scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #a0a0a0;
+}
+
+/* Estilos para el contenido de eventos */
+.panel-info-lateral .vbox {
+    -fx-spacing: 8;
+}
+
+.panel-info-lateral .label {
+    -fx-wrap-text: true;
+    -fx-max-width: infinity;
+}
 .card-blanco { 
     -fx-background-radius: 12; 
     -fx-padding: 16; 
@@ -268,3 +307,44 @@
     -fx-cursor: hand;
 }
 .btn-navegacion-calendario:hover { -fx-background-color: rgba(0,0,0,0.06); }
+
+/* TIMEPICKER PERSONALIZADO */
+.time-picker {
+    -fx-padding: 5px;
+    -fx-background-color: white;
+    -fx-border-color: #d0d0d0;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.time-picker .combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #c0c0c0;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 4px;
+}
+
+.time-picker .combo-box:hover {
+    -fx-border-color: #3f86f2;
+}
+
+.time-picker .combo-box:focused {
+    -fx-border-color: #3f86f2;
+    -fx-effect: dropshadow(three-pass-box, rgba(63, 134, 242, 0.3), 3, 0, 0, 1);
+}
+
+.time-picker .combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.time-picker .combo-box .arrow {
+    -fx-background-color: #666;
+}
+
+.time-picker .label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+    -fx-padding: 0 5px;
+}

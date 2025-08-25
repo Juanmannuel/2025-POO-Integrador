@@ -13,7 +13,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.util.StringConverter;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -26,6 +25,7 @@ import com.app_eventos.model.enums.*;
 import com.app_eventos.services.Servicio;
 // Utils
 import com.app_eventos.utils.ComboBoxInicializador;
+import com.app_eventos.utils.TimePicker;
 
 public class ABMEventoController {
 
@@ -37,8 +37,8 @@ public class ABMEventoController {
     @FXML private StackPane modalOverlay;
     @FXML private ComboBox<TipoEvento> comboTipoEvento;
     @FXML private ComboBox<EstadoEvento> comboEstado;
-    @FXML private Spinner<LocalTime> spinnerHoraInicio;
-    @FXML private Spinner<LocalTime> spinnerHoraFin;
+    @FXML private TimePicker timePickerInicio;
+    @FXML private TimePicker timePickerFin;
     @FXML private Pane seccionDinamica;
     @FXML private TableColumn<Evento, Void> colAcciones;
 
@@ -102,8 +102,9 @@ public class ABMEventoController {
             }
         });
 
-        spinnerHoraInicio.setValueFactory(factoryHora());
-        spinnerHoraFin.setValueFactory(factoryHora());
+        // Configurar valores por defecto para los TimePicker
+        timePickerInicio.setValue(LocalTime.of(9, 0)); // 9:00 por defecto
+        timePickerFin.setValue(LocalTime.of(10, 0));   // 10:00 por defecto
         ComboBoxInicializador.cargarTipoEvento(comboTipoEvento);
         ComboBoxInicializador.cargarEstadoEvento(comboEstado);
         comboTipoEvento.valueProperty().addListener((o, a, b) -> cargarFragmentoEspecifico(b));
@@ -163,58 +164,6 @@ public class ABMEventoController {
         var resultados = servicio.buscarEventos(tipo, estado, desde, hasta);
         modeloTabla.setAll(resultados);
         tablaEventos.refresh();
-    }
-
-    private SpinnerValueFactory<LocalTime> factoryHora() {
-        final LocalTime min  = LocalTime.of(6, 0);
-        final LocalTime max  = LocalTime.of(23, 59);
-        final int paso = 5;
-
-        return new SpinnerValueFactory<>() {
-            private final DateTimeFormatter f = DateTimeFormatter.ofPattern("HH:mm");
-            {
-                setConverter(new StringConverter<>() {
-                    @Override public String toString(LocalTime t) { return t == null ? "" : f.format(t); }
-                    @Override public LocalTime fromString(String s) {
-                        if (s == null) return null;
-                        s = s.trim();
-                        if (s.isEmpty()) return null;
-                        try {
-                            LocalTime t = LocalTime.parse(s, f);
-                            if (t.isBefore(min)) t = min;
-                            if (t.isAfter(max))  t = max;
-                            return t;
-                        } catch (Exception e) {
-                            // Entrada inválida: no cambiar el valor actual
-                            return getValue();
-                        }
-                    }
-                });
-                setValue(null); // empieza vacío
-            }
-
-            @Override public void decrement(int steps) {
-                LocalTime v = getValue();
-                if (v == null) {
-                    setValue(max); // primer decremento -> max
-                } else {
-                    LocalTime n = v.minusMinutes(steps * paso);
-                    if (n.isBefore(min)) n = min;
-                    setValue(n);
-                }
-            }
-
-            @Override public void increment(int steps) {
-                LocalTime v = getValue();
-                if (v == null) {
-                    setValue(min); // primer incremento -> min
-                } else {
-                    LocalTime n = v.plusMinutes(steps * paso);
-                    if (n.isAfter(max)) n = max;
-                    setValue(n);
-                }
-            }
-        };
     }
 
     private void agregarBotonAsignarRol() {
@@ -303,8 +252,8 @@ public class ABMEventoController {
         comboTipoEvento.getSelectionModel().clearSelection();
         comboEstado.getSelectionModel().clearSelection();
         seccionDinamica.getChildren().clear();
-        if (spinnerHoraInicio.getValueFactory()!=null) spinnerHoraInicio.getValueFactory().setValue(null);
-        if (spinnerHoraFin.getValueFactory()!=null)    spinnerHoraFin.getValueFactory().setValue(null);
+        timePickerInicio.setValue(LocalTime.of(9, 0)); // Reset a 9:00
+        timePickerFin.setValue(LocalTime.of(10, 0));   // Reset a 10:00
     }
 
     private void setEstadosParaAlta() {
@@ -338,14 +287,14 @@ public class ABMEventoController {
                 crearSegunTipo(
                     txtNombre.getText(), tipo,
                     dateInicio.getValue(), dateFin.getValue(),
-                    spinnerHoraInicio.getValue(), spinnerHoraFin.getValue(),
+                    timePickerInicio.getValue(), timePickerFin.getValue(),
                     comboEstado.getValue()
                 );
             } else {
                 actualizarSegunTipo(
                     eventoEnEdicion, txtNombre.getText(), tipo,
                     dateInicio.getValue(), dateFin.getValue(),
-                    spinnerHoraInicio.getValue(), spinnerHoraFin.getValue(),
+                    timePickerInicio.getValue(), timePickerFin.getValue(),
                     comboEstado.getValue()
                 );
             }
@@ -434,8 +383,8 @@ public class ABMEventoController {
         txtNombre.setText(e.getNombre());
         dateInicio.setValue(e.getFechaInicio().toLocalDate());
         dateFin.setValue(e.getFechaFin().toLocalDate());
-        spinnerHoraInicio.getValueFactory().setValue(e.getFechaInicio().toLocalTime());
-        spinnerHoraFin.getValueFactory().setValue(e.getFechaFin().toLocalTime());
+        timePickerInicio.setValue(e.getFechaInicio().toLocalTime());
+        timePickerFin.setValue(e.getFechaFin().toLocalTime());
         comboEstado.getSelectionModel().select(e.getEstado());
 
         comboTipoEvento.getSelectionModel().select(e.getTipoEvento());
