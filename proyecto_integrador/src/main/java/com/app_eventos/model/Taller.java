@@ -66,7 +66,7 @@ public class Taller extends Evento implements IEventoConCupo {
     @Override
     public void setCupoMaximo(int v) {
         // Validación mínima aquí (sin mirar la colección lazy)
-        if (v <= 0) throw new IllegalArgumentException("El cupo debe ser mayor a cero.");
+        if (v <= 0) throw new IllegalArgumentException("El cupo debe ser mayor a 0.");
         this.cupoMaximo = v;
     }
 

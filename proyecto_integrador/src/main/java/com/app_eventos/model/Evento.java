@@ -10,10 +10,10 @@ import java.util.*;
 
 @Entity
 @Table(name = "evento")
-
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Evento {
 
+    // Atributos
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "idEvento")
@@ -37,9 +37,9 @@ public abstract class Evento {
     private TipoEvento tipoEvento;
 
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
-
     private List<RolEvento> roles = new ArrayList<>();
 
+    // Constructores
     protected Evento() {
         this.estado = EstadoEvento.PLANIFICACIÓN;
     }
@@ -51,19 +51,30 @@ public abstract class Evento {
         setEstado(EstadoEvento.PLANIFICACIÓN);
     }
 
+    // Métodos privados auxiliares
     private void asignarFechas(LocalDateTime ini, LocalDateTime fin) {
-        if (ini == null || fin == null) {
+        if (ini == null || fin == null)
             throw new IllegalArgumentException("Las fechas/horas de inicio y fin son obligatorias.");
-        }
         if (ini.isBefore(LocalDateTime.now()))
             throw new IllegalArgumentException("La fecha/hora de inicio no puede estar en el pasado.");
         if (!fin.isAfter(ini))
             throw new IllegalArgumentException("La fecha/hora de fin debe ser posterior a la de inicio.");
-
         this.fechaInicio = ini;
         this.fechaFin = fin;
     }
-    
+
+    private boolean invariantesCumplidas() {
+        try { validarInvariantes(); return true; }
+        catch (RuntimeException ex) { return false; }
+    }
+
+    private void validarGestionarRoles() {
+        verificarEstadoAutomatico();
+        if (estado == EstadoEvento.EJECUCIÓN || estado == EstadoEvento.FINALIZADO)
+            throw new IllegalStateException("No se pueden gestionar roles cuando el evento está en EJECUCIÓN o FINALIZADO.");
+    }
+
+    // Métodos estáticos
     public static void validarFechasAlta(LocalDate fIni, LocalDate fFin) {
         if (fIni == null || fFin == null)
             throw new IllegalArgumentException("Las fechas del evento son obligatorias");
@@ -72,6 +83,7 @@ public abstract class Evento {
             throw new IllegalArgumentException("Las fechas del evento deben ser desde la actual en adelante");
     }
 
+    // Gestión de fechas
     public void setFechas(LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin) {
         asignarFechas(
             (fIni != null && hIni != null) ? LocalDateTime.of(fIni, hIni) : null,
@@ -79,22 +91,20 @@ public abstract class Evento {
         );
     }
 
-
+    // Gestión de estados
     public void cambiarEstado(EstadoEvento nuevoEstado) {
         if (this.estado == nuevoEstado) return;
-
         if (this.estado != EstadoEvento.PLANIFICACIÓN)
             throw new IllegalStateException("No se permite cambiar manualmente el estado desde " + this.estado + ".");
         if (this.fechaInicio.isBefore(LocalDateTime.now()))
             throw new IllegalStateException("No se puede confirmar con fecha/hora de inicio pasada.");
-
         validarRolesObligatorios();
-        this.estado = nuevoEstado; // usa el parámetro
+        this.estado = nuevoEstado;
     }
 
     public void setEstado(EstadoEvento nuevo) {
         if (nuevo == null) throw new IllegalArgumentException("El estado del evento es obligatorio.");
-        if (this.idEvento == null) { // entidad nueva siempre arranca en PLANIFICACIÓN
+        if (this.idEvento == null) {
             this.estado = EstadoEvento.PLANIFICACIÓN;
             return;
         }
@@ -113,6 +123,7 @@ public abstract class Evento {
         }
     }
 
+    // Inscripciones
     public boolean esInscribible() {
         LocalDateTime now = LocalDateTime.now();
         return this.estado == EstadoEvento.CONFIRMADO
@@ -124,18 +135,13 @@ public abstract class Evento {
         if (!esInscribible()) throw new IllegalStateException("No se permite inscribir.");
     }
 
-    private boolean invariantesCumplidas() {
-        try { validarInvariantes(); return true; }
-        catch (RuntimeException ex) { return false; }
-    }
-
-    private void validarGestionarRoles() {
+    public void validarPuedeModificar() {
         verificarEstadoAutomatico();
-        if (estado == EstadoEvento.EJECUCIÓN || estado == EstadoEvento.FINALIZADO) {
-            throw new IllegalStateException("No se pueden gestionar roles cuando el evento está en EJECUCIÓN o FINALIZADO.");
-        }
+        if (estado == EstadoEvento.EJECUCIÓN || estado == EstadoEvento.FINALIZADO)
+            throw new IllegalStateException("El evento se encuentra en ejecución o finalizó, no se puede modificar");
     }
 
+    // Gestión de roles
     protected void validarRestriccionesRol(TipoRol rol, Persona persona) {}
     protected void validarRolesObligatorios() { validarInvariantes(); }
 
@@ -151,7 +157,7 @@ public abstract class Evento {
 
     public void borrarResponsable(Persona persona, TipoRol rol) {
         validarGestionarRoles();
-        if (persona == null || rol == null || roles.isEmpty()) return; // ← early return
+        if (persona == null || rol == null || roles.isEmpty()) return;
         roles.removeIf(r -> r.getPersona().equals(persona) && r.getRol() == rol);
     }
 
@@ -180,10 +186,9 @@ public abstract class Evento {
         return set;
     }
 
-    // IMPORTANTE: usado por Servicio.java (sin cambiar firma)
     public void agregarRol(RolEvento rol) { if (rol != null) roles.add(rol); }
 
-    // Getters / Setters
+    // Getters y Setters
     public Long getIdEvento() { return idEvento; }
     public void setIdEvento(Long idEvento) { this.idEvento = idEvento; }
 
@@ -197,6 +202,7 @@ public abstract class Evento {
     public LocalDateTime getFechaFin() { return fechaFin; }
 
     public EstadoEvento getEstado() { return estado; }
+
     public TipoEvento getTipoEvento() { return tipoEvento; }
     public void setTipoEvento(TipoEvento tipoEvento) {
         if (tipoEvento == null) throw new IllegalArgumentException("El tipo de evento es obligatorio.");
@@ -204,10 +210,4 @@ public abstract class Evento {
     }
 
     public List<RolEvento> getRoles() { return new ArrayList<>(roles); }
-
-    public void validarPuedeModificar() {
-        verificarEstadoAutomatico();
-        if (estado == EstadoEvento.EJECUCIÓN || estado == EstadoEvento.FINALIZADO)
-            throw new IllegalStateException("El evento se encuentra en ejecución o finalizó, no se puede modificar");
-    }
 }

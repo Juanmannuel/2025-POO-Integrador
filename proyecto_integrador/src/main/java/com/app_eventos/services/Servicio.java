@@ -208,7 +208,7 @@ public class Servicio {
     public void guardarPersona(Persona persona) { repositorio.guardarPersona(persona); }
     public void eliminarPersona(Persona persona) { repositorio.eliminarPersona(persona); }
     public void actualizarPersona(Persona original, Persona actualizada) {
-        original.actualizarCon(actualizada);
+        original.actualizar(actualizada);
         repositorio.actualizarPersona(original);
     }
 

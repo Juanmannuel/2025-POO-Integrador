@@ -17,13 +17,13 @@ public class Persona {
     @Column(nullable = false, length = 80)
     private String apellido;
 
-    @Column(nullable = false, unique = true, length = 10) // 7–10 dígitos
+    @Column(nullable = false, unique = true, length = 10)
     private String dni;
 
-    @Column(nullable = false, length = 15) // 6–15 dígitos
+    @Column(nullable = false, length = 15)
     private String telefono;
 
-    @Column(length = 254) // email puede ser null
+    @Column(length = 254)
     private String email;
 
     public Persona() {}
@@ -78,11 +78,11 @@ public class Persona {
     public void setTelefono(String telefono){
         if (telefono == null) throw new IllegalArgumentException("Teléfono requerido");
         String clean = onlyDigits(telefono);
-        if (!clean.matches("\\d{6,15}")) throw new IllegalArgumentException("Teléfono inválido (6 a 15 dígitos)");
+        if (!clean.matches("\\d{6,15}")) throw new IllegalArgumentException("Teléfono inválido, se permite entre 6 a 15 dígitos.");
         this.telefono = clean;
     }
 
-    public void actualizarCon(Persona o){
+    public void actualizar(Persona o){
         if (o == null) throw new IllegalArgumentException("Persona origen nula");
         setNombre(o.getNombre());
         setApellido(o.getApellido());

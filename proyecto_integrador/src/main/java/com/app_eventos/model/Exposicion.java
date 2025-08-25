@@ -26,7 +26,7 @@ public class Exposicion extends Evento {
     public TipoArte getTipoArte() { return tipoArte; }
 
     public void setTipoArte(TipoArte t) {
-        if (t == null) throw new IllegalArgumentException("TipoArte nulo.");
+        if (t == null) throw new IllegalArgumentException("Seleccione un tipo de arte.");
         this.tipoArte = t;
     }
 
