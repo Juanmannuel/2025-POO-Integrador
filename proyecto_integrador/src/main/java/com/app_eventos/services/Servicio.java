@@ -35,108 +35,84 @@ public class Servicio {
         }
     }
 
-    // Guards de nulidad
-    private void validarAlta(LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin, EstadoEvento estado) {
-        if (fIni == null)  throw new IllegalArgumentException("La Fecha de inicio es obligatoria.");
-        if (hIni == null)  throw new IllegalArgumentException("La Hora de inicio es obligatoria.");
-        if (fFin == null)  throw new IllegalArgumentException("La Fecha de fin es obligatoria.");
-        if (hFin == null)  throw new IllegalArgumentException("La Hora de fin es obligatoria.");
-        if (estado == null) throw new IllegalArgumentException("El Estado es obligatorio.");
-    }
-
-    private void validarActualizar(LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin) {
-        if (fIni == null)  throw new IllegalArgumentException("La Fecha de inicio es obligatoria.");
-        if (hIni == null)  throw new IllegalArgumentException("La Hora de inicio es obligatoria.");
-        if (fFin == null)  throw new IllegalArgumentException("La Fecha de fin es obligatoria.");
-        if (hFin == null)  throw new IllegalArgumentException("La Hora de fin es obligatoria.");
-    }
-
     // ALTAS 
-
-    public void crearFeria(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
-                           EstadoEvento estado, int cantidadStands, TipoAmbiente ambiente) {
-        validarAlta(fIni, hIni, fFin, hFin, estado);
+    
+    public void crearFeria(String nombre, LocalDateTime ini, LocalDateTime fin,
+                        EstadoEvento estado, int cantidadStands, TipoAmbiente ambiente) {
         var f = new Feria();
         f.setNombre(nombre);
-        f.setFechas(fIni, hIni, fFin, hFin);
+        f.asignarFechas(ini, fin); // validación centralizada en dominio
         f.setCantidadStands(cantidadStands);
         f.setAmbiente(ambiente);
         aplicarEstadoInicial(f, estado);
         repositorio.guardarEvento(f);
     }
 
-    public void crearConcierto(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
-                               EstadoEvento estado, TipoEntrada tipoEntrada, int cupoMaximo) {
-        validarAlta(fIni, hIni, fFin, hFin, estado);
+    public void crearConcierto(String nombre, LocalDateTime ini, LocalDateTime fin,
+                            EstadoEvento estado, TipoEntrada tipoEntrada, int cupoMaximo) {
         var c = new Concierto();
         c.setNombre(nombre);
-        c.setFechas(fIni, hIni, fFin, hFin);
+        c.asignarFechas(ini, fin);
         c.setTipoEntrada(tipoEntrada);
         c.setCupoMaximo(cupoMaximo);
         aplicarEstadoInicial(c, estado);
         repositorio.guardarEvento(c);
     }
 
-    public void crearExposicion(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
+    public void crearExposicion(String nombre, LocalDateTime ini, LocalDateTime fin,
                                 EstadoEvento estado, TipoArte tipoArte) {
-        validarAlta(fIni, hIni, fFin, hFin, estado);
         var x = new Exposicion();
         x.setNombre(nombre);
-        x.setFechas(fIni, hIni, fFin, hFin);
+        x.asignarFechas(ini, fin);
         x.setTipoArte(tipoArte);
         aplicarEstadoInicial(x, estado);
         repositorio.guardarEvento(x);
     }
 
-    public void crearTaller(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
+    public void crearTaller(String nombre, LocalDateTime ini, LocalDateTime fin,
                             EstadoEvento estado, int cupoMaximo, Modalidad modalidad) {
-        validarAlta(fIni, hIni, fFin, hFin, estado);
         var t = new Taller();
         t.setNombre(nombre);
-        t.setFechas(fIni, hIni, fFin, hFin);
+        t.asignarFechas(ini, fin);
         t.setCupoMaximo(cupoMaximo);
         t.setModalidad(modalidad);
         aplicarEstadoInicial(t, estado);
         repositorio.guardarEvento(t);
     }
 
-    public void crearCicloCine(String nombre, LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
-                               EstadoEvento estado, boolean postCharla, int cupoMaximo, List<Pelicula> pelis) {
-        validarAlta(fIni, hIni, fFin, hFin, estado);
+    public void crearCicloCine(String nombre, LocalDateTime ini, LocalDateTime fin,
+                            EstadoEvento estado, boolean postCharla, int cupoMaximo, List<Pelicula> pelis) {
         var cc = new CicloCine();
         cc.setNombre(nombre);
-        cc.setFechas(fIni, hIni, fFin, hFin);
+        cc.asignarFechas(ini, fin);
         cc.setPostCharla(postCharla);
         cc.setCupoMaximo(cupoMaximo);
 
-        // Opcional: para que el modal refleje selección inicial
         if (pelis != null) pelis.forEach(cc::agregarPelicula);
 
         aplicarEstadoInicial(cc, estado);
         repositorio.guardarEvento(cc);
-
-        // Persistir asociaciones (solo las seleccionadas)
         repositorio.actualizarPeliculasCiclo(cc.getIdEvento(), pelis);
     }
 
     // MODIFICACIONES
 
-    public void actualizarFeria(Feria f, String nombre, LocalDate fIni, LocalDate fFin,
-                                LocalTime hIni, LocalTime hFin, EstadoEvento estado,
-                                int cantidadStands, TipoAmbiente ambiente) {
-        validarActualizar(fIni, hIni, fFin, hFin);
+    public void actualizarFeria(Feria f, String nombre,
+                                LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin,
+                                EstadoEvento estado, int cantidadStands, TipoAmbiente ambiente) {
+        f.validarPuedeModificar();
         f.setNombre(nombre);
-        f.setFechas(fIni, hIni, fFin, hFin);
+        f.setFechas(fIni, hIni, fFin, hFin); // dominio construye/valida
         f.setCantidadStands(cantidadStands);
         f.setAmbiente(ambiente);
         aplicarCambioEstadoSiCorresponde(f, estado);
         repositorio.actualizarEvento(f);
     }
 
-    public void actualizarConcierto(Concierto c, String nombre, LocalDate fIni, LocalDate fFin,
-                                    LocalTime hIni, LocalTime hFin, EstadoEvento estado,
-                                    TipoEntrada tipoEntrada, int cupoMaximo) {
-        validarActualizar(fIni, hIni, fFin, hFin);
+    public void actualizarConcierto(Concierto c, String nombre,
+                                    LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin,
+                                    EstadoEvento estado, TipoEntrada tipoEntrada, int cupoMaximo) {
+        c.validarPuedeModificar();
         c.setNombre(nombre);
         c.setFechas(fIni, hIni, fFin, hFin);
         c.setTipoEntrada(tipoEntrada);
@@ -145,9 +121,10 @@ public class Servicio {
         repositorio.actualizarEvento(c);
     }
 
-    public void actualizarExposicion(Exposicion x, String nombre, LocalDate fIni, LocalDate fFin,
-                                     LocalTime hIni, LocalTime hFin, EstadoEvento estado, TipoArte tipoArte) {
-        validarActualizar(fIni, hIni, fFin, hFin);
+    public void actualizarExposicion(Exposicion x, String nombre,
+                                    LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin,
+                                    EstadoEvento estado, TipoArte tipoArte) {
+        x.validarPuedeModificar();
         x.setNombre(nombre);
         x.setFechas(fIni, hIni, fFin, hFin);
         x.setTipoArte(tipoArte);
@@ -155,10 +132,10 @@ public class Servicio {
         repositorio.actualizarEvento(x);
     }
 
-    public void actualizarTaller(Taller t, String nombre, LocalDate fIni, LocalDate fFin,
-                                 LocalTime hIni, LocalTime hFin, EstadoEvento estado,
-                                 int cupoMaximo, Modalidad modalidad) {
-        validarActualizar(fIni, hIni, fFin, hFin);
+    public void actualizarTaller(Taller t, String nombre,
+                                LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin,
+                                EstadoEvento estado, int cupoMaximo, Modalidad modalidad) {
+        t.validarPuedeModificar();
         t.setNombre(nombre);
         t.setFechas(fIni, hIni, fFin, hFin);
         t.setCupoMaximo(cupoMaximo);
@@ -167,20 +144,18 @@ public class Servicio {
         repositorio.actualizarEvento(t);
     }
 
-    public void actualizarCicloCine(CicloCine cc, String nombre, LocalDate fIni, LocalDate fFin,
-                                    LocalTime hIni, LocalTime hFin, EstadoEvento estado,
-                                    boolean postCharla, int cupoMaximo, List<Pelicula> pelis) {
-        validarActualizar(fIni, hIni, fFin, hFin);
+    public void actualizarCicloCine(CicloCine cc, String nombre,
+                                    LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin,
+                                    EstadoEvento estado, boolean postCharla, int cupoMaximo, List<Pelicula> pelis) {
+        cc.validarPuedeModificar();
         cc.setNombre(nombre);
         cc.setFechas(fIni, hIni, fFin, hFin);
         cc.setPostCharla(postCharla);
         cc.setCupoMaximo(cupoMaximo);
-
-        // No tocar la colección (puede estar detached). Persistir deltas en repositorio.
         aplicarCambioEstadoSiCorresponde(cc, estado);
         repositorio.actualizarEvento(cc);
 
-        // Solo quita lo destildado y agrega lo tildado, en la join table
+        // mantiene tu actualización específica de pelis
         repositorio.actualizarPeliculasCiclo(cc.getIdEvento(), pelis);
     }
 

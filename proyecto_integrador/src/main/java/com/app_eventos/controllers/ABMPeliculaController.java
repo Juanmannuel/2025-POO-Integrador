@@ -219,7 +219,6 @@ public class ABMPeliculaController {
     }
 
     // API de refresco
-
     // Vuelve a pedir al Servicio la lista de películas y actualiza la tabla.
     public void refrescarDatos() {
         tablaPeliculas.setItems(servicio.obtenerPeliculas()); // nueva lista desde BD

@@ -16,6 +16,7 @@ import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
@@ -87,7 +88,7 @@ public class ABMEventoController {
         colFechaFin.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getFechaFin().format(fmt)));
         colEstado.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getEstado()));
 
-        // Evita problemas si roles es lazy; ya viene con fetch en Servicio.listarEventos()
+        // Evita problemas si roles es lazy
         colResponsables.setCellValueFactory(d -> {
             try {
                 var roles = d.getValue().getRoles();
@@ -309,70 +310,96 @@ public class ABMEventoController {
     }
 
     private void crearSegunTipo(String nombre, TipoEvento tipo,
-            LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
+        LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
 
-        // no permitir fechas anteriores a hoy en ALTA
-        Evento.validarFechasAlta(fIni, fFin);
+    // Convertimos LocalDate + LocalTime → LocalDateTime
+    LocalDateTime ini = (fIni != null && hIni != null) ? LocalDateTime.of(fIni, hIni) : null;
+    LocalDateTime fin = (fFin != null && hFin != null) ? LocalDateTime.of(fFin, hFin) : null;
 
-        switch (tipo) {
-            case FERIA -> {
-                FeriaController c = (FeriaController) controladorFragmento;
-                servicio.crearFeria(nombre, fIni, fFin, hIni, hFin, estado,
-                        c.getCantidadStands(), c.getAmbienteSeleccionado());
-            }
-            case CONCIERTO -> {
-                ConciertoController c = (ConciertoController) controladorFragmento;
-                servicio.crearConcierto(nombre, fIni, fFin, hIni, hFin, estado,
-                        c.getTipoEntradaSeleccionada(), c.getCupoMaximo());
-            }
-            case EXPOSICION -> {
-                ExposicionController c = (ExposicionController) controladorFragmento;
-                servicio.crearExposicion(nombre, fIni, fFin, hIni, hFin, estado,
-                        c.getTipoArteSeleccionado());
-            }
-            case TALLER -> {
-                TallerController c = (TallerController) controladorFragmento;
-                servicio.crearTaller(nombre, fIni, fFin, hIni, hFin, estado,
-                        c.getCupoMaximo(), c.getModalidadSeleccionada());
-            }
-            case CICLO_CINE -> {
-                CicloCineController c = (CicloCineController) controladorFragmento;
-                servicio.crearCicloCine(nombre, fIni, fFin, hIni, hFin, estado,
-                        c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas());
-            }
+    // Crear según el tipo de evento (las validaciones se hacen en asignarFechas)
+    switch (tipo) {
+        case FERIA -> {
+            FeriaController c = (FeriaController) controladorFragmento;
+            servicio.crearFeria(nombre, ini, fin, estado,
+                    c.getCantidadStands(), c.getAmbienteSeleccionado());
+        }
+        case CONCIERTO -> {
+            ConciertoController c = (ConciertoController) controladorFragmento;
+            servicio.crearConcierto(nombre, ini, fin, estado,
+                    c.getTipoEntradaSeleccionada(), c.getCupoMaximo());
+        }
+        case EXPOSICION -> {
+            ExposicionController c = (ExposicionController) controladorFragmento;
+            servicio.crearExposicion(nombre, ini, fin, estado,
+                    c.getTipoArteSeleccionado());
+        }
+        case TALLER -> {
+            TallerController c = (TallerController) controladorFragmento;
+            servicio.crearTaller(nombre, ini, fin, estado,
+                    c.getCupoMaximo(), c.getModalidadSeleccionada());
+        }
+        case CICLO_CINE -> {
+            CicloCineController c = (CicloCineController) controladorFragmento;
+            servicio.crearCicloCine(nombre, ini, fin, estado,
+                    c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas());
         }
     }
+}
 
 
-    private void actualizarSegunTipo(Evento original, String nombre, TipoEvento tipo,
-                                     LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
 
-        // bloquear MODIFICACIONES si está en ejecución o finalizado
+        private void actualizarSegunTipo(Evento original, String nombre, TipoEvento tipo,
+                                    LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
+                                    EstadoEvento estado) {
+
+        // (Opcional) bloquear rápido desde UI
         original.validarPuedeModificar();
 
         switch (tipo) {
             case FERIA -> {
-                if (controladorFragmento instanceof FeriaController c && original instanceof Feria f)
-                    servicio.actualizarFeria(f, nombre, fIni, fFin, hIni, hFin, estado, c.getCantidadStands(), c.getAmbienteSeleccionado());
+                if (controladorFragmento instanceof FeriaController c && original instanceof Feria f) {
+                    servicio.actualizarFeria(
+                        f, nombre, fIni, hIni, fFin, hFin, estado,
+                        c.getCantidadStands(), c.getAmbienteSeleccionado()
+                    );
+                }
             }
             case CONCIERTO -> {
-                if (controladorFragmento instanceof ConciertoController c && original instanceof Concierto x)
-                    servicio.actualizarConcierto(x, nombre, fIni, fFin, hIni, hFin, estado, c.getTipoEntradaSeleccionada(), c.getCupoMaximo());
+                if (controladorFragmento instanceof ConciertoController c && original instanceof Concierto x) {
+                    servicio.actualizarConcierto(
+                        x, nombre, fIni, hIni, fFin, hFin, estado,
+                        c.getTipoEntradaSeleccionada(), c.getCupoMaximo()
+                    );
+                }
             }
             case EXPOSICION -> {
-                if (controladorFragmento instanceof ExposicionController c && original instanceof Exposicion x)
-                    servicio.actualizarExposicion(x, nombre, fIni, fFin, hIni, hFin, estado, c.getTipoArteSeleccionado());
+                if (controladorFragmento instanceof ExposicionController c && original instanceof Exposicion x) {
+                    servicio.actualizarExposicion(
+                        x, nombre, fIni, hIni, fFin, hFin, estado,
+                        c.getTipoArteSeleccionado()
+                    );
+                }
             }
             case TALLER -> {
-                if (controladorFragmento instanceof TallerController c && original instanceof Taller x)
-                    servicio.actualizarTaller(x, nombre, fIni, fFin, hIni, hFin, estado, c.getCupoMaximo(), c.getModalidadSeleccionada());
+                if (controladorFragmento instanceof TallerController c && original instanceof Taller x) {
+                    servicio.actualizarTaller(
+                        x, nombre, fIni, hIni, fFin, hFin, estado,
+                        c.getCupoMaximo(), c.getModalidadSeleccionada()
+                    );
+                }
             }
             case CICLO_CINE -> {
-                if (controladorFragmento instanceof CicloCineController c && original instanceof CicloCine x)
-                    servicio.actualizarCicloCine(x, nombre, fIni, fFin, hIni, hFin, estado, c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas());
+                if (controladorFragmento instanceof CicloCineController c && original instanceof CicloCine x) {
+                    servicio.actualizarCicloCine(
+                        x, nombre, fIni, hIni, fFin, hFin, estado,
+                        c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas()
+                    );
+                }
             }
         }
     }
+
+
 
     @FXML
     private void modificarEvento() {

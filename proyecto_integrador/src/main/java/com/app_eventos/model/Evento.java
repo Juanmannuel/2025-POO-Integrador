@@ -51,12 +51,13 @@ public abstract class Evento {
         setEstado(EstadoEvento.PLANIFICACIÓN);
     }
 
-    // Métodos privados auxiliares
-    private void asignarFechas(LocalDateTime ini, LocalDateTime fin) {
+    public void asignarFechas(LocalDateTime ini, LocalDateTime fin) {
         if (ini == null || fin == null)
             throw new IllegalArgumentException("Las fechas/horas de inicio y fin son obligatorias.");
-        if (ini.isBefore(LocalDateTime.now()))
+        LocalDateTime actual = LocalDateTime.now();
+        if (ini.isBefore(actual))
             throw new IllegalArgumentException("La fecha/hora de inicio no puede estar en el pasado.");
+
         if (!fin.isAfter(ini))
             throw new IllegalArgumentException("La fecha/hora de fin debe ser posterior a la de inicio.");
         this.fechaInicio = ini;
@@ -72,15 +73,6 @@ public abstract class Evento {
         verificarEstadoAutomatico();
         if (estado == EstadoEvento.EJECUCIÓN || estado == EstadoEvento.FINALIZADO)
             throw new IllegalStateException("No se pueden gestionar roles cuando el evento está en EJECUCIÓN o FINALIZADO.");
-    }
-
-    // Métodos estáticos
-    public static void validarFechasAlta(LocalDate fIni, LocalDate fFin) {
-        if (fIni == null || fFin == null)
-            throw new IllegalArgumentException("Las fechas del evento son obligatorias");
-        LocalDate hoy = LocalDate.now();
-        if (fIni.isBefore(hoy) || fFin.isBefore(hoy))
-            throw new IllegalArgumentException("Las fechas del evento deben ser desde la actual en adelante");
     }
 
     // Gestión de fechas
