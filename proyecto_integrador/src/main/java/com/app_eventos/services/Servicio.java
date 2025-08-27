@@ -37,54 +37,59 @@ public class Servicio {
 
     // ALTAS 
     
-    public void crearFeria(String nombre, LocalDateTime ini, LocalDateTime fin,
+    public void crearFeria(String nombre,
+                        LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin,
                         EstadoEvento estado, int cantidadStands, TipoAmbiente ambiente) {
         var f = new Feria();
         f.setNombre(nombre);
-        f.asignarFechas(ini, fin); // validación centralizada en dominio
+        f.setFechas(fIni, hIni, fFin, hFin); // dominio arma y valida las fechas
         f.setCantidadStands(cantidadStands);
         f.setAmbiente(ambiente);
         aplicarEstadoInicial(f, estado);
         repositorio.guardarEvento(f);
     }
 
-    public void crearConcierto(String nombre, LocalDateTime ini, LocalDateTime fin,
+    public void crearConcierto(String nombre,
+                            LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin,
                             EstadoEvento estado, TipoEntrada tipoEntrada, int cupoMaximo) {
         var c = new Concierto();
         c.setNombre(nombre);
-        c.asignarFechas(ini, fin);
+        c.setFechas(fIni, hIni, fFin, hFin);
         c.setTipoEntrada(tipoEntrada);
         c.setCupoMaximo(cupoMaximo);
         aplicarEstadoInicial(c, estado);
         repositorio.guardarEvento(c);
     }
 
-    public void crearExposicion(String nombre, LocalDateTime ini, LocalDateTime fin,
+    public void crearExposicion(String nombre,
+                                LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin,
                                 EstadoEvento estado, TipoArte tipoArte) {
         var x = new Exposicion();
         x.setNombre(nombre);
-        x.asignarFechas(ini, fin);
+        x.setFechas(fIni, hIni, fFin, hFin);
         x.setTipoArte(tipoArte);
         aplicarEstadoInicial(x, estado);
         repositorio.guardarEvento(x);
     }
 
-    public void crearTaller(String nombre, LocalDateTime ini, LocalDateTime fin,
+    public void crearTaller(String nombre,
+                            LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin,
                             EstadoEvento estado, int cupoMaximo, Modalidad modalidad) {
         var t = new Taller();
         t.setNombre(nombre);
-        t.asignarFechas(ini, fin);
+        t.setFechas(fIni, hIni, fFin, hFin);
         t.setCupoMaximo(cupoMaximo);
         t.setModalidad(modalidad);
         aplicarEstadoInicial(t, estado);
         repositorio.guardarEvento(t);
     }
 
-    public void crearCicloCine(String nombre, LocalDateTime ini, LocalDateTime fin,
+    public void crearCicloCine(String nombre,
+                            LocalDate fIni, LocalTime hIni, LocalDate fFin, LocalTime hFin,
                             EstadoEvento estado, boolean postCharla, int cupoMaximo, List<Pelicula> pelis) {
         var cc = new CicloCine();
         cc.setNombre(nombre);
-        cc.asignarFechas(ini, fin);
+        cc.setFechas(fIni, hIni, fFin, hFin);
         cc.setPostCharla(postCharla);
         cc.setCupoMaximo(cupoMaximo);
 
@@ -94,6 +99,7 @@ public class Servicio {
         repositorio.guardarEvento(cc);
         repositorio.actualizarPeliculasCiclo(cc.getIdEvento(), pelis);
     }
+
 
     // MODIFICACIONES
 

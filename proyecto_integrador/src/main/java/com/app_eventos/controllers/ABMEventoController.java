@@ -16,7 +16,6 @@ import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
@@ -304,55 +303,48 @@ public class ABMEventoController {
             buscarYRefrescarTabla();
             cerrarModal();
 
-        } catch (IllegalArgumentException | IllegalStateException ex) { // mantiene captura de validaciones de dominio
+        } catch (IllegalArgumentException | IllegalStateException ex) { // captura de validaciones de dominio
             mostrarAlerta("Error de validación", ex.getMessage());
         }
     }
 
     private void crearSegunTipo(String nombre, TipoEvento tipo,
-        LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin, EstadoEvento estado) {
+                                LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
+                                EstadoEvento estado) {
 
-    // Convertimos LocalDate + LocalTime → LocalDateTime
-    LocalDateTime ini = (fIni != null && hIni != null) ? LocalDateTime.of(fIni, hIni) : null;
-    LocalDateTime fin = (fFin != null && hFin != null) ? LocalDateTime.of(fFin, hFin) : null;
-
-    // Crear según el tipo de evento (las validaciones se hacen en asignarFechas)
-    switch (tipo) {
-        case FERIA -> {
-            FeriaController c = (FeriaController) controladorFragmento;
-            servicio.crearFeria(nombre, ini, fin, estado,
-                    c.getCantidadStands(), c.getAmbienteSeleccionado());
-        }
-        case CONCIERTO -> {
-            ConciertoController c = (ConciertoController) controladorFragmento;
-            servicio.crearConcierto(nombre, ini, fin, estado,
-                    c.getTipoEntradaSeleccionada(), c.getCupoMaximo());
-        }
-        case EXPOSICION -> {
-            ExposicionController c = (ExposicionController) controladorFragmento;
-            servicio.crearExposicion(nombre, ini, fin, estado,
-                    c.getTipoArteSeleccionado());
-        }
-        case TALLER -> {
-            TallerController c = (TallerController) controladorFragmento;
-            servicio.crearTaller(nombre, ini, fin, estado,
-                    c.getCupoMaximo(), c.getModalidadSeleccionada());
-        }
-        case CICLO_CINE -> {
-            CicloCineController c = (CicloCineController) controladorFragmento;
-            servicio.crearCicloCine(nombre, ini, fin, estado,
-                    c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas());
+        switch (tipo) {
+            case FERIA -> {
+                FeriaController c = (FeriaController) controladorFragmento;
+                servicio.crearFeria(nombre, fIni, hIni, fFin, hFin, estado,
+                                    c.getCantidadStands(), c.getAmbienteSeleccionado());
+            }
+            case CONCIERTO -> {
+                ConciertoController c = (ConciertoController) controladorFragmento;
+                servicio.crearConcierto(nombre, fIni, hIni, fFin, hFin, estado,
+                                        c.getTipoEntradaSeleccionada(), c.getCupoMaximo());
+            }
+            case EXPOSICION -> {
+                ExposicionController c = (ExposicionController) controladorFragmento;
+                servicio.crearExposicion(nombre, fIni, hIni, fFin, hFin, estado,
+                                        c.getTipoArteSeleccionado());
+            }
+            case TALLER -> {
+                TallerController c = (TallerController) controladorFragmento;
+                servicio.crearTaller(nombre, fIni, hIni, fFin, hFin, estado,
+                                    c.getCupoMaximo(), c.getModalidadSeleccionada());
+            }
+            case CICLO_CINE -> {
+                CicloCineController c = (CicloCineController) controladorFragmento;
+                servicio.crearCicloCine(nombre, fIni, hIni, fFin, hFin, estado,
+                                        c.isPostCharla(), c.getCupoMaximo(), c.getPeliculasSeleccionadas());
+            }
         }
     }
-}
 
-
-
-        private void actualizarSegunTipo(Evento original, String nombre, TipoEvento tipo,
+    private void actualizarSegunTipo(Evento original, String nombre, TipoEvento tipo,
                                     LocalDate fIni, LocalDate fFin, LocalTime hIni, LocalTime hFin,
                                     EstadoEvento estado) {
-
-        // (Opcional) bloquear rápido desde UI
+        // bloquear desde UI
         original.validarPuedeModificar();
 
         switch (tipo) {
@@ -398,8 +390,6 @@ public class ABMEventoController {
             }
         }
     }
-
-
 
     @FXML
     private void modificarEvento() {
