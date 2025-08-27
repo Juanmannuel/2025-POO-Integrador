@@ -30,7 +30,7 @@ public abstract class Evento {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private EstadoEvento estado = EstadoEvento.PLANIFICACIÓN;
+    private EstadoEvento estado;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tipoEvento", nullable = false)

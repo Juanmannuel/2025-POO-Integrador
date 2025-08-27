@@ -319,7 +319,7 @@ public class Servicio {
     public ObservableList<Evento> obtenerEventosParaInscripcion() {
         return FXCollections.observableArrayList(
             repositorio.listarEventos().stream()
-                .filter(e -> e instanceof com.app_eventos.model.interfaces.IEventoConCupo)
+                .filter(e -> e instanceof com.app_eventos.model.interfaces.IEventoConInscripcion)
                 .filter(e -> e.getEstado() == EstadoEvento.CONFIRMADO)
                 .filter(e -> e.getFechaFin() != null && e.getFechaFin().isAfter(LocalDateTime.now()))
                 .toList()

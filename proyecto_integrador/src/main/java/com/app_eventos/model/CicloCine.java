@@ -2,7 +2,7 @@ package com.app_eventos.model;
 
 import jakarta.persistence.*;
 import com.app_eventos.model.enums.*;
-import com.app_eventos.model.interfaces.IEventoConCupo;
+import com.app_eventos.model.interfaces.IEventoConInscripcion;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -10,7 +10,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "cicloCine")
-public class CicloCine extends Evento implements IEventoConCupo {
+public class CicloCine extends Evento implements IEventoConInscripcion {
 
     @ManyToMany
     @JoinTable(

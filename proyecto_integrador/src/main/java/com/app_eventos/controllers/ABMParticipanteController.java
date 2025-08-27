@@ -4,7 +4,7 @@ import com.app_eventos.model.Evento;
 import com.app_eventos.model.Persona;
 import com.app_eventos.model.enums.EstadoEvento;
 import com.app_eventos.model.enums.TipoEvento;
-import com.app_eventos.model.interfaces.IEventoConCupo;
+import com.app_eventos.model.interfaces.IEventoConInscripcion;
 import com.app_eventos.services.Servicio;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
@@ -203,7 +203,7 @@ public class ABMParticipanteController {
         lblTipoEvento.setText("Tipo: " + tipoToLabel(e.getTipoEvento()));
 
         int inscriptos = servicio.obtenerParticipantes(e).size();
-        if (e instanceof IEventoConCupo c) {
+        if (e instanceof IEventoConInscripcion c) {
             lblCupoDisponible.setText("Cupo: " + inscriptos + " / " + c.getCupoMaximo());
         } else {
             lblCupoDisponible.setText("Cupo: -");
@@ -246,13 +246,13 @@ public class ABMParticipanteController {
     // Eventos que requieren inscripción (para el combo del filtro).
     private List<Evento> eventosConCupo() {
         return servicio.listarEventos().stream()
-                .filter(e -> e instanceof IEventoConCupo)
+                .filter(e -> e instanceof IEventoConInscripcion)
                 .toList();
     }
 
     // Eventos que requieren inscripción y están CONFIRMADOS y no vencidos.
     private boolean esInscribibleAhora(Evento e) {
-        if (!(e instanceof IEventoConCupo)) return false;
+        if (!(e instanceof IEventoConInscripcion)) return false;
         LocalDateTime ahora = LocalDateTime.now();
         return e.getEstado() == EstadoEvento.CONFIRMADO
                 && e.getFechaFin() != null
