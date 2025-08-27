@@ -2,7 +2,6 @@ package com.app_eventos.utils;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -10,14 +9,10 @@ import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Componente personalizado para selección de hora más cómodo que los spinners
- * Permite seleccionar hora y minutos de forma intuitiva
- */
+// Componente personalizado para selección de hora
 public class TimePicker extends VBox {
     
     private final ObjectProperty<LocalTime> value = new SimpleObjectProperty<>();
@@ -25,10 +20,9 @@ public class TimePicker extends VBox {
     private final ComboBox<Integer> comboMinuto;
     private final Label lblSeparador;
     
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
-    private static final int MIN_HOUR = 6;
-    private static final int MAX_HOUR = 23;
-    private static final int MINUTE_STEP = 5;
+    private static final int horaMin = 6;
+    private static final int horaMax = 23;
+    private static final int intervalo = 5;
     
     public TimePicker() {
         this(null);
@@ -38,31 +32,31 @@ public class TimePicker extends VBox {
         setSpacing(5);
         setAlignment(Pos.CENTER_LEFT);
         
-        // Crear combos para hora y minutos
+        // crear combos para hora y minutos
         comboHora = new ComboBox<>();
         comboMinuto = new ComboBox<>();
         lblSeparador = new Label(":");
         
-        // Configurar estilos
+        // configurar estilos
         comboHora.setPrefWidth(80);
         comboMinuto.setPrefWidth(80);
         lblSeparador.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
         
-        // Cargar opciones de horas
+        // cargar opciones de horas
         List<Integer> horas = new ArrayList<>();
-        for (int i = MIN_HOUR; i <= MAX_HOUR; i++) {
+        for (int i = horaMin; i <= horaMax; i++) {
             horas.add(i);
         }
         comboHora.setItems(javafx.collections.FXCollections.observableArrayList(horas));
         
-        // Cargar opciones de minutos
+        // cargar opciones de minutos
         List<Integer> minutos = new ArrayList<>();
-        for (int i = 0; i < 60; i += MINUTE_STEP) {
+        for (int i = 0; i < 60; i += intervalo) {
             minutos.add(i);
         }
         comboMinuto.setItems(javafx.collections.FXCollections.observableArrayList(minutos));
         
-        // Configurar conversores para mostrar formato 00:00
+        // configurar conversores para mostrar formato 00:00
         comboHora.setConverter(new StringConverter<Integer>() {
             @Override
             public String toString(Integer object) {
@@ -95,27 +89,22 @@ public class TimePicker extends VBox {
             }
         });
         
-        // Configurar valores por defecto
+        // configurar valores por defecto
         if (initialValue != null) {
             setValue(initialValue);
         } else {
-            // Valor por defecto: 9:00
             comboHora.setValue(9);
             comboMinuto.setValue(0);
         }
         
-        // Configurar listeners para actualizar el valor
-        comboHora.valueProperty().addListener((obs, oldVal, newVal) -> updateTimeValue());
-        comboMinuto.valueProperty().addListener((obs, oldVal, newVal) -> updateTimeValue());
-        
-        // Layout horizontal: [Hora] : [Minutos]
+        // configurar listeners para actualizar el valor (_ los parámetros no usados)
+        comboHora.valueProperty().addListener((_, _, _) -> updateTimeValue());
+        comboMinuto.valueProperty().addListener((_, _, _) -> updateTimeValue());
         HBox timeBox = new HBox(5);
         timeBox.setAlignment(Pos.CENTER_LEFT);
         timeBox.getChildren().addAll(comboHora, lblSeparador, comboMinuto);
         
         getChildren().add(timeBox);
-        
-        // Aplicar estilos CSS
         getStyleClass().add("time-picker");
     }
     
@@ -130,21 +119,17 @@ public class TimePicker extends VBox {
                     value.set(newTime);
                 }
             } catch (Exception e) {
-                // Ignorar errores de tiempo inválido
+                // hora o minuto inválido, no hacer nada
             }
         }
     }
     
-    /**
-     * Obtiene el valor de tiempo seleccionado
-     */
+    // Obtiene el valor de tiempo seleccionado
     public LocalTime getValue() {
         return value.get();
     }
     
-    /**
-     * Establece el valor de tiempo
-     */
+    // Establece el valor de tiempo
     public void setValue(LocalTime time) {
         if (time != null) {
             comboHora.setValue(time.getHour());
@@ -157,32 +142,24 @@ public class TimePicker extends VBox {
         }
     }
     
-    /**
-     * Propiedad observable del valor
-     */
+    // Propiedad observable del valor
     public ObjectProperty<LocalTime> valueProperty() {
         return value;
     }
     
-    /**
-     * Habilita o deshabilita el componente
-     */
+    // Habilita o deshabilita el componente
     public void setTimePickerDisable(boolean disable) {
         setDisable(disable);
         comboHora.setDisable(disable);
         comboMinuto.setDisable(disable);
     }
     
-    /**
-     * Obtiene el combo de hora (útil para estilos personalizados)
-     */
+    // Obtiene el combo de hora
     public ComboBox<Integer> getComboHora() {
         return comboHora;
     }
     
-    /**
-     * Obtiene el combo de minutos (útil para estilos personalizados)
-     */
+    // Obtiene el combo de minutos
     public ComboBox<Integer> getComboMinuto() {
         return comboMinuto;
     }

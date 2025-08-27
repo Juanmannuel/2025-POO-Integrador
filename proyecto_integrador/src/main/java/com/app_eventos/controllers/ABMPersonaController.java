@@ -41,9 +41,9 @@ public class ABMPersonaController {
 
     @FXML
     public void initialize() {
-        // Responsivo
-        tablaPersonas.widthProperty().addListener((obs, oldWidth, newWidth) -> {
-            double total = newWidth.doubleValue();
+        // Columnas responsivas (ancho proporcional)
+        tablaPersonas.widthProperty().addListener((_, _, ancho) -> {
+            double total = ancho.doubleValue();
             colDNI.setPrefWidth(total * 0.15);
             colNombre.setPrefWidth(total * 0.20);
             colApellido.setPrefWidth(total * 0.20);
@@ -69,9 +69,9 @@ public class ABMPersonaController {
         tablaPersonas.setOnMouseClicked(this::onSeleccionarFila);
 
         // Deseleccionar al click afuera
-        tablaPersonas.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (newScene != null) {
-                newScene.setOnMousePressed(event -> {
+        tablaPersonas.sceneProperty().addListener((_, _, escena) -> {
+            if (escena != null) {
+                escena.setOnMousePressed(_ -> {
                     if (!tablaPersonas.isHover()) {
                         tablaPersonas.getSelectionModel().clearSelection();
                         personaSeleccionada = null;

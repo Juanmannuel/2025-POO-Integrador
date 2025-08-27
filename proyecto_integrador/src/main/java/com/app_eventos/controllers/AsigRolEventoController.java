@@ -144,7 +144,7 @@ public class AsigRolEventoController {
         this.evento = evento;
         if (evento != null) {
             // Limitar roles permitidos según tipo
-            comboTipoRol.getItems().setAll(evento.rolesPermitidosParaAsignacion());
+            comboTipoRol.getItems().setAll(evento.rolesPermitidosAsignacion());
             refrescarTablaDesdeBD();
         } else {
             comboTipoRol.getItems().clear();

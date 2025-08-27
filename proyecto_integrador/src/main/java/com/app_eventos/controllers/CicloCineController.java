@@ -41,7 +41,7 @@ public class CicloCineController {
 
         // Cargar películas desde servicio
         todas.setAll(servicio.obtenerPeliculas());
-        filtradas = new FilteredList<>(todas, p -> true);
+        filtradas = new FilteredList<>(todas, _ -> true);
         listaPeliculas.setItems(filtradas);
 
         // Celda con checkbox persistente y formato "Xh Ymin"
@@ -49,9 +49,9 @@ public class CicloCineController {
             pelicula -> {
                 Long id = (pelicula != null ? pelicula.getIdPelicula() : null);
                 SimpleBooleanProperty prop = new SimpleBooleanProperty(id != null && seleccionadasIds.contains(id));
-                prop.addListener((obs, wasSelected, isNowSelected) -> {
+                prop.addListener((_, _, seleccionado) -> {
                     if (id == null) return;
-                    if (isNowSelected) seleccionadasIds.add(id);
+                    if (seleccionado) seleccionadasIds.add(id);
                     else seleccionadasIds.remove(id);
                     actualizarContador();
                 });
@@ -71,9 +71,9 @@ public class CicloCineController {
         ));
 
         // Filtro por título
-        txtFiltro.textProperty().addListener((obs, old, text) -> {
+        txtFiltro.textProperty().addListener((_, _, text) -> {
             Predicate<Pelicula> pred = (text == null || text.isBlank())
-                ? p -> true
+                ? _ -> true
                 : p -> p.getTitulo().toLowerCase().contains(text.toLowerCase());
             filtradas.setPredicate(pred);
         });

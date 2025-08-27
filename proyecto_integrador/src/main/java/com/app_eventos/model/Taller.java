@@ -46,7 +46,6 @@ public class Taller extends Evento implements IEventoConCupo {
 
         if (personaTieneRol(persona))
             throw new IllegalStateException("No puede ser participante y responsable a la vez.");
-
         // Validación de cupo
         if (getCupoDisponible() <= 0)
             throw new IllegalStateException("Cupo lleno.");

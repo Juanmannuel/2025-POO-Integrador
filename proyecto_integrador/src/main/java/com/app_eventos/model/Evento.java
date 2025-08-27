@@ -149,7 +149,7 @@ public abstract class Evento {
         if (roles.stream().anyMatch(r -> r.getPersona().equals(persona)))
             throw new IllegalArgumentException("La persona ya tiene un rol asignado en este evento.");
         validarRestriccionesRol(rol, persona);
-        this.roles.add(new RolEvento(this, persona, rol));
+        roles.add(new RolEvento(this, persona, rol));
     }
 
     public void borrarResponsable(Persona persona, TipoRol rol) {
@@ -160,6 +160,7 @@ public abstract class Evento {
         roles.removeIf(r -> r.getPersona().equals(persona) && r.getRol() == rol);
     }
 
+    // si la persona ya tiene un rol, devuelve true
     public boolean personaTieneRol(Persona persona) {
         return roles.stream().anyMatch(r -> r.getPersona().equals(persona));
     }
@@ -175,7 +176,8 @@ public abstract class Evento {
 
     protected abstract boolean rolPermitido(TipoRol rol);
 
-    public EnumSet<TipoRol> rolesPermitidosParaAsignacion() {
+    // Limita las opciones que se muestran al asignar un rol segun el tipo de evento
+    public EnumSet<TipoRol> rolesPermitidosAsignacion() {
         EnumSet<TipoRol> set = EnumSet.noneOf(TipoRol.class);
         for (TipoRol r : TipoRol.values()) if (rolPermitido(r)) set.add(r);
         return set;

@@ -21,9 +21,20 @@ public class Pelicula {
         setTitulo(titulo); setDuracionMinutos(duracionMinutos); setTipo(tipo);
     }
 
-    public void setTitulo(String t){ if (t == null || t.isBlank()) throw new IllegalArgumentException("El título de la película es obligatorio."); this.titulo = t; }
-    public void setDuracionMinutos(int d){ if (d <= 0) throw new IllegalArgumentException("La duración debe ser mayor a 0."); this.duracionMinutos = d; }
-    public void setTipo(TipoPelicula tp){ if (tp == null) throw new IllegalArgumentException("Seleccione el tipo de película."); this.tipo = tp; }
+    public void setTitulo(String t){ 
+        if (t == null || t.isBlank()) throw new IllegalArgumentException("El título de la película es obligatorio."); 
+        this.titulo = t; 
+    }
+
+    public void setDuracionMinutos(int d){ 
+        if (d <= 0) throw new IllegalArgumentException("La duración debe ser mayor a 0."); 
+        this.duracionMinutos = d; 
+    }
+
+    public void setTipo(TipoPelicula tp){ 
+        if (tp == null) throw new IllegalArgumentException("Seleccione el tipo de película."); 
+        this.tipo = tp; 
+    }
 
     public Long getIdPelicula(){ return idPelicula; }
     public String getTitulo(){ return titulo; }

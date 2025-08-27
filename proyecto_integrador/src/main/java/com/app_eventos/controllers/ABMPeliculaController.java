@@ -41,9 +41,9 @@ public class ABMPeliculaController {
 
     @FXML
     public void initialize() {
-        // Columnas responsivas
-        tablaPeliculas.widthProperty().addListener((obs, oldW, newW) -> {
-            double total = newW.doubleValue();
+        // Columnas responsivas (ancho proporcional)
+        tablaPeliculas.widthProperty().addListener((_, _, ancho) -> {
+            double total = ancho.doubleValue();
             colTitulo.setPrefWidth(total * 0.60);
             colDuracion.setPrefWidth(total * 0.20);
             colTipo.setPrefWidth(total * 0.20);
@@ -65,7 +65,7 @@ public class ABMPeliculaController {
         // Combo Tipo de Película
         comboTipoPelicula.setItems(FXCollections.observableArrayList(TipoPelicula.values()));
         comboTipoPelicula.getSelectionModel().select(TipoPelicula.DOS_D);
-        comboTipoPelicula.setCellFactory(listView -> new ListCell<>() {
+        comboTipoPelicula.setCellFactory(_ -> new ListCell<>() {
             @Override protected void updateItem(TipoPelicula item, boolean empty) {
                 super.updateItem(item, empty);
                 setText((empty || item == null) ? null : item.getEtiqueta());

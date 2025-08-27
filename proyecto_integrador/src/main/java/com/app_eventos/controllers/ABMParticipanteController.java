@@ -73,16 +73,16 @@ public class ABMParticipanteController {
         comboParticipante.setPlaceholder(new Label("Seleccione un evento"));
 
         // Listeners filtros
-        comboEventoFiltro.valueProperty().addListener((o,a,b)->refrescarTabla());
-        txtDNIFiltro.textProperty().addListener((o,a,b)->refrescarTabla());
-        txtNombreFiltro.textProperty().addListener((o,a,b)->refrescarTabla());
+        comboEventoFiltro.valueProperty().addListener((_,_,_)->refrescarTabla());
+        txtDNIFiltro.textProperty().addListener((_,_,_)->refrescarTabla());
+        txtNombreFiltro.textProperty().addListener((_,_,_)->refrescarTabla());
 
         // Listeners modal
-        comboEvento.valueProperty().addListener((o,a,b)->{
+        comboEvento.valueProperty().addListener((_,_,b)->{
             pintarInfoEvento(b);
             cargarPersonasElegibles(b); 
         });
-        comboParticipante.valueProperty().addListener((o,a,b)->pintarInfoPersona(b));
+        comboParticipante.valueProperty().addListener((_,_,b)->pintarInfoPersona(b));
 
         // Columnas
         colEvento.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().evento().getNombre()));

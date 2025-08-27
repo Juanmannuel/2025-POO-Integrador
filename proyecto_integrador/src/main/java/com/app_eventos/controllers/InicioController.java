@@ -112,7 +112,7 @@ public class InicioController {
 
     // Dibujo del calendario
     private void dibujarCalendario() {
-        String mes = fechaActual.getMonth().getDisplayName(TextStyle.FULL, new Locale("es", "ES"));
+    String mes = fechaActual.getMonth().getDisplayName(TextStyle.FULL, Locale.forLanguageTag("es-ES"));
         String anio = String.valueOf(fechaActual.getYear());
         lblMesAnio.setText(mes.substring(0, 1).toUpperCase() + mes.substring(1) + " " + anio);
 
@@ -193,14 +193,14 @@ public class InicioController {
         celdaBoton.setGraphic(contenidoCelda);
 
         // el click muestra lista lateral
-        celdaBoton.setOnAction(e -> mostrarEventosDelDia(dia, eventosDelDia));
+        celdaBoton.setOnAction(_ -> mostrarEventosDelDia(dia, eventosDelDia));
 
         return celdaBoton;
     }
 
     // Lista lateral de eventos del día
     private void mostrarEventosDelDia(int dia, List<Evento> eventos) {
-        DateTimeFormatter formato = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
+    DateTimeFormatter formato = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", Locale.forLanguageTag("es-ES"));
         lblDiaSeleccionado.setText("Eventos del " + fechaActual.withDayOfMonth(dia).format(formato));
 
         vboxEventosDia.getChildren().clear();

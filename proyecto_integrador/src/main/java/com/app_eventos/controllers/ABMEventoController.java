@@ -68,8 +68,9 @@ public class ABMEventoController {
         tablaEventos.setItems(modeloTabla);
         tablaEventos.setPlaceholder(new Label("Sin eventos"));
 
-        tablaEventos.widthProperty().addListener((obs, oldWidth, newWidth) -> {
-            double total = newWidth.doubleValue();
+        // Columnas responsivas (ancho proporcional)
+        tablaEventos.widthProperty().addListener((_, _, ancho) -> {
+            double total = ancho.doubleValue();
             colNombre.setPrefWidth(total * 0.20);
             colTipo.setPrefWidth(total * 0.10);
             colFechaInicio.setPrefWidth(total * 0.15);
@@ -107,7 +108,7 @@ public class ABMEventoController {
         timePickerFin.setValue(LocalTime.of(10, 0));   // 10:00 por defecto
         ComboBoxInicializador.cargarTipoEvento(comboTipoEvento);
         ComboBoxInicializador.cargarEstadoEvento(comboEstado);
-        comboTipoEvento.valueProperty().addListener((o, a, b) -> cargarFragmentoEspecifico(b));
+        comboTipoEvento.valueProperty().addListener((_, _, b) -> cargarFragmentoEspecifico(b));
 
         agregarBotonAsignarRol();
         detectarFiltros();
@@ -140,15 +141,15 @@ public class ABMEventoController {
         if (comboTipoEventoFiltro != null) {
             comboTipoEventoFiltro.setItems(FXCollections.observableArrayList(TipoEvento.values()));
             comboTipoEventoFiltro.getSelectionModel().clearSelection();
-            comboTipoEventoFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
+            comboTipoEventoFiltro.valueProperty().addListener((_,_,_)->buscarYRefrescarTabla());
         }
         if (comboEstadoFiltro != null) {
             comboEstadoFiltro.setItems(FXCollections.observableArrayList(EstadoEvento.values()));
             comboEstadoFiltro.getSelectionModel().clearSelection();
-            comboEstadoFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
+            comboEstadoFiltro.valueProperty().addListener((_,_,_)->buscarYRefrescarTabla());
         }
-        if (dateDesdeFiltro != null)  dateDesdeFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
-        if (dateHastaFiltro != null)  dateHastaFiltro.valueProperty().addListener((o,a,b)->buscarYRefrescarTabla());
+        if (dateDesdeFiltro != null)  dateDesdeFiltro.valueProperty().addListener((_,_,_)->buscarYRefrescarTabla());
+        if (dateHastaFiltro != null)  dateHastaFiltro.valueProperty().addListener((_,_,_)->buscarYRefrescarTabla());
     }
 
     private void buscarYRefrescarTabla() {
@@ -167,10 +168,10 @@ public class ABMEventoController {
     }
 
     private void agregarBotonAsignarRol() {
-        colAcciones.setCellFactory(col -> new TableCell<>() {
+        colAcciones.setCellFactory(_ -> new TableCell<>() {
             private final Button btn = new Button("Asignar Rol");
             {
-                btn.setOnAction(e -> {
+                btn.setOnAction(_ -> {
                     Evento ev = getTableView().getItems().get(getIndex());
                     if (ev != null) abrirModalAsignacionRoles(ev);
                 });
@@ -199,7 +200,7 @@ public class ABMEventoController {
             VBox vista = loader.load();
             AsigRolEventoController ctrl = loader.getController();
             ctrl.setEvento(evento);
-            ctrl.setOnRolesChanged(ev -> buscarYRefrescarTabla());
+            ctrl.setOnRolesChanged(_ -> buscarYRefrescarTabla());
 
             Dialog<ButtonType> dlg = new Dialog<>();
             dlg.setTitle("Asignar Roles");
@@ -207,7 +208,7 @@ public class ABMEventoController {
             dlg.getDialogPane().getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
             dlg.setResizable(true);
 
-            dlg.setOnHidden(e -> buscarYRefrescarTabla());
+            dlg.setOnHidden(_ -> buscarYRefrescarTabla());
             dlg.showAndWait();
 
         } catch (IOException ex) {
