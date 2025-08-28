@@ -175,6 +175,7 @@ public abstract class Evento {
         return set;
     }
 
+    // método utilizado en repositorio para agregar roles al cargar desde BD
     public void agregarRol(RolEvento rol) { if (rol != null) roles.add(rol); }
 
     // Getters y Setters

@@ -72,8 +72,7 @@ public class CicloCineController {
 
         // Filtro por título
         txtFiltro.textProperty().addListener((_, _, text) -> {
-            Predicate<Pelicula> pred = (text == null || text.isBlank())
-                ? _ -> true
+            Predicate<Pelicula> pred = (text == null || text.isBlank())? _ -> true
                 : p -> p.getTitulo().toLowerCase().contains(text.toLowerCase());
             filtradas.setPredicate(pred);
         });
@@ -110,16 +109,9 @@ public class CicloCineController {
         actualizarContador();
     }
 
-    // devuelve las seleccionadas actuales (instancias de 'todas')
+    // devuelve las seleccionadas actuales (instancias de todas)
     public List<Pelicula> getPeliculasSeleccionadas() {
         return todas.stream()
-                .filter(p -> p.getIdPelicula() != null && seleccionadasIds.contains(p.getIdPelicula()))
-                .toList();
-    }
-
-    // mismas seleccionadas pero respetando el orden visual
-    public List<Pelicula> getPeliculasSeleccionadasEnOrden() {
-        return listaPeliculas.getItems().stream()
                 .filter(p -> p.getIdPelicula() != null && seleccionadasIds.contains(p.getIdPelicula()))
                 .toList();
     }
