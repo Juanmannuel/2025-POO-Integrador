@@ -22,6 +22,9 @@ public class RolEvento {
     @Column(name = "tipo", nullable = false, length = 32)
     private TipoRol rol;
 
+    @Column(nullable = false)
+    private boolean activo = true;
+
     public RolEvento() {}
 
     public RolEvento(Evento evento, Persona persona, TipoRol rol) {
@@ -37,4 +40,8 @@ public class RolEvento {
     public void setPersona(Persona persona) { this.persona = persona; }
     public TipoRol getRol() { return rol; }
     public void setRol(TipoRol rol) { this.rol = rol; }
+
+    // Atributo para baja lógica
+    public boolean isActivo() { return activo; }
+    public void setActivo(boolean activo) { this.activo = activo; }
 }

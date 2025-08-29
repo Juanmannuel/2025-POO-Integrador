@@ -36,7 +36,13 @@ public abstract class Evento {
     @Column(name = "tipoEvento", nullable = false)
     private TipoEvento tipoEvento;
 
-    @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Column(nullable = false)
+    private boolean activo = true;
+
+    @OneToMany(
+    mappedBy = "evento",
+    cascade = { CascadeType.PERSIST, CascadeType.MERGE },
+    orphanRemoval = false)
     private List<RolEvento> roles = new ArrayList<>();
 
     // Constructores
@@ -198,6 +204,10 @@ public abstract class Evento {
         if (tipoEvento == null) throw new IllegalArgumentException("El tipo de evento es obligatorio.");
         this.tipoEvento = tipoEvento;
     }
+    
+    // Atributo para baja lógica
+    public boolean isActivo() { return activo; }
+    public void setActivo(boolean activo) { this.activo = activo; }
 
     public List<RolEvento> getRoles() { return new ArrayList<>(roles); }
 }

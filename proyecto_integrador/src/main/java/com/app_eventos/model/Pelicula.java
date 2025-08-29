@@ -13,6 +13,9 @@ public class Pelicula {
     @Column(nullable = false) private String titulo;
     @Column(name = "duracionMinutos") private int duracionMinutos;
 
+    @Column(nullable = false)
+    private boolean activo = true;
+
     @Enumerated(EnumType.STRING) @Column(name = "tipo")
     private TipoPelicula tipo;
 
@@ -41,4 +44,8 @@ public class Pelicula {
     public int getDuracionMinutos(){ return duracionMinutos; }
     public TipoPelicula getTipo(){ return tipo; }
     @Override public String toString(){ return titulo + " (" + duracionMinutos + " min, " + tipo + ")"; }
+
+    // Atributo para baja lógica
+    public boolean isActivo() { return activo; }
+    public void setActivo(boolean activo) { this.activo = activo; }
 }

@@ -26,6 +26,9 @@ public class Persona {
     @Column(length = 254)
     private String email;
 
+    @Column(nullable = false)
+    private boolean activo = true;
+
     public Persona() {}
 
     public Persona(String nombre, String apellido, String dni, String telefono, String email) {
@@ -121,6 +124,10 @@ public class Persona {
     public String getDni(){ return dni; }
     public String getTelefono(){ return telefono; }
     public String getEmail(){ return email; }
+
+    // Atributo para baja lógica
+    public boolean isActivo() { return activo; }
+    public void setActivo(boolean activo) { this.activo = activo; }
 
     @Override public String toString(){ return apellido + ", " + nombre; }
 }
